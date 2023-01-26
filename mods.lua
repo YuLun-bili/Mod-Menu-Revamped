@@ -1978,9 +1978,11 @@ function drawCreate(scale)
 				local hcl = 9*22+10
 				local hcm = 17*22+10
 				local rmb_pushedC
+				local prevSelect = gCollectionSelected
 
 				gCollectionSelected, rmb_pushedC = listCollections(gCollections, listW, hcl)
 				local validCollection = gCollections[gCollectionSelected]
+				if prevSelect ~= gCollectionSelected then updateCollectMods(gCollectionSelected) end
 
 				UiTranslate(0, listH-hcm)
 				UiPush()
