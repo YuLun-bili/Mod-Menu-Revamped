@@ -1,4 +1,4 @@
-# Mod Menu Revamped (V1.0.0)
+# Mod Menu Revamped
 
 This is a revamped version of vanilla mod menu.
 
