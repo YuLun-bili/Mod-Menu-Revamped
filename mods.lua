@@ -1389,11 +1389,19 @@ function drawCreate(scale)
 		UiColor(0.96,0.96,0.96)
 		local quitCondA = gLargePreview <= 0 and InputPressed("esc")
 		local quitCondB = not (UiIsMouseInRect(UiWidth(), UiHeight())) and InputPressed("lmb")
-		if not gCollectionTyping and (quitCondA or quitCondB) then
+		if not (gCollectionTyping or gSearchTyping) and (quitCondA or quitCondB) then
 			open = false
 			gMods[1].isdragging = false;
 			gMods[2].isdragging = false;
 			gMods[3].isdragging = false;
+		end
+		if quitCondB then
+			gCollectionTyping = false
+			gCollectionFocus = false
+			gCollectionClick = false
+			gSearchTyping = false
+			gSearchFocus = false
+			gSearchClick = false
 		end
 
 		UiPush()
