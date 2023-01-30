@@ -1436,7 +1436,12 @@ function drawCreate(scale)
 					UiPush()
 						UiButtonHoverColor(0.77, 0.77, 0.77)
 						UiButtonPressDist(0.5)
-						UiButtonImageBox("ui/common/box-solid-4.png", 4, 4, 1, 1, 1, 0.1)
+						UiPush()
+							UiTranslate(0, -8)
+							UiButtonImageBox("ui/common/box-solid-4.png", 4, 4, 1, 1, 1, 0.1)
+							UiBlankButton(110, 30)
+						UiPop()
+						UiButtonImageBox("ui/common/box-outline-4.png", 4, 4, 1, 1, 1, 0.9)
 						if gSearchText ~= "" then
 							UiTextButton("Search", 110, 30)
 						else
