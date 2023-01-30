@@ -2,6 +2,8 @@
 
 This is a revamped version of vanilla mod menu.
 
+<img src="https://user-images.githubusercontent.com/70589524/215516129-fe398945-84b0-48a9-8e66-1d69510ec950.png" width="576px" align="center">
+
 ## New Features
 
 * Redesigned UI layout
