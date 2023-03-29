@@ -540,6 +540,7 @@ function contextMenuCommon(sel_mod, category)
 				UiRect(w, 22)
 				if InputPressed("lmb") then
 					Command("mods.unsubscribe", sel_mod)
+					updateCollections()
 					updateMods()
 					open = false
 				end
@@ -615,6 +616,7 @@ function contextMenuCommon(sel_mod, category)
 				UiRect(w, 22)
 				if InputPressed("lmb") then
 					deactivateMods(category)
+					updateCollections()
 					updateMods()
 					open = false
 				end
@@ -1042,6 +1044,22 @@ function listSearchMods(list, w, h)
 
 			if list.items[i].override then
 				UiPush()
+					UiTranslate(-10, -18)
+					if UiIsMouseInRect(22, 22) and InputPressed("lmb") then
+						if list.items[i].active then
+							Command("mods.deactivate", list.items[i].id)
+							updateCollections()
+							updateMods()
+							list.items[i].active = false
+						else
+							Command("mods.activate", list.items[i].id)
+							updateCollections()
+							updateMods()
+							list.items[i].active = true
+						end
+					end
+				UiPop()
+				UiPush()
 					UiTranslate(2, -6)
 					UiAlign("center middle")
 					UiScale(0.5)
@@ -1330,11 +1348,13 @@ function listCollectionMods(mainList, w, h, selected)
 						Command("mods.deactivate", list.items[i].id)
 						updateCollections()
 						updateMods()
+						updateSearch()
 						list.items[i].active = false
 					else
 						Command("mods.activate", list.items[i].id)
 						updateCollections()
 						updateMods()
+						updateSearch()
 						list.items[i].active = true
 					end
 				end
@@ -1443,7 +1463,12 @@ function drawCreate(scale)
 						UiPop()
 						UiButtonImageBox("ui/common/box-outline-4.png", 4, 4, 1, 1, 1, 0.9)
 						if gSearchText ~= "" then
-							UiTextButton("Search", 110, 30)
+							if UiTextButton("Search", 110, 30) then
+								gSearchText = ""
+								local modPrefix = gModSelected:match("^(%w+)-")
+								local index = categoryLookup[modPrefix]
+								category = index and index or category
+							end
 						else
 							if UiTextButton(gMods[category].title, 110, 30) then
 								category = category%3+1
@@ -1464,6 +1489,7 @@ function drawCreate(scale)
 							selectMod(selected)
 							if category==2 then
 								updateMods()
+								updateCollections()
 							end
 						end
 					end
@@ -1610,8 +1636,9 @@ function drawCreate(scale)
 				UiWindow(mainW, mainH)
 				if gModSelected ~= "" then
 					UiPush()
+						local unknownMod = false
 						local name = GetString(modKey..".name")
-						if gModSelected ~= "" and name == "" then name = "Unknown" end
+						if gModSelected ~= "" and name == "" then name = "Unknown" unknownMod = true end
 						local author = GetString(modKey..".author")
 						if gModSelected ~= "" and author == "" then author = "Unknown" end
 						local authorList = string.split(author, ",")
@@ -1622,7 +1649,7 @@ function drawCreate(scale)
 						local previewPath = "RAW:"..GetString(modKey..".path").."/preview.jpg"
 						local hasPreview = HasFile(previewPath)
 						local idPath = "RAW:"..GetString(modKey..".path").."/id.txt"
-						local hasId = HasFile(previewPath)
+						local hasId = HasFile(idPath)
 
 						UiAlign("top left")
 						UiTranslate(30, 16)
@@ -1764,6 +1791,8 @@ function drawCreate(scale)
 									if UiTextButton("Enabled", 200, 40) then
 										Command("mods.deactivate", gModSelected)
 										updateMods()
+										updateCollections()
+										updateSearch()
 									end
 									UiColor(1, 1, 0.5)
 									UiTranslate(-60, 0)
@@ -1772,6 +1801,8 @@ function drawCreate(scale)
 									if UiTextButton("Disabled", 200, 40) then
 										Command("mods.activate", gModSelected)
 										updateMods()
+										updateCollections()
+										updateSearch()
 									end
 									UiTranslate(-60, 0)
 									UiImage("ui/menu/mod-inactive.png")
@@ -1799,12 +1830,13 @@ function drawCreate(scale)
 							UiPop()
 						end
 					else
-						if gModSelected ~= "" then
+						if gModSelected ~= "" and not unknownMod then
 							UiPush()
 								UiTranslate(mainW-buttonW/2-30,mainH-260)
 								if UiTextButton("Make local copy", 200, 40) then
 									Command("mods.makelocalcopy", gModSelected)
 									updateMods()
+									updateSearch()
 								end
 							UiPop()
 						end
@@ -1886,6 +1918,9 @@ function drawCreate(scale)
 					UiColor(1,1,1,0.5)
 					UiTranslate(0, 20)
 					UiText("[search mod]")
+					local modPrefix = gModSelected:match("^(%w+)-")
+					local index = categoryLookup[modPrefix]
+					category = index and index or category
 				else
 					UiTranslate(tw-24, 5)
 					UiColor(1,1,1)
