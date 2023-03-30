@@ -247,7 +247,7 @@ function updateMods()
 		local index = categoryLookup[modPrefix]
 		if index then
 			if index == 2 then mod.showbold = GetBool("mods.available."..mods[i]..".showbold") end
-			if gMods[index].filter == 0 or (gMods[index].filter == 1 and not iscontentmod) or (gMods[index].filter == 2 and iscontentmod) then
+			if gMods[index].filter == 0 or (gMods[index].filter == 1 and not iscontentmod) or (gMods[index].filter == 2 and iscontentmod) or (gMods[index].filter == 3 and mod.active) then
 				gMods[index].items[#gMods[index].items+1] = mod
 			end
 		end
@@ -324,9 +324,9 @@ function collectionReset()
 	}
 end
 
-function updateCollections()
+function updateCollections(noReset)
 	gCollections = {}
-	collectionReset()
+	if not noReset then collectionReset() end
 
 	for i, collection in ipairs(ListKeys("savegame.collection")) do
 		gCollections[i] = {}
@@ -356,10 +356,11 @@ function updateCollectMods(id)
 		mod.name = #nameCheck > 0 and nameCheck or "Unknown"
 		mod.override = GetBool("mods.available."..item..".override") and not GetBool("mods.available."..item..".playable")
 		mod.active = GetBool("mods.available."..item..".active")
-		if gCollectionList.filter == 0 or (gCollectionList.filter == 1 and not iscontentmod) or (gCollectionList.filter == 2 and iscontentmod) then
+		local iscontentmod = GetBool("mods.available."..item..".playable")
+		if gCollectionList.filter == 0 or (gCollectionList.filter == 1 and not iscontentmod) or (gCollectionList.filter == 2 and iscontentmod) or (gCollectionList.filter == 3 and mod.active) then
 			table.insert(gCollections[id].items, mod)
-			gCollections[id].itemLookup[item] = 1
 		end
+		gCollections[id].itemLookup[item] = 1
 	end
 	if gCollectionList.sortInv then
 		table.sort(gCollections[id].items, function(a, b) return string.lower(a.name) > string.lower(b.name) end)
@@ -417,7 +418,7 @@ function activeCollection()
 		end
 	end
 	updateMods()
-	updateCollections()
+	updateCollections(true)
 end
 
 function onlyActiveCollection()
@@ -436,7 +437,7 @@ function onlyActiveCollection()
 		end
 	end
 	updateMods()
-	updateCollections()
+	updateCollections(true)
 end
 
 function deactiveCollection()
@@ -447,7 +448,7 @@ function deactiveCollection()
 		end
 	end
 	updateMods()
-	updateCollections()
+	updateCollections(true)
 end
 
 function deleteCollectionCallback()
@@ -540,7 +541,7 @@ function contextMenuCommon(sel_mod, category)
 				UiRect(w, 22)
 				if InputPressed("lmb") then
 					Command("mods.unsubscribe", sel_mod)
-					updateCollections()
+					updateCollections(true)
 					updateMods()
 					open = false
 				end
@@ -616,7 +617,7 @@ function contextMenuCommon(sel_mod, category)
 				UiRect(w, 22)
 				if InputPressed("lmb") then
 					deactivateMods(category)
-					updateCollections()
+					updateCollections(true)
 					updateMods()
 					open = false
 				end
@@ -694,7 +695,7 @@ function contextMenuCollection(sel_collect)
 				UiRect(w, 22)
 				if InputPressed("lmb") then
 					handleCollectionDuplicate(sel_collect)
-					updateCollections()
+					updateCollections(true)
 					open = false
 				end
 			end
@@ -769,7 +770,7 @@ function updateSearch()
 		local modPrefix = (mod.id):match("^(%w+)-")
 		local index = categoryLookup[modPrefix]
 		if matchSearch and index then
-			if gSearch.filter == 0 or (gSearch.filter == 1 and not iscontentmod) or (gSearch.filter == 2 and iscontentmod) then
+			if gSearch.filter == 0 or (gSearch.filter == 1 and not iscontentmod) or (gSearch.filter == 2 and iscontentmod) or (gSearch.filter == 3 and mod.active) then
 				gSearch.items[#gSearch.items+1] = mod
 			end
 		end
@@ -783,6 +784,7 @@ function updateSearch()
 end
 
 function listMods(list, w, h, issubscribedlist)
+	local needUpdate = false
 	local ret = ""
 	local rmb_pushed = false
 	if list.isdragging and InputReleased("lmb") then
@@ -899,15 +901,13 @@ function listMods(list, w, h, issubscribedlist)
 				UiTranslate(-10, -18)
 				if UiIsMouseInRect(22, 22) and InputPressed("lmb") then
 					if list.items[i].active then
-						Command("mods.deactivate", list.items[i].id)
-						updateCollections()
-						updateMods()
 						list.items[i].active = false
+						Command("mods.deactivate", list.items[i].id)
+						needUpdate = true
 					else
-						Command("mods.activate", list.items[i].id)
-						updateCollections()
-						updateMods()
 						list.items[i].active = true
+						Command("mods.activate", list.items[i].id)
+						needUpdate = true
 					end
 				end
 				UiPop()
@@ -937,13 +937,18 @@ function listMods(list, w, h, issubscribedlist)
 		if not rmb_pushed and mouseOver and InputPressed("rmb") then
 			rmb_pushed = true
 		end
-
 	UiPop()
+
+	if needUpdate then
+		updateCollections(true)
+		updateMods()
+	end
 
 	return ret, rmb_pushed
 end
 
 function listSearchMods(list, w, h)
+	local needUpdate = false
 	local ret = ""
 	if list.isdragging and InputReleased("lmb") then
 		list.isdragging = false
@@ -1047,15 +1052,13 @@ function listSearchMods(list, w, h)
 					UiTranslate(-10, -18)
 					if UiIsMouseInRect(22, 22) and InputPressed("lmb") then
 						if list.items[i].active then
-							Command("mods.deactivate", list.items[i].id)
-							updateCollections()
-							updateMods()
 							list.items[i].active = false
+							Command("mods.deactivate", list.items[i].id)
+							needUpdate = true
 						else
-							Command("mods.activate", list.items[i].id)
-							updateCollections()
-							updateMods()
 							list.items[i].active = true
+							Command("mods.activate", list.items[i].id)
+							needUpdate = true
 						end
 					end
 				UiPop()
@@ -1078,6 +1081,11 @@ function listSearchMods(list, w, h)
 			UiTranslate(0, 22)
 		end
 	UiPop()
+
+	if needUpdate then
+		updateCollections(true)
+		updateMods()
+	end
 
 	return ret
 end
@@ -1140,7 +1148,6 @@ function listCollections(list, w, h)
 
 				UiTranslate(2,bar_posy)
 				UiImageBox("ui/common/box-solid-4.png", 10, bar_sizey, 4, 4)
-				--UiRect(10, bar_sizey)
 				if UiIsMouseInRect(10, bar_sizey) and InputPressed("lmb") then
 					local posx, posy = UiGetMousePos()
 					gCollectionMain.dragstarty = posy
@@ -1195,12 +1202,12 @@ function listCollections(list, w, h)
 				if list[i].itemLookup[gModSelected] then
 					if UiImageButton("ui/hud/checkmark.png", 36, 36) then
 						handleModCollect(list[i].lookup)
-						updateCollections()
+						updateCollections(true)
 					end
 				else
 					if UiBlankButton(36, 36) then
 						handleModCollect(list[i].lookup)
-						updateCollections()
+						updateCollections(true)
 					end
 				end
 			UiPop()
@@ -1227,6 +1234,7 @@ function listCollections(list, w, h)
 end
 
 function listCollectionMods(mainList, w, h, selected)
+	local needUpdate = false
 	local list = mainList[selected]
 	local ret = ""
 	local rmb_pushed = false
@@ -1345,17 +1353,13 @@ function listCollectionMods(mainList, w, h, selected)
 				UiTranslate(-10, -18)
 				if UiIsMouseInRect(22, 22) and InputPressed("lmb") then
 					if list.items[i].active then
-						Command("mods.deactivate", list.items[i].id)
-						updateCollections()
-						updateMods()
-						updateSearch()
 						list.items[i].active = false
+						Command("mods.deactivate", list.items[i].id)
+						needUpdate = true
 					else
-						Command("mods.activate", list.items[i].id)
-						updateCollections()
-						updateMods()
-						updateSearch()
 						list.items[i].active = true
+						Command("mods.activate", list.items[i].id)
+						needUpdate = true
 					end
 				end
 				UiPop()
@@ -1382,10 +1386,91 @@ function listCollectionMods(mainList, w, h, selected)
 		if not rmb_pushed and mouseOver and InputPressed("rmb") then
 			rmb_pushed = true
 		end
-
 	UiPop()
 
+	if needUpdate then
+		updateCollections(true)
+		updateMods()
+		updateSearch()
+	end
+
 	return ret, rmb_pushed
+end
+
+function drawFilter(filter, sort, order, isWorkshop)
+	local needUpdate = false
+	UiPush()
+		UiTranslate(40, -11)
+		UiFont("regular.ttf", 19)
+		UiAlign("center")
+		UiColor(1,1,1,0.8)
+		UiButtonImageBox("ui/common/box-solid-4.png", 4, 4, 1, 1, 1, 0.1)
+		if filter == 0 then
+			if UiTextButton("All", 80, 26) then
+				filter = 1
+				needUpdate = true
+			end
+		elseif filter == 1 then
+			if UiTextButton("Global", 80, 26) then
+				filter = 2
+				needUpdate = true
+			end
+		elseif filter == 2 then
+			if UiTextButton("Content", 80, 26) then
+				filter = 3
+				needUpdate = true
+			end
+		else
+			if UiTextButton("Enabled", 80, 26) then
+				filter = 0
+				needUpdate = true
+			end
+		end
+	UiPop()
+	UiPush()
+		UiTranslate(80+55+1, -11)
+		UiFont("regular.ttf", 19)
+		UiAlign("center")
+		UiColor(1,1,1,0.8)
+		UiButtonImageBox("ui/common/box-solid-4.png", 4, 4, 1, 1, 1, 0.1)
+		if isWorkshop then
+			if sort == 0 then
+				if UiTextButton("Alphabetical", 110, 26) then
+					sort = 1
+					needUpdate = true
+				end
+			elseif sort == 1 then
+				if UiTextButton("Updated", 110, 26) then
+					sort = 2
+					needUpdate = true
+				end
+			else
+				if UiTextButton("Subscribed", 110, 26) then
+					sort = 0
+					needUpdate = true
+				end
+			end
+		else
+			UiTextButton("Alphabetical", 110, 26)
+		end
+	UiPop()
+	UiPush()
+		UiTranslate(80+110+2, -11)
+		UiFont("regular.ttf", 19)
+		UiAlign("center")
+		UiColor(1,1,1,0.8)
+		UiButtonImageBox("ui/common/box-solid-4.png", 4, 4, 1, 1, 1, 0.1)
+		UiPush()
+			UiTranslate(14, -6)
+			UiAlign("center middle")
+			UiRotate(order and 90 or -90)
+			if UiImageButton("ui/common/play.png", 26, 28) then
+				order = not order
+				needUpdate = true
+			end
+		UiPop()
+	UiPop()
+	return filter, sort, order, needUpdate
 end
 
 function drawCreate(scale)
@@ -1489,7 +1574,7 @@ function drawCreate(scale)
 							selectMod(selected)
 							if category==2 then
 								updateMods()
-								updateCollections()
+								updateCollections(true)
 							end
 						end
 					end
@@ -1497,99 +1582,16 @@ function drawCreate(scale)
 					-- filter
 					UiPush()
 						UiTranslate(114, 0)
-						UiPush()
-							UiTranslate(40, -11)
-							UiFont("regular.ttf", 19)
-							UiAlign("center")
-							UiColor(1,1,1,0.8)
-							UiButtonImageBox("ui/common/box-solid-4.png", 4, 4, 1, 1, 1, 0.1)
-							if gSearchText == "" then
-								if gMods[category].filter == 0 then
-									if UiTextButton("All", 80, 26) then
-										gMods[category].filter = 1
-										updateMods()
-									end
-								elseif gMods[category].filter == 1 then
-									if UiTextButton("Global", 80, 26) then
-										gMods[category].filter = 2
-										updateMods()
-									end
-								else
-									if UiTextButton("Content", 80, 26) then
-										gMods[category].filter = 0
-										updateMods()
-									end
-								end
-							else
-								if gSearch.filter == 0 then
-									if UiTextButton("All", 80, 26) then
-										gSearch.filter = 1
-										updateSearch()
-									end
-								elseif gSearch.filter == 1 then
-									if UiTextButton("Global", 80, 26) then
-										gSearch.filter = 2
-										updateSearch()
-									end
-								else
-									if UiTextButton("Content", 80, 26) then
-										gSearch.filter = 0
-										updateSearch()
-									end
-								end
-							end
-						UiPop()
-						UiPush()
-							UiTranslate(80+55+1, -11)
-							UiFont("regular.ttf", 19)
-							UiAlign("center")
-							UiColor(1,1,1,0.8)
-							UiButtonImageBox("ui/common/box-solid-4.png", 4, 4, 1, 1, 1, 0.1)
-							if category == 2 then
-								if gMods[category].sort == 0 then
-									if UiTextButton("Alphabetical", 110, 26) then
-										gMods[category].sort = 1
-										updateMods()
-									end
-								elseif gMods[category].sort == 1 then
-									if UiTextButton("Updated", 110, 26) then
-										gMods[category].sort = 2
-										updateMods()
-									end
-								else
-									if UiTextButton("Subscribed", 110, 26) then
-										gMods[category].sort = 0
-										updateMods()
-									end
-								end
-							else
-								UiTextButton("Alphabetical", 110, 26)
-							end
-						UiPop()
-						UiPush()
-							UiTranslate(80+110+2, -11)
-							UiFont("regular.ttf", 19)
-							UiAlign("center")
-							UiColor(1,1,1,0.8)
-							UiButtonImageBox("ui/common/box-solid-4.png", 4, 4, 1, 1, 1, 0.1)
-							UiPush()
-								UiTranslate(14, -6)
-								UiAlign("center middle")
-								if gSearchText ~= "" then
-									UiRotate(gSearch.sortInv and 90 or -90)
-									if UiImageButton("ui/common/play.png", 26, 28) then
-										gSearch.sortInv = not gSearch.sortInv
-										updateSearch()
-									end
-								else
-									UiRotate(gMods[category].sortInv and 90 or -90)
-									if UiImageButton("ui/common/play.png", 26, 28) then
-										gMods[category].sortInv = not gMods[category].sortInv
-										updateMods()
-									end
-								end
-							UiPop()
-						UiPop()
+						if gSearchText == "" then
+							local needUpdate = false
+							gMods[category].filter, gMods[category].sort, gMods[category].sortInv, needUpdate
+							= drawFilter(gMods[category].filter, gMods[category].sort, gMods[category].sortInv, category == 2)
+							if needUpdate then updateMods() end
+						else
+							local needUpdate = false
+							gSearch.filter, gSearch.sort, gSearch.sortInv, needUpdate = drawFilter(gSearch.filter, gSearch.sort, gSearch.sortInv)
+							if needUpdate then updateSearch() end
+						end
 					UiPop()
 
 					if gSearchText == "" and rmb_pushed then
@@ -1791,7 +1793,7 @@ function drawCreate(scale)
 									if UiTextButton("Enabled", 200, 40) then
 										Command("mods.deactivate", gModSelected)
 										updateMods()
-										updateCollections()
+										updateCollections(true)
 										updateSearch()
 									end
 									UiColor(1, 1, 0.5)
@@ -1801,7 +1803,7 @@ function drawCreate(scale)
 									if UiTextButton("Disabled", 200, 40) then
 										Command("mods.activate", gModSelected)
 										updateMods()
-										updateCollections()
+										updateCollections(true)
 										updateSearch()
 									end
 									UiTranslate(-60, 0)
@@ -2044,53 +2046,10 @@ function drawCreate(scale)
 
 					-- filter
 					UiTranslate(114, 0)
-					UiPush()
-						UiTranslate(40, -11)
-						UiFont("regular.ttf", 19)
-						UiAlign("center")
-						UiColor(1,1,1,0.8)
-						UiButtonImageBox("ui/common/box-solid-4.png", 4, 4, 1, 1, 1, 0.1)
-						if gCollectionList.filter == 0 then
-							if UiTextButton("All", 80, 26) then
-								gCollectionList.filter = 1
-								updateCollectMods(gCollectionSelected)
-							end
-						elseif gCollectionList.filter == 1 then
-							if UiTextButton("Global", 80, 26) then
-								gCollectionList.filter = 2
-								updateCollectMods(gCollectionSelected)
-							end
-						else
-							if UiTextButton("Content", 80, 26) then
-								gCollectionList.filter = 0
-								updateCollectMods(gCollectionSelected)
-							end
-						end
-					UiPop()
-					UiPush()
-							UiTranslate(80+55+1, -11)
-							UiFont("regular.ttf", 19)
-							UiAlign("center")
-							UiColor(1,1,1,0.8)
-							UiButtonImageBox("ui/common/box-solid-4.png", 4, 4, 1, 1, 1, 0.1)
-							UiTextButton("Alphabetical", 110, 26)
-					UiPop()
-					UiPush()
-						UiTranslate(80+110+2, -11)
-						UiFont("regular.ttf", 19)
-						UiAlign("center")
-						UiColor(1,1,1,0.8)
-						UiButtonImageBox("ui/common/box-solid-4.png", 4, 4, 1, 1, 1, 0.1)
-						UiPush()
-							UiTranslate(14, -6)
-							UiAlign("center middle")
-							UiRotate(gCollectionList.sortInv and 90 or -90)
-							if UiImageButton("ui/common/play.png", 26, 28) then
-								gCollectionList.sortInv = not gCollectionList.sortInv
-								updateCollectMods(gCollectionSelected)
-							end
-						UiPop()
-					UiPop()
+					local needUpdate = false
+					gCollectionList.filter, gCollectionList.sort, gCollectionList.sortInv, needUpdate
+					= drawFilter(gCollectionList.filter, gCollectionList.sort, gCollectionList.sortInv)
+					if needUpdate then updateCollectMods(gCollectionSelected) end
 				UiPop()
 				local selected, rmb_pushedM = listCollectionMods(gCollections, listW, hcm, gCollectionSelected)
 
