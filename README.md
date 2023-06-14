@@ -8,8 +8,10 @@ This is a revamped version of vanilla mod menu.
 
 * Redesigned UI layout
 * Display mod preview
-* Search mod function
+* Search mod
+* More mods filtering & sorting options
 * Mod collections
+* Refresh mods
 
 ## [Download & Installation](../../releases)
 
