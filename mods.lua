@@ -24,6 +24,11 @@ errList = {
 	"Name too long, max 20 charactors"
 }
 
+newList = {}
+updateFade = 0
+oldCollectionNode = "savegame.collection"
+collectionNode = "options.collection"
+
 -- Yes-No popup
 yesNoPopup = 
 {
@@ -35,6 +40,7 @@ yesNoPopup =
 	yes_fn	= nil,
 	no_fn	= nil
 }
+
 function yesNoInit(text,item,fn,fn1)
 	yesNoPopup.show		= true
 	yesNoPopup.yes		= false
@@ -132,8 +138,22 @@ function debugRect()
 	UiPop()
 end
 
+function transferCollection()
+	if HasKey(oldCollectionNode) and not HasKey(collectionNode) then
+		for i, oldCollNode in pairs(ListKeys(oldCollectionNode)) do
+			local locNode = oldCollectionNode.."."..oldCollNode
+			local newNode = collectionNode.."."..oldCollNode
+			local locName = GetString(locNode)
+			SetString(newNode, locName)
+			for _, oldMod in pairs(ListKeys(locNode)) do SetString(newNode.."."..oldMod) end
+		end
+		ClearKey(oldCollectionNode)
+	end
+end
+
 function initLoc() -- edited init(), this function is not called
 	SetInt("savegame.startcount", GetInt("savegame.startcount")+1)
+	transferCollection()
 
 	gMods = {}
 	for i=1,3 do
@@ -234,24 +254,32 @@ function updateMods()
 	local foundSelected = false
 	for i=1,#mods do
 		local mod = {}
-		mod.id = mods[i]
-		mod.name = GetString("mods.available."..mods[i]..".listname")
-		mod.override = GetBool("mods.available."..mods[i]..".override") and not GetBool("mods.available."..mods[i]..".playable")
-		mod.active = GetBool("mods.available."..mods[i]..".active")
-		mod.steamtime = GetInt("mods.available."..mods[i]..".steamtime")
-		mod.subscribetime = GetInt("mods.available."..mods[i]..".subscribetime")
+		local modNode = mods[i]
+		mod.id = modNode
+		mod.name = GetString("mods.available."..modNode..".listname")
+		mod.override = GetBool("mods.available."..modNode..".override") and not GetBool("mods.available."..modNode..".playable")
+		mod.active = GetBool("mods.available."..modNode..".active")
+		mod.steamtime = GetInt("mods.available."..modNode..".steamtime")
+		mod.subscribetime = GetInt("mods.available."..modNode..".subscribetime")
 		mod.showbold = false
 
-		local iscontentmod = GetBool("mods.available."..mods[i]..".playable")
+		local iscontentmod = GetBool("mods.available."..modNode..".playable")
 		local modPrefix = (mod.id):match("^(%w+)-")
 		local index = categoryLookup[modPrefix]
 		if index then
-			if index == 2 then mod.showbold = GetBool("mods.available."..mods[i]..".showbold") end
-			if gMods[index].filter == 0 or (gMods[index].filter == 1 and not iscontentmod) or (gMods[index].filter == 2 and iscontentmod) or (gMods[index].filter == 3 and mod.active) then
+			if index == 2 then
+				mod.showbold = GetBool("mods.available."..modNode..".showbold")
+				if not newList.modNode and mod.showbold then newList[modNode] = true end
+			end
+			if gMods[index].filter == 0 or
+				(gMods[index].filter == 2 and not iscontentmod) or
+				(gMods[index].filter == 3 and iscontentmod) or
+				(gMods[index].filter == 4 and mod.active) or
+				(gMods[index].filter == 1 and newList[modNode]) then
 				gMods[index].items[#gMods[index].items+1] = mod
 			end
 		end
-		if gModSelected ~= "" and gModSelected == mods[i] then
+		if gModSelected ~= "" and gModSelected == modNode then
 			foundSelected = true
 		end
 	end
@@ -297,19 +325,19 @@ function newCollection(name)
 	if #name < 3 or idLength < 3 then return true, 2 end
 	if #name > 20 then return true, 3 end
 	newID = newID:lower()
-	if HasKey("savegame.collection."..newID) then
+	if HasKey(collectionNode.."."..newID) then
 		repeat
 			dupIndex = dupIndex + 1
-		until not HasKey("savegame.collection."..newID.."-"..dupIndex)
+		until not HasKey(collectionNode.."."..newID.."-"..dupIndex)
 		newID = newID.."-"..dupIndex
 	end
-	SetString("savegame.collection."..newID, name)
+	SetString(collectionNode.."."..newID, name)
 end
 
 function renameCollection(id, name)
 	if #name < 3 then return true, 2 end
 	if #name > 20 then return true, 3 end
-	SetString("savegame.collection."..id, name)
+	SetString(collectionNode.."."..id, name)
 end
 
 function collectionReset()
@@ -328,10 +356,10 @@ function updateCollections(noReset)
 	gCollections = {}
 	if not noReset then collectionReset() end
 
-	for i, collection in ipairs(ListKeys("savegame.collection")) do
+	for i, collection in ipairs(ListKeys(collectionNode)) do
 		gCollections[i] = {}
 		gCollections[i].lookup = collection
-		gCollections[i].name = GetString("savegame.collection."..collection)
+		gCollections[i].name = GetString(collectionNode.."."..collection)
 		gCollections[i].items = {}
 		gCollections[i].itemLookup = {}
 	end
@@ -348,7 +376,7 @@ function updateCollectMods(id)
 	gCollections[id].items = {}
 	gCollections[id].itemLookup = {}
 	local lookupID = gCollections[id].lookup
-	local itemList = ListKeys("savegame.collection."..lookupID)
+	local itemList = ListKeys(collectionNode.."."..lookupID)
 	for index, item in ipairs(itemList) do
 		local mod = {}
 		local nameCheck = GetString("mods.available."..item..".listname")
@@ -357,7 +385,10 @@ function updateCollectMods(id)
 		mod.override = GetBool("mods.available."..item..".override") and not GetBool("mods.available."..item..".playable")
 		mod.active = GetBool("mods.available."..item..".active")
 		local iscontentmod = GetBool("mods.available."..item..".playable")
-		if gCollectionList.filter == 0 or (gCollectionList.filter == 1 and not iscontentmod) or (gCollectionList.filter == 2 and iscontentmod) or (gCollectionList.filter == 3 and mod.active) then
+		if gCollectionList.filter == 0 or
+			(gCollectionList.filter == 2 and not iscontentmod) or
+			(gCollectionList.filter == 3 and iscontentmod) or
+			(gCollectionList.filter == 4 and mod.active) then
 			table.insert(gCollections[id].items, mod)
 		end
 		gCollections[id].itemLookup[item] = 1
@@ -370,7 +401,7 @@ function updateCollectMods(id)
 end
 
 function handleModCollect(collection)
-	local modKey = "savegame.collection."..collection.."."..gModSelected
+	local modKey = collectionNode.."."..collection.."."..gModSelected
 	if HasKey(modKey) then
 		ClearKey(modKey)
 		return
@@ -379,7 +410,7 @@ function handleModCollect(collection)
 end
 
 function handleCollectionDuplicate(collection)
-	local collKey = "savegame.collection."..collection
+	local collKey = collectionNode.."."..collection
 	local collName = GetString(collKey)
 	local dupIndex = 0
 	local colMods = ListKeys(collKey)
@@ -395,7 +426,7 @@ end
 function getActiveModCountCollection()
 	local count = 0
 	local collection = gCollections[gCollectionSelected].lookup
-	for i, mod in ipairs(ListKeys("savegame.collection."..collection)) do
+	for i, mod in ipairs(ListKeys(collectionNode.."."..collection)) do
 		if GetBool("mods.available."..mod..".active") then
 			count = count+1
 		end
@@ -407,12 +438,12 @@ end
 function getGlobalModCountCollection()
 	if not gCollections[gCollectionSelected] then return 0 end
 	local collection = gCollections[gCollectionSelected].lookup
-	return #ListKeys("savegame.collection."..collection)
+	return #ListKeys(collectionNode.."."..collection)
 end
 
 function activeCollection()
 	local collection = gCollections[gCollectionSelected].lookup
-	for i, mod in ipairs(ListKeys("savegame.collection."..collection)) do
+	for i, mod in ipairs(ListKeys(collectionNode.."."..collection)) do
 		if not GetBool("mods.available."..mod..".active") then
 			Command("mods.activate", mod)
 		end
@@ -431,7 +462,7 @@ function onlyActiveCollection()
 			Command("mods.deactivate", id)
 		end
 	end
-	for i, mod in ipairs(ListKeys("savegame.collection."..collection)) do
+	for i, mod in ipairs(ListKeys(collectionNode.."."..collection)) do
 		if not GetBool("mods.available."..mod..".active") then
 			Command("mods.activate", mod)
 		end
@@ -442,7 +473,7 @@ end
 
 function deactiveCollection()
 	local collection = gCollections[gCollectionSelected].lookup
-	for i, mod in ipairs(ListKeys("savegame.collection."..collection)) do
+	for i, mod in ipairs(ListKeys(collectionNode.."."..collection)) do
 		if GetBool("mods.available."..mod..".active") then
 			Command("mods.deactivate", mod)
 		end
@@ -453,8 +484,16 @@ end
 
 function deleteCollectionCallback()
 	if yesNoPopup.item ~= "" then
-		ClearKey("savegame.collection."..(yesNoPopup.item))
+		ClearKey(collectionNode.."."..(yesNoPopup.item))
 		updateCollections()
+	end
+end
+
+function deleteModCallback()
+	if yesNoPopup.item ~= "" then
+		Command("mods.delete", yesNoPopup.item)
+		updateCollections(true)
+		updateMods()
 	end
 end
 
@@ -495,15 +534,11 @@ function contextMenuCommon(sel_mod, category)
 	UiPush()
 		local w = 135
 		local h = 38
-		if category == 2 and sel_mod ~= "" then
-			h = 63
-		end
+		if category == 2 and sel_mod ~= "" then h = 63 end
 		if category == 3 then
 			w = 177
 			h = 128
-			if sel_mod == "" then
-				h = 85
-			end
+			if sel_mod == "" then h = 85 end
 		end
 
 		local x = contextPosX
@@ -518,14 +553,10 @@ function contextMenuCommon(sel_mod, category)
 		UiImageBox("ui/common/box-outline-6.png", w, h, 6, 6, 1)
 
 		--lmb click outside
-		if InputPressed("esc") or (not UiIsMouseInRect(w, h) and InputPressed("lmb")) then
-			open = false
-		end
+		if InputPressed("esc") or (not UiIsMouseInRect(w, h) and InputPressed("lmb")) then open = false end
 
 		--rmb click outside
-		if InputPressed("esc") or (not UiIsMouseInRect(w, h) and InputPressed("rmb")) then
-			return false
-		end
+		if InputPressed("esc") or (not UiIsMouseInRect(w, h) and InputPressed("rmb")) then return false end
 
 		--Indent 12,8
 		w = w - 24
@@ -759,14 +790,15 @@ function updateSearch()
 	local mods = ListKeys("mods.available")
 	for i=1,#mods do
 		local mod = {}
-		local modName = GetString("mods.available."..mods[i]..".listname")
+		local modNode = mods[i]
+		local modName = GetString("mods.available."..modNode..".listname")
 		local matchSearch = modName:lower():match(gSearchText)
-		mod.id = mods[i]
+		mod.id = modNode
 		mod.name = modName
-		mod.override = GetBool("mods.available."..mods[i]..".override") and not GetBool("mods.available."..mods[i]..".playable")
-		mod.active = GetBool("mods.available."..mods[i]..".active")
+		mod.override = GetBool("mods.available."..modNode..".override") and not GetBool("mods.available."..modNode..".playable")
+		mod.active = GetBool("mods.available."..modNode..".active")
 
-		local iscontentmod = GetBool("mods.available."..mods[i]..".playable")
+		local iscontentmod = GetBool("mods.available."..modNode..".playable")
 		local modPrefix = (mod.id):match("^(%w+)-")
 		local index = categoryLookup[modPrefix]
 		if matchSearch and index then
@@ -783,10 +815,30 @@ function updateSearch()
 	end
 end
 
+function browseOperation(value, pageSize, listMax)
+	local wheelValue = InputValue("mousewheel")
+	if wheelValue ~= 0 then
+		value = value + wheelValue*(InputDown("shift") and 10 or 1)
+	else
+		local press = 0
+		if InputPressed("pgup") then press = press + 1 end
+		if InputPressed("pgdown") then press = press - 1 end
+		value = value + press*pageSize
+		press = 0
+		if InputPressed("home") then press = press + 1 end
+		if InputPressed("end") then press = press - 1 end
+		value = ((press == 1) and 0) or ((press == -1) and -listMax) or value
+	end
+	if value > 0 then value = 0 end
+	return value
+end
+
 function listMods(list, w, h, issubscribedlist)
 	local needUpdate = false
 	local ret = ""
 	local rmb_pushed = false
+	local listingVal = math.ceil((h-10)/22)-1
+	local totalVal = #list.items
 	if list.isdragging and InputReleased("lmb") then
 		list.isdragging = false
 	end
@@ -795,24 +847,17 @@ function listMods(list, w, h, issubscribedlist)
 		UiFont("regular.ttf", 22)
 
 		local mouseOver = UiIsMouseInRect(w+12, h)
-		if mouseOver then
-			list.pos = list.pos + InputValue("mousewheel")
-			if list.pos > 0 then
-				list.pos = 0
-			end
-		end
-		if not UiReceivesInput() then
-			mouseOver = false
-		end
+		if mouseOver then list.pos = browseOperation(list.pos, listingVal, totalVal) end
+		if not UiReceivesInput() then mouseOver = false end
 
 		local itemsInView = math.floor(h/UiFontHeight())
-		if #list.items > itemsInView then
+		if totalVal > itemsInView then
 			w = w-14
-			local scrollCount = (#list.items-itemsInView)
+			local scrollCount = (totalVal-itemsInView)
 			if scrollCount < 0 then scrollCount = 0 end
 
-			local frac = itemsInView / #list.items
-			local pos = -list.possmooth / #list.items
+			local frac = itemsInView / totalVal
+			local pos = -list.possmooth / totalVal
 			if list.isdragging then
 				local posx, posy = UiGetMousePos()
 				local dy = 0.0445 * (posy - list.dragstarty)
@@ -830,12 +875,12 @@ function listMods(list, w, h, issubscribedlist)
 				UiPush()
 					UiTranslate(2,2)
 					if bar_posy > 2 and UiIsMouseInRect(8, bar_posy-2) and InputPressed("lmb") then
-						list.pos = list.pos + frac * #list.items
+						list.pos = list.pos + frac * totalVal
 					end
 					local h2 = h - 4 - bar_sizey - bar_posy
 					UiTranslate(0,bar_posy + bar_sizey)
 					if h2 > 0 and UiIsMouseInRect(10, h2) and InputPressed("lmb") then
-						list.pos = list.pos - frac * #list.items
+						list.pos = list.pos - frac * totalVal
 					end
 				UiPop()
 
@@ -872,8 +917,8 @@ function listMods(list, w, h, issubscribedlist)
 		UiAlign("left")
 		UiColor(0.95,0.95,0.95,1)
 		local listStart = math.floor(1-list.pos or 1)
-		for i=listStart, math.min(#list.items, listStart+math.ceil((h-10)/22)-1) do
-			-- for i=1, #list.items do
+		for i=listStart, math.min(totalVal, listStart+listingVal) do
+			-- for i=1, totalVal do
 			UiPush()
 				UiTranslate(10, -18)
 				UiColor(0,0,0,0)
@@ -950,6 +995,8 @@ end
 function listSearchMods(list, w, h)
 	local needUpdate = false
 	local ret = ""
+	local listingVal = math.ceil((h-10)/22)-1
+	local totalVal = #list.items
 	if list.isdragging and InputReleased("lmb") then
 		list.isdragging = false
 	end
@@ -958,24 +1005,17 @@ function listSearchMods(list, w, h)
 		UiFont("regular.ttf", 22)
 
 		local mouseOver = UiIsMouseInRect(w+12, h)
-		if mouseOver then
-			list.pos = list.pos + InputValue("mousewheel")
-			if list.pos > 0 then
-				list.pos = 0
-			end
-		end
-		if not UiReceivesInput() then
-			mouseOver = false
-		end
+		if mouseOver then list.pos = browseOperation(list.pos, listingVal, totalVal) end
+		if not UiReceivesInput() then mouseOver = false end
 
 		local itemsInView = math.floor(h/UiFontHeight())
-		if #list.items > itemsInView then
+		if totalVal > itemsInView then
 			w = w-14
-			local scrollCount = (#list.items-itemsInView)
+			local scrollCount = (totalVal-itemsInView)
 			if scrollCount < 0 then scrollCount = 0 end
 
-			local frac = itemsInView / #list.items
-			local pos = -list.possmooth / #list.items
+			local frac = itemsInView / totalVal
+			local pos = -list.possmooth / totalVal
 			if list.isdragging then
 				local posx, posy = UiGetMousePos()
 				local dy = 0.0445 * (posy - list.dragstarty)
@@ -993,12 +1033,12 @@ function listSearchMods(list, w, h)
 				UiPush()
 					UiTranslate(2,2)
 					if bar_posy > 2 and UiIsMouseInRect(8, bar_posy-2) and InputPressed("lmb") then
-						list.pos = list.pos + frac * #list.items
+						list.pos = list.pos + frac * totalVal
 					end
 					local h2 = h - 4 - bar_sizey - bar_posy
 					UiTranslate(0,bar_posy + bar_sizey)
 					if h2 > 0 and UiIsMouseInRect(10, h2) and InputPressed("lmb") then
-						list.pos = list.pos - frac * #list.items
+						list.pos = list.pos - frac * totalVal
 					end
 				UiPop()
 
@@ -1028,7 +1068,7 @@ function listSearchMods(list, w, h)
 		UiAlign("left")
 		UiColor(0.95,0.95,0.95,1)
 		local listStart = math.floor(1-list.pos or 1)
-		for i=listStart, math.min(#list.items, listStart+math.ceil((h-10)/22)-1) do
+		for i=listStart, math.min(totalVal, listStart+listingVal) do
 			UiPush()
 				UiTranslate(10, -18)
 				UiColor(0,0,0,0)
@@ -1093,6 +1133,8 @@ end
 function listCollections(list, w, h)
 	local ret = gCollectionSelected
 	local rmb_pushed = false
+	local listingVal = math.ceil((h-10)/22)-1
+	local totalVal = #list
 	if gCollectionMain.isdragging and InputReleased("lmb") then
 		gCollectionMain.isdragging = false
 	end
@@ -1102,24 +1144,17 @@ function listCollections(list, w, h)
 		UiFont("regular.ttf", 22)
 
 		local mouseOver = UiIsMouseInRect(w+12, h)
-		if mouseOver then
-			gCollectionMain.pos = gCollectionMain.pos + InputValue("mousewheel")
-			if gCollectionMain.pos > 0 then
-				gCollectionMain.pos = 0
-			end
-		end
-		if not UiReceivesInput() then
-			mouseOver = false
-		end
+		if mouseOver then gCollectionMain.pos = browseOperation(gCollectionMain.pos, listingVal, totalVal) end
+		if not UiReceivesInput() then mouseOver = false end
 
 		local itemsInView = math.floor(h/UiFontHeight())
-		if #list > itemsInView then
+		if totalVal > itemsInView then
 			w = w-14
-			local scrollCount = (#list-itemsInView)
+			local scrollCount = (totalVal-itemsInView)
 			if scrollCount < 0 then scrollCount = 0 end
 
-			local frac = itemsInView / #list
-			local pos = -gCollectionMain.possmooth / #list
+			local frac = itemsInView / totalVal
+			local pos = -gCollectionMain.possmooth / totalVal
 			if gCollectionMain.isdragging then
 				local posx, posy = UiGetMousePos()
 				local dy = 0.0445 * (posy - gCollectionMain.dragstarty)
@@ -1137,12 +1172,12 @@ function listCollections(list, w, h)
 				UiPush()
 					UiTranslate(2,2)
 					if bar_posy > 2 and UiIsMouseInRect(8, bar_posy-2) and InputPressed("lmb") then
-						gCollectionMain.pos = gCollectionMain.pos + frac * #list
+						gCollectionMain.pos = gCollectionMain.pos + frac * totalVal
 					end
 					local h2 = h - 4 - bar_sizey - bar_posy
 					UiTranslate(0,bar_posy + bar_sizey)
 					if h2 > 0 and UiIsMouseInRect(10, h2) and InputPressed("lmb") then
-						gCollectionMain.pos = gCollectionMain.pos - frac * #list
+						gCollectionMain.pos = gCollectionMain.pos - frac * totalVal
 					end
 				UiPop()
 
@@ -1171,7 +1206,7 @@ function listCollections(list, w, h)
 		UiAlign("left")
 		UiColor(0.95,0.95,0.95,1)
 		local listStart = math.floor(1-gCollectionMain.pos or 1)
-		for i=listStart, math.min(#list, listStart+math.ceil((h-10)/22)-1) do
+		for i=listStart, math.min(totalVal, listStart+listingVal) do
 			UiPush()
 				UiTranslate(20, -18)
 				UiColor(0,0,0,0)
@@ -1238,6 +1273,7 @@ function listCollectionMods(mainList, w, h, selected)
 	local list = mainList[selected]
 	local ret = ""
 	local rmb_pushed = false
+	local listingVal = math.ceil((h-10)/22)-1
 	if gCollectionList.isdragging and InputReleased("lmb") then
 		gCollectionList.isdragging = false
 	end
@@ -1245,18 +1281,6 @@ function listCollectionMods(mainList, w, h, selected)
 	UiPush()
 		UiAlign("top left")
 		UiFont("regular.ttf", 22)
-
-		local mouseOver = UiIsMouseInRect(w+12, h)
-		if mouseOver then
-			gCollectionList.pos = gCollectionList.pos + InputValue("mousewheel")
-			if gCollectionList.pos > 0 then
-				gCollectionList.pos = 0
-			end
-		end
-		if not UiReceivesInput() then
-			mouseOver = false
-		end
-
 		local itemsInView = math.floor(h/UiFontHeight())
 		if not list then
 			UiPush()
@@ -1266,13 +1290,19 @@ function listCollectionMods(mainList, w, h, selected)
 			UiPop()
 			return ret, rmb_pushed
 		end
-		if #list.items > itemsInView then
+
+		local totalVal = #list.items
+		local mouseOver = UiIsMouseInRect(w+12, h)
+		if mouseOver then gCollectionList.pos = browseOperation(gCollectionList.pos, listingVal, totalVal) end
+		if not UiReceivesInput() then mouseOver = false end
+
+		if totalVal > itemsInView then
 			w = w-14
-			local scrollCount = (#list.items-itemsInView)
+			local scrollCount = (totalVal-itemsInView)
 			if scrollCount < 0 then scrollCount = 0 end
 
-			local frac = itemsInView / #list.items
-			local pos = -gCollectionList.possmooth / #list.items
+			local frac = itemsInView / totalVal
+			local pos = -gCollectionList.possmooth / totalVal
 			if gCollectionList.isdragging then
 				local posx, posy = UiGetMousePos()
 				local dy = 0.0445 * (posy - gCollectionList.dragstarty)
@@ -1290,12 +1320,12 @@ function listCollectionMods(mainList, w, h, selected)
 				UiPush()
 					UiTranslate(2,2)
 					if bar_posy > 2 and UiIsMouseInRect(8, bar_posy-2) and InputPressed("lmb") then
-						gCollectionList.pos = gCollectionList.pos + frac * #list.items
+						gCollectionList.pos = gCollectionList.pos + frac * totalVal
 					end
 					local h2 = h - 4 - bar_sizey - bar_posy
 					UiTranslate(0,bar_posy + bar_sizey)
 					if h2 > 0 and UiIsMouseInRect(10, h2) and InputPressed("lmb") then
-						gCollectionList.pos = gCollectionList.pos - frac * #list.items
+						gCollectionList.pos = gCollectionList.pos - frac * totalVal
 					end
 				UiPop()
 
@@ -1325,7 +1355,7 @@ function listCollectionMods(mainList, w, h, selected)
 		UiAlign("left")
 		UiColor(0.95,0.95,0.95,1)
 		local listStart = math.floor(1-gCollectionList.pos or 1)
-		for i=listStart, math.min(#list.items, listStart+math.ceil((h-10)/22)-1) do
+		for i=listStart, math.min(totalVal, listStart+listingVal) do
 			UiPush()
 				UiTranslate(10, -18)
 				UiColor(0,0,0,0)
@@ -1399,32 +1429,28 @@ end
 
 function drawFilter(filter, sort, order, isWorkshop)
 	local needUpdate = false
+	local categoryText = {
+		"All",
+		"New",
+		"Global",
+		"Content",
+		"Enabled"
+	}
+	local sortText = {
+		"Alphabetical",
+		"Updated",
+		"Subscribed"
+	}
 	UiPush()
 		UiTranslate(40, -11)
 		UiFont("regular.ttf", 19)
 		UiAlign("center")
 		UiColor(1,1,1,0.8)
 		UiButtonImageBox("ui/common/box-solid-4.png", 4, 4, 1, 1, 1, 0.1)
-		if filter == 0 then
-			if UiTextButton("All", 80, 26) then
-				filter = 1
-				needUpdate = true
-			end
-		elseif filter == 1 then
-			if UiTextButton("Global", 80, 26) then
-				filter = 2
-				needUpdate = true
-			end
-		elseif filter == 2 then
-			if UiTextButton("Content", 80, 26) then
-				filter = 3
-				needUpdate = true
-			end
-		else
-			if UiTextButton("Enabled", 80, 26) then
-				filter = 0
-				needUpdate = true
-			end
+		if UiTextButton(categoryText[filter+1], 80, 26) then
+			filter = (filter+1)%5
+			if not isWorkshop and filter == 1 then filter = 2 end
+			needUpdate = true
 		end
 	UiPop()
 	UiPush()
@@ -1434,24 +1460,12 @@ function drawFilter(filter, sort, order, isWorkshop)
 		UiColor(1,1,1,0.8)
 		UiButtonImageBox("ui/common/box-solid-4.png", 4, 4, 1, 1, 1, 0.1)
 		if isWorkshop then
-			if sort == 0 then
-				if UiTextButton("Alphabetical", 110, 26) then
-					sort = 1
-					needUpdate = true
-				end
-			elseif sort == 1 then
-				if UiTextButton("Updated", 110, 26) then
-					sort = 2
-					needUpdate = true
-				end
-			else
-				if UiTextButton("Subscribed", 110, 26) then
-					sort = 0
-					needUpdate = true
-				end
+			if UiTextButton(sortText[sort+1], 110, 26) then
+				sort = (sort+1)%3
+				needUpdate = true
 			end
 		else
-			UiTextButton("Alphabetical", 110, 26)
+			UiTextButton(sortText[1], 110, 26)
 		end
 	UiPop()
 	UiPush()
@@ -1514,7 +1528,20 @@ function drawCreate(scale)
 			UiColor(1,1,1)
 			UiAlign("center")
 			UiTranslate(UiCenter(), 60)
-			UiText("MODS")
+			if updateFade > 0.1 then
+				UiPush()
+					UiTranslate(0, -36)
+					UiFont("bold.ttf", 24)
+					UiColorFilter(0.8, 0.8, 0.8, updateFade)
+					UiText("Mods Refreshed")
+				UiPop()
+			end
+			if UiTextButton("MODS", 134, 44) then
+				updateFade = 1
+				SetValue("updateFade", 0, "easein", 1.5)
+				updateMods()
+				updateCollections()
+			end
 		UiPop()
 		
 		UiPush()
