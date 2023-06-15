@@ -22,14 +22,6 @@ gActivations = 0
 promo_full_initiated = false
 
 
-function deleteModCallback()
-	if yesNoPopup.item ~= "" then
-		Command("mods.delete", yesNoPopup.item)
-		updateMods()
-	end
-end
-
-
 function bgLoad(i)
 	bg = {}
 	bg.i = i+1
@@ -149,6 +141,8 @@ end
 
 function init()
 	SetInt("savegame.startcount", GetInt("savegame.startcount")+1)
+	initModMenuSettings()
+	transferCollection()
 
 	gMods = {}
 	for i=1,3 do
