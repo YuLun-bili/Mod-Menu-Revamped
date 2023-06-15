@@ -141,6 +141,7 @@ end
 
 function init()
 	SetInt("savegame.startcount", GetInt("savegame.startcount")+1)
+	initModMenuSettings()
 	transferCollection()
 
 	gMods = {}

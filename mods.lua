@@ -6,13 +6,6 @@ contextMenu = {
 }
 contextIsCollection = false
 
-category = 1
-categoryLookup = {
-	builtin = 1,
-	steam = 2,
-	["local"] = 3
-}
-
 collectionPop = false
 
 errCode = 0
@@ -25,9 +18,39 @@ errList = {
 }
 
 newList = {}
-updateFade = 0
+refreshFade = 0
 oldCollectionNode = "savegame.collection"
 collectionNode = "options.collection"
+settingsNode = "options.modmenu"
+
+prevSelectMod = ""
+initSelect = true
+
+menuVer = "v1.2.0"
+initSettings = {
+	["showpath.1"] = {"bool", false},
+	["showpath.2"] = {"bool", false},
+	["startcategory"] = {"int", 0},
+	["rememberlast"] = {"bool", false}
+}
+optionSettings = {
+	{"Built-in path",	"showpath.1",	"bool"},
+	{"Workshop path",	"showpath.2", 	"bool"},
+	{"Initial category","startcategory","int", 3},
+	{"Remember last",	"rememberlast",	"bool", 0, "overwrite previous"}
+}
+
+category = GetInt(settingsNode..".startcategory")+1
+categoryLookup = {
+	builtin = 1,
+	steam = 2,
+	["local"] = 3
+}
+categoryInvertLookup = {
+	"Built-in",
+	"Workshop",
+	"Local"
+}
 
 -- Yes-No popup
 yesNoPopup = 
@@ -138,17 +161,25 @@ function debugRect()
 	UiPop()
 end
 
-function transferCollection()
-	if HasKey(oldCollectionNode) and not HasKey(collectionNode) then
-		for i, oldCollNode in pairs(ListKeys(oldCollectionNode)) do
-			local locNode = oldCollectionNode.."."..oldCollNode
-			local newNode = collectionNode.."."..oldCollNode
-			local locName = GetString(locNode)
-			SetString(newNode, locName)
-			for _, oldMod in pairs(ListKeys(locNode)) do SetString(newNode.."."..oldMod) end
-		end
-		ClearKey(oldCollectionNode)
+function initModMenuSettings()
+	if GetString(settingsNode) == menuVer then return end
+	for setNode, setVal in pairs(initSettings) do
+		if setVal[1] == "bool" then SetBool(settingsNode.."."..setNode, setVal[2]) end
+		if setVal[1] == "int" then SetInt(settingsNode.."."..setNode, setVal[2]) end
 	end
+	SetString(settingsNode, menuVer)
+end
+
+function transferCollection()
+	if not HasKey(oldCollectionNode) or HasKey(collectionNode) then return end
+	for _, oldCollNode in pairs(ListKeys(oldCollectionNode)) do
+		local locNode = oldCollectionNode.."."..oldCollNode
+		local newNode = collectionNode.."."..oldCollNode
+		local locName = GetString(locNode)
+		SetString(newNode, locName)
+		for _, oldMod in pairs(ListKeys(locNode)) do SetString(newNode.."."..oldMod) end
+	end
+	ClearKey(oldCollectionNode)
 end
 
 function initLoc() -- edited init(), this function is not called
@@ -427,9 +458,7 @@ function getActiveModCountCollection()
 	local count = 0
 	local collection = gCollections[gCollectionSelected].lookup
 	for i, mod in ipairs(ListKeys(collectionNode.."."..collection)) do
-		if GetBool("mods.available."..mod..".active") then
-			count = count+1
-		end
+		if GetBool("mods.available."..mod..".active") then count = count+1 end
 	end
 
 	return count
@@ -444,9 +473,7 @@ end
 function activeCollection()
 	local collection = gCollections[gCollectionSelected].lookup
 	for i, mod in ipairs(ListKeys(collectionNode.."."..collection)) do
-		if not GetBool("mods.available."..mod..".active") then
-			Command("mods.activate", mod)
-		end
+		if not GetBool("mods.available."..mod..".active") then Command("mods.activate", mod) end
 	end
 	updateMods()
 	updateCollections(true)
@@ -458,14 +485,10 @@ function onlyActiveCollection()
 	for i=1,#mods do
 		local id = mods[i]
 		local active = GetBool("mods.available."..id..".active")
-		if active then
-			Command("mods.deactivate", id)
-		end
+		if active then Command("mods.deactivate", id) end
 	end
 	for i, mod in ipairs(ListKeys(collectionNode.."."..collection)) do
-		if not GetBool("mods.available."..mod..".active") then
-			Command("mods.activate", mod)
-		end
+		if not GetBool("mods.available."..mod..".active") then Command("mods.activate", mod) end
 	end
 	updateMods()
 	updateCollections(true)
@@ -474,9 +497,7 @@ end
 function deactiveCollection()
 	local collection = gCollections[gCollectionSelected].lookup
 	for i, mod in ipairs(ListKeys(collectionNode.."."..collection)) do
-		if GetBool("mods.available."..mod..".active") then
-			Command("mods.deactivate", mod)
-		end
+		if GetBool("mods.available."..mod..".active") then Command("mods.deactivate", mod) end
 	end
 	updateMods()
 	updateCollections(true)
@@ -944,7 +965,7 @@ function listMods(list, w, h, issubscribedlist)
 			if list.items[i].override then
 				UiPush()
 				UiTranslate(-10, -18)
-				if UiIsMouseInRect(22, 22) and InputPressed("lmb") then
+				if mouseOver and UiIsMouseInRect(22, 22) and InputPressed("lmb") then
 					if list.items[i].active then
 						list.items[i].active = false
 						Command("mods.deactivate", list.items[i].id)
@@ -1489,6 +1510,11 @@ end
 
 function drawCreate(scale)
 	local open = true
+	if initSelect then
+		if gModSelected == "" and GetBool(settingsNode..".rememberlast") then gModSelected = GetString(settingsNode..".rememberlast.last") end
+		if not HasKey("mods.available."..gModSelected) then gModSelected = "" end
+		initSelect = false
+	end
 	UiPush()
 		local w = 758 + 1*610
 		local h = 880
@@ -1528,17 +1554,17 @@ function drawCreate(scale)
 			UiColor(1,1,1)
 			UiAlign("center")
 			UiTranslate(UiCenter(), 60)
-			if updateFade > 0.1 then
+			if refreshFade > 0.1 then
 				UiPush()
 					UiTranslate(0, -36)
 					UiFont("bold.ttf", 24)
-					UiColorFilter(0.8, 0.8, 0.8, updateFade)
+					UiColorFilter(0.8, 0.8, 0.8, refreshFade)
 					UiText("Mods Refreshed")
 				UiPop()
 			end
 			if UiTextButton("MODS", 134, 44) then
-				updateFade = 1
-				SetValue("updateFade", 0, "easein", 1.5)
+				refreshFade = 1
+				SetValue("refreshFade", 0, "easein", 1.5)
 				updateMods()
 				updateCollections()
 			end
@@ -1547,16 +1573,87 @@ function drawCreate(scale)
 		UiPush()
 			UiPush()
 				UiFont("regular.ttf", 22)
-				UiTranslate(UiCenter(), 90)
-				UiAlign("center")
-				UiWordWrap(700)
+				UiTranslate(UiCenter()-580, 90)
+				UiAlign("left")
 				UiColor(0.8, 0.8, 0.8)
-				UiText("Create your own mods using Lua scripting and the free voxel modeling program MagicaVoxel. We have provided example mods that you can modify or replace with your own creations. Find out more on our web page:", true)
-				UiTranslate(0, 2)
+				UiText("Create your own mods using Lua scripting and the free voxel modeling program MagicaVoxel.", true)
+				UiTranslate(0, 4)
+				UiText("We have provided example mods that you can modify or replace with your own creations.", true)
+				UiTranslate(0, 4)
+				local infw = UiText("Find out more on our web page:")
+				UiTranslate(infw+5, 0)
 				UiFont("bold.ttf", 22)
 				UiColor(1, 0.95, .7)
-				if UiTextButton("www.teardowngame.com/modding") then
-					Command("game.openurl", "http://www.teardowngame.com/modding")
+				if UiTextButton("www.teardowngame.com/modding") then Command("game.openurl", "http://www.teardowngame.com/modding") end
+			UiPop()
+
+			UiPush()
+				UiTranslate(UiCenter()+202, 90)
+				UiAlign("left")
+				UiPush()
+					UiTranslate(0, -10)
+					UiColor(0.8, 0.8, 0.8, 0.75)
+					UiRect(2, 80)
+				UiPop()
+				UiColor(0.85, 0.85, 0.85)
+				UiTranslate(26, 0)
+				UiFont("bold.ttf", 25)
+				UiText("Settings")
+				UiTranslate(105, 0)
+				UiFont("regular.ttf", 23)
+				for _, setting in ipairs(optionSettings) do
+					local xOff = 0
+					if setting[3] == "bool" then
+						UiPush()
+							UiAlign("left middle")
+							UiTranslate(0, -5)
+							UiButtonImageBox("ui/common/box-outline-4.png", 16, 16, 1, 1, 1, 0.75)
+							UiScale(0.5)
+							local currSetting = GetBool(settingsNode.."."..setting[2])
+							if currSetting then
+								if UiImageButton("ui/hud/checkmark.png", 36, 36) then SetBool(settingsNode.."."..setting[2], not currSetting) end
+							else
+								if UiBlankButton(36, 36) then SetBool(settingsNode.."."..setting[2], not currSetting) end
+							end
+						UiPop()
+						UiPush()
+							UiAlign("left middle")
+							UiColor(0.85, 0.85, 0.85)
+							UiTranslate(20, -5)
+							local txw = UiText(setting[1])
+						UiPop()
+						xOff = xOff + 20 + txw + 5
+					end
+					if setting[3] == "int" then
+						UiPush()
+							UiAlign("left middle")
+							UiTranslate(0, -5)
+							UiPush()
+								UiColor(1, 1, 1, 0.15)
+								UiImageBox("ui/common/box-solid-4.png", 98, 25, 1, 1)
+							UiPop()
+							UiColor(0.95, 0.95, 0.95)
+							local currSetting = GetInt(settingsNode.."."..setting[2])
+							if UiTextButton(categoryInvertLookup[currSetting+1], 80, 23) then SetInt(settingsNode.."."..setting[2], (currSetting+1)%3) end
+						UiPop()
+						UiPush()
+							UiAlign("left middle")
+							UiColor(0.85, 0.85, 0.85)
+							UiTranslate(100, -5)
+							local txw = UiText(setting[1])
+						UiPop()
+						xOff = xOff + 100 + txw + 5
+					end
+					if setting[5] then
+						UiPush()
+							UiAlign("left middle")
+							UiFont("regular.ttf", 17)
+							UiColor(0.95, 0.45, 0)
+							UiTranslate(xOff, -3)
+							UiText(setting[5])
+						UiPop()
+					end
+					UiTranslate(0, 23)
 				end
 			UiPop()
 
@@ -1649,9 +1746,7 @@ function drawCreate(scale)
 						end
 					UiPop()
 				end
-				if InputPressed("esc") or (not UiIsMouseInRect(UiWidth(), UiHeight()) and (InputPressed("lmb") or InputPressed("rmb"))) then
-					contextMenu.show = false
-				end
+				if InputPressed("esc") or (not UiIsMouseInRect(UiWidth(), UiHeight()) and (InputPressed("lmb") or InputPressed("rmb"))) then contextMenu.show = false end
 			UiPop()
 
 			UiColor(0,0,0,0.1)
@@ -1665,6 +1760,8 @@ function drawCreate(scale)
 				UiWindow(mainW, mainH)
 				if gModSelected ~= "" then
 					UiPush()
+						local modPrefix = gModSelected:match("^(%w+)-")
+						local modCategory = categoryLookup[modPrefix]
 						local unknownMod = false
 						local name = GetString(modKey..".name")
 						if gModSelected ~= "" and name == "" then name = "Unknown" unknownMod = true end
@@ -1675,10 +1772,13 @@ function drawCreate(scale)
 						local tagList = string.split(tags, ",")
 						local description = GetString(modKey..".description")
 						local timestamp = GetString(modKey..".timestamp")
-						local previewPath = "RAW:"..GetString(modKey..".path").."/preview.jpg"
+						local modPath = GetString(modKey..".path")
+						if modCategory == 1 then modPath = GetString("game.path").."/"..modPath end
+						local previewPath = "RAW:"..modPath.."/preview.jpg"
 						local hasPreview = HasFile(previewPath)
-						local idPath = "RAW:"..GetString(modKey..".path").."/id.txt"
+						local idPath = "RAW:"..modPath.."/id.txt"
 						local hasId = HasFile(idPath)
+						local isLocal = GetBool(modKey..".local")
 
 						UiAlign("top left")
 						UiTranslate(30, 16)
@@ -1849,7 +1949,7 @@ function drawCreate(scale)
 						UiPop()
 					end
 					-- edit & copy
-					if GetBool(modKey..".local") then
+					if isLocal then
 						if GetBool(modKey..".playable") then
 							UiPush()
 								UiTranslate(mainW-buttonW/2-30,mainH-260)
@@ -1858,60 +1958,53 @@ function drawCreate(scale)
 								end
 							UiPop()
 						end
-					else
-						if gModSelected ~= "" and not unknownMod then
-							UiPush()
-								UiTranslate(mainW-buttonW/2-30,mainH-260)
-								if UiTextButton("Make local copy", 200, 40) then
-									Command("mods.makelocalcopy", gModSelected)
-									updateMods()
-									updateSearch()
-								end
-							UiPop()
-						end
-					end
-					-- details & publish
-					if GetBool(modKey..".local") then
+					elseif not unknownMod then
 						UiPush()
-							UiTranslate(mainW-buttonW/2-30,mainH-210)
-							if not GetBool("game.workshop")or not GetBool("game.workshop.publish") then 
-								UiDisableInput()
-								UiColorFilter(1,1,1,0.5)
-							end
-							if UiTextButton("Publish...", 200, 40) then
-								SetValue("gPublishScale", 1, "cosine", 0.25)
-								Command("mods.publishbegin", gModSelected)
-							end
-							if not GetBool("game.workshop.publish") then
-								UiTranslate(0, 30)
-								UiFont("regular.ttf", 18)
-								UiText("Unavailable in experimental")
+							UiTranslate(mainW-buttonW/2-30,mainH-260)
+							if UiTextButton("Make local copy", 200, 40) then
+								Command("mods.makelocalcopy", gModSelected)
+								updateMods()
+								updateSearch()
 							end
 						UiPop()
+					end
+					-- details & publish
+					if isLocal or GetBool(settingsNode..".showpath."..modCategory) then
+						if isLocal then
+							UiPush()
+								UiTranslate(mainW-buttonW/2-30,mainH-210)
+								if not GetBool("game.workshop")or not GetBool("game.workshop.publish") then 
+									UiDisableInput()
+									UiColorFilter(1,1,1,0.5)
+								end
+								if UiTextButton("Publish...", 200, 40) then
+									SetValue("gPublishScale", 1, "cosine", 0.25)
+									Command("mods.publishbegin", gModSelected)
+								end
+								if not GetBool("game.workshop.publish") then
+									UiTranslate(0, 30)
+									UiFont("regular.ttf", 18)
+									UiText("Unavailable in experimental")
+								end
+							UiPop()
+						elseif hasId then
+							UiPush()
+								UiTranslate(mainW-buttonW/2-30,mainH-210)
+								if UiTextButton("Details...", 200, 40) then Command("mods.browsesubscribed", gModSelected) end
+							UiPop()
+						end
 						UiPush()
 							UiTranslate(UiCenter(),mainH+5)
 							UiColor(0.5, 0.5, 0.5)
 							UiFont("regular.ttf", 18)
 							UiAlign("center top")
-							local path = GetString(modKey..".path")
-							local w,h = UiGetTextSize(path)
+							local w,h = UiGetTextSize(modPath)
 							if UiIsMouseInRect(w, h) then
 								UiColor(1, 0.8, 0.5)
-								if InputPressed("lmb") then
-									Command("game.openfolder", path)
-								end
+								if InputPressed("lmb") then Command("game.openfolder", modPath) end
 							end
-							UiText(path, true)
+							UiText(modPath, true)
 						UiPop()
-					elseif hasId then
-						if gModSelected ~= "" then
-							UiPush()
-								UiTranslate(mainW-buttonW/2-30,mainH-210)
-								if UiTextButton("Details...", 200, 40) then
-									Command("mods.browsesubscribed", gModSelected)
-								end
-							UiPop()
-						end
 					end
 				end
 			UiPop()
@@ -2376,6 +2469,9 @@ function drawCreate(scale)
 			yesNoPopup.no_fn()
 		end
 	end
+
+	-- last selected mod
+	if prevSelectMod ~= gModSelected and gModSelected ~= "" then SetString(settingsNode..".rememberlast.last", gModSelected) prevSelectMod = gModSelected end
 
 	return open
 end
