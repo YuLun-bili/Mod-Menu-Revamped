@@ -26,7 +26,7 @@ settingsNode = "options.modmenu"
 prevSelectMod = ""
 initSelect = true
 
-menuVer = "v1.3.0"
+menuVer = "v1.3.1"
 initSettings = {
 	["showpath.1"] = {"bool", false},
 	["showpath.2"] = {"bool", false},
@@ -294,7 +294,7 @@ function updateMods()
 		mod.id = modNode
 		mod.name = GetString("mods.available."..modNode..".listname")
 		mod.override = GetBool("mods.available."..modNode..".override") and not GetBool("mods.available."..modNode..".playable")
-		mod.active = GetBool("mods.available."..modNode..".active")
+		mod.active = GetBool("mods.available."..modNode..".active") or GetBool(modNode..".active")
 		mod.steamtime = GetInt("mods.available."..modNode..".steamtime")
 		mod.subscribetime = GetInt("mods.available."..modNode..".subscribetime")
 		mod.showbold = false
@@ -419,7 +419,7 @@ function updateCollectMods(id)
 		mod.id = item
 		mod.name = #nameCheck > 0 and nameCheck or "Unknown"
 		mod.override = GetBool("mods.available."..item..".override") and not GetBool("mods.available."..item..".playable")
-		mod.active = GetBool("mods.available."..item..".active")
+		mod.active = GetBool("mods.available."..item..".active") or GetBool(item..".active")
 		local iscontentmod = GetBool("mods.available."..item..".playable")
 		if gCollectionList.filter == 0 or
 			(gCollectionList.filter == 2 and not iscontentmod) or
@@ -463,7 +463,7 @@ function getActiveModCountCollection()
 	local count = 0
 	local collection = gCollections[gCollectionSelected].lookup
 	for i, mod in ipairs(ListKeys(collectionNode.."."..collection)) do
-		if GetBool("mods.available."..mod..".active") then count = count+1 end
+		if GetBool("mods.available."..mod..".active") or GetBool(mod..".active") then count = count+1 end
 	end
 
 	return count
@@ -476,9 +476,11 @@ function getGlobalModCountCollection()
 end
 
 function activeCollection()
+	DebugWatch("run")
 	local collection = gCollections[gCollectionSelected].lookup
 	for i, mod in ipairs(ListKeys(collectionNode.."."..collection)) do
-		if not GetBool("mods.available."..mod..".active") then Command("mods.activate", mod) end
+		DebugWatch("test"..i, mod)
+		if not GetBool("mods.available."..mod..".active") or not GetBool(mod..".active") then Command("mods.activate", mod) end
 	end
 	updateMods()
 	updateCollections(true)
@@ -489,11 +491,11 @@ function onlyActiveCollection()
 	local mods = ListKeys("mods.available")
 	for i=1,#mods do
 		local id = mods[i]
-		local active = GetBool("mods.available."..id..".active")
+		local active = GetBool("mods.available."..mod..".active") or GetBool(id..".active")
 		if active then Command("mods.deactivate", id) end
 	end
 	for i, mod in ipairs(ListKeys(collectionNode.."."..collection)) do
-		if not GetBool("mods.available."..mod..".active") then Command("mods.activate", mod) end
+		if not GetBool("mods.available."..mod..".active") or not GetBool(mod..".active") then Command("mods.activate", mod) end
 	end
 	updateMods()
 	updateCollections(true)
@@ -502,7 +504,7 @@ end
 function deactiveCollection()
 	local collection = gCollections[gCollectionSelected].lookup
 	for i, mod in ipairs(ListKeys(collectionNode.."."..collection)) do
-		if GetBool("mods.available."..mod..".active") then Command("mods.deactivate", mod) end
+		if GetBool("mods.available."..mod..".active") or GetBool(mod..".active") then Command("mods.deactivate", mod) end
 	end
 	updateMods()
 	updateCollections(true)
@@ -528,7 +530,7 @@ function getActiveModCount(category)
 	local mods = ListKeys("mods.available")
 	for i=1,#mods do
 		local id = mods[i]
-		local active = GetBool("mods.available."..id..".active")
+		local active = GetBool("mods.available."..mod..".active") or GetBool(id..".active")
 		if active then
 			local modPrefix = id:match("^(%w+)-")
 			if categoryLookup[modPrefix] == category then
@@ -544,7 +546,7 @@ function deactivateMods(category)
 	local mods = ListKeys("mods.available")
 	for i=1,#mods do
 		local id = mods[i]
-		local active = GetBool("mods.available."..id..".active")
+		local active = GetBool("mods.available."..mod..".active") or GetBool(id..".active")
 		if active then
 			local modPrefix = id:match("^(%w+)-")
 			if categoryLookup[modPrefix] == category then
@@ -822,7 +824,7 @@ function updateSearch()
 		mod.id = modNode
 		mod.name = modName
 		mod.override = GetBool("mods.available."..modNode..".override") and not GetBool("mods.available."..modNode..".playable")
-		mod.active = GetBool("mods.available."..modNode..".active")
+		mod.active = GetBool("mods.available."..modNode..".active") or GetBool(modNode..".active")
 
 		local iscontentmod = GetBool("mods.available."..modNode..".playable")
 		local modPrefix = (mod.id):match("^(%w+)-")
@@ -1760,6 +1762,7 @@ function drawCreate(scale)
 
 			UiPush()
 				local modKey = "mods.available."..gModSelected
+				local modKeyShort = gModSelected
 				UiAlign("left")
 				UiColor(1,1,1, 0.07)
 				UiImageBox("ui/common/box-solid-6.png", mainW, mainH, 6, 6)
@@ -1923,7 +1926,7 @@ function drawCreate(scale)
 						if GetBool(modKey..".override") then
 							UiPush()
 								UiTranslate(mainW-buttonW/2-30,mainH-40)
-								if GetBool(modKey..".active") then
+								if GetBool(modKey..".active") or GetBool(modKeyShort..".active") then
 									if UiTextButton("Enabled", 200, 40) then
 										Command("mods.deactivate", gModSelected)
 										updateMods()

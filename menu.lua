@@ -18,95 +18,11 @@ bgItems = {nil, nil}
 bgCurrent = 0
 bgPromoIndex = {}
 
--- Context Menu
-showContextMenu = false
-showBuiltinContextMenu = false
-showSubscribedContextMenu = false
-getContextMousePos = false
-contextItem = ""
-contextPosX = 0
-contextPosY = 0
-contextScale = 0
-
 gActivations = 0
 
 promo_full_initiated = false
 
 gForcedFocus = nil
-
--- Yes-No popup
-yesNoPopup = 
-{
-	show = false,
-	yes  = false,
-	text = "",
-	item = "",
-	yes_fn = nil
-}
-function yesNoInit(text,item,fn)
-	yesNoPopup.show = true
-	yesNoPopup.yes  = false
-	yesNoPopup.text = text
-	yesNoPopup.item = item
-	yesNoPopup.yes_fn = fn
-end
-
-function yesNo()
-	local clicked = false
-	UiModalBegin()
-	UiPush()
-		local w = 500
-		local h = 160
-		UiTranslate(UiCenter()-250, UiMiddle()-85)
-		UiAlign("top left")
-		UiWindow(w, h)
-		UiColor(0.2, 0.2, 0.2)
-		UiImageBox("common/box-solid-6.png", w, h, 6, 6)
-		UiColor(1, 1, 1)
-		UiImageBox("common/box-outline-6.png", w, h, 6, 6)
-
-		if InputPressed("esc") then
-			yesNoPopup.yes = false
-			return true
-		end
-
-		UiColor(1,1,1,1)
-		UiTranslate(16, 16)
-		UiPush()
-			UiTranslate(60, 20)
-			UiFont("regular.ttf", 22)
-			UiColor(1,1,1)
-			UiText(yesNoPopup.text)
-		UiPop()
-		
-		UiButtonImageBox("common/box-outline-6.png", 6, 6, 1, 1, 1)
-		UiTranslate(77, 70)
-		UiFont("regular.ttf", 22)
-		UiColor(0.6, 0.2, 0.2)
-		UiImageBox("common/box-solid-6.png", 140, 40, 6, 6)
-		UiFont("regular.ttf", 26)
-		UiColor(1,1,1,1)
-		if UiTextButton("loc@UI_BUTTON_YES", 140, 40) then
-			yesNoPopup.yes = true
-			clicked = true
-		end
-
-		UiTranslate(170, 0)
-		if UiTextButton("loc@UI_BUTTON_NO", 140, 40) then
-			yesNoPopup.yes = false
-			clicked = true
-		end
-	UiPop()
-	UiModalEnd()
-	return clicked
-end
-
-function deleteModCallback()
-	if yesNoPopup.item ~= "" then
-		Command("mods.delete", yesNoPopup.item)
-		updateMods()
-	end
-end
 
 
 function bgLoad(i)
@@ -227,7 +143,6 @@ function initSlideshow()
 end
 
 function resetAllWindows()
-	gModSelected = ""
 	gOptionsScale = 0
 	gSandboxScale = 0
 	gChallengesScale = 0
