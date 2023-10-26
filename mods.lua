@@ -1,4 +1,4 @@
-
+locInitCalled = false
 -- Context Menu
 contextMenu = {
 	show = false,
@@ -26,7 +26,7 @@ settingsNode = "options.modmenu"
 prevSelectMod = ""
 initSelect = true
 
-menuVer = "v1.2.0"
+menuVer = "v1.3.0"
 initSettings = {
 	["showpath.1"] = {"bool", false},
 	["showpath.2"] = {"bool", false},
@@ -154,6 +154,14 @@ function yesNo()
 	return clicked
 end
 
+function selectMod(mod)
+	gModSelected = mod
+	if mod ~= "" then
+		Command("mods.updateselecttime", gModSelected)
+	Command("game.selectmod", gModSelected)
+	end
+end
+
 function debugRect()
 	UiPush()
 		UiColor(0, 0, 0)
@@ -182,8 +190,7 @@ function transferCollection()
 	ClearKey(oldCollectionNode)
 end
 
-function initLoc() -- edited init(), this function is not called
-	SetInt("savegame.startcount", GetInt("savegame.startcount")+1)
+function initLoc()
 	transferCollection()
 
 	gMods = {}
@@ -244,8 +251,6 @@ function initLoc() -- edited init(), this function is not called
 	gLargePreview = 0
 	gQuitLarge = false
 
-	initSlideshow()
-
 	gOptionsScale = 0
 	gSandboxScale = 0
 	gChallengesScale = 0
@@ -260,12 +265,12 @@ function initLoc() -- edited init(), this function is not called
 	gPublishScale = 0
 	
 	local showLargeUI = GetBool("game.largeui")
-	gUiScaleUpFactor = 1.0
+	locUiScaleUpFactor = 1.0
     if showLargeUI then
-		gUiScaleUpFactor = 1.2
+		locUiScaleUpFactor = 1.2
 	end
 
-	gDeploy = GetBool("game.deploy")
+	locInitCalled = true
 end
 
 function string.split(str, splitAt)
@@ -1509,6 +1514,7 @@ function drawFilter(filter, sort, order, isWorkshop)
 end
 
 function drawCreate(scale)
+	if not locInitCalled then initLoc() end
 	local open = true
 	if initSelect then
 		if gModSelected == "" and GetBool(settingsNode..".rememberlast") then gModSelected = GetString(settingsNode..".rememberlast.last") end
@@ -1524,7 +1530,7 @@ function drawCreate(scale)
 		local mainH = listH
 		local buttonW = 180
 		UiTranslate(UiCenter(), UiMiddle())
-		UiScale(scale*gUiScaleUpFactor)
+		UiScale(scale*locUiScaleUpFactor)
 		UiColorFilter(1, 1, 1, scale)
 		UiColor(0,0,0, 0.5)
 		UiAlign("center middle")
@@ -1532,7 +1538,7 @@ function drawCreate(scale)
 		UiWindow(w, h)
 		UiAlign("left top")
 		UiColor(0.96,0.96,0.96)
-		local quitCondA = gLargePreview <= 0 and InputPressed("esc")
+		local quitCondA = (gLargePreview or 0) <= 0 and InputPressed("esc")
 		local quitCondB = not (UiIsMouseInRect(UiWidth(), UiHeight())) and InputPressed("lmb")
 		if not (gCollectionTyping or gSearchTyping) and (quitCondA or quitCondB) then
 			open = false
@@ -1775,6 +1781,7 @@ function drawCreate(scale)
 						local modPath = GetString(modKey..".path")
 						if modCategory == 1 then modPath = GetString("game.path").."/"..modPath end
 						local previewPath = "RAW:"..modPath.."/preview.jpg"
+						if not HasFile(previewPath) then previewPath = "RAW:"..modPath.."/preview.png" end
 						local hasPreview = HasFile(previewPath)
 						local idPath = "RAW:"..modPath.."/id.txt"
 						local hasId = HasFile(idPath)
@@ -2260,6 +2267,7 @@ function drawCreate(scale)
 					local tags = GetString(modKey..".tags")
 					local description = GetString(modKey..".description")
 					local previewPath = "RAW:"..GetString(modKey..".path").."/preview.jpg"
+					if not HasFile(previewPath) then previewPath = "RAW:"..GetString(modKey..".path").."/preview.png" end
 					local hasPreview = HasFile(previewPath)
 					local missingInfo = false
 					if hasPreview then
