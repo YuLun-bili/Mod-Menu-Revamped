@@ -26,7 +26,7 @@ settingsNode = "options.modmenu"
 prevSelectMod = ""
 initSelect = true
 
-menuVer = "v1.3.1"
+menuVer = "v1.3.2"
 initSettings = {
 	["showpath.1"] = {"bool", false},
 	["showpath.2"] = {"bool", false},
@@ -490,9 +490,9 @@ function onlyActiveCollection()
 	local collection = gCollections[gCollectionSelected].lookup
 	local mods = ListKeys("mods.available")
 	for i=1,#mods do
-		local id = mods[i]
-		local active = GetBool("mods.available."..mod..".active") or GetBool(id..".active")
-		if active then Command("mods.deactivate", id) end
+		local mod = mods[i]
+		local active = GetBool("mods.available."..mod..".active") or GetBool(mod..".active")
+		if active then Command("mods.deactivate", mod) end
 	end
 	for i, mod in ipairs(ListKeys(collectionNode.."."..collection)) do
 		if not GetBool("mods.available."..mod..".active") or not GetBool(mod..".active") then Command("mods.activate", mod) end
@@ -529,10 +529,10 @@ function getActiveModCount(category)
 	local count = 0
 	local mods = ListKeys("mods.available")
 	for i=1,#mods do
-		local id = mods[i]
-		local active = GetBool("mods.available."..mod..".active") or GetBool(id..".active")
+		local mod = mods[i]
+		local active = GetBool("mods.available."..mod..".active") or GetBool(mod..".active")
 		if active then
-			local modPrefix = id:match("^(%w+)-")
+			local modPrefix = mod:match("^(%w+)-")
 			if categoryLookup[modPrefix] == category then
 				count = count+1
 			end
@@ -545,12 +545,12 @@ end
 function deactivateMods(category)
 	local mods = ListKeys("mods.available")
 	for i=1,#mods do
-		local id = mods[i]
-		local active = GetBool("mods.available."..mod..".active") or GetBool(id..".active")
+		local mod = mods[i]
+		local active = GetBool("mods.available."..mod..".active") or GetBool(mod..".active")
 		if active then
-			local modPrefix = id:match("^(%w+)-")
+			local modPrefix = mod:match("^(%w+)-")
 			if categoryLookup[modPrefix] == category then
-				Command("mods.deactivate", id)
+				Command("mods.deactivate", mod)
 			end
 		end
 	end
