@@ -338,7 +338,7 @@ end
 function mainMenu()
 	UiPush()
 		local topMenuBackgroundHeight = 152
-		local logoOffsetX = 45
+		local logoOffsetX = 40
 
 		UiAlign("top left")
 
@@ -347,7 +347,7 @@ function mainMenu()
 		UiColor(1,1,1)
 		UiPush()
 			UiTranslate(logoOffsetX, 38)
-			UiScale(0.43)
+			UiScale(0.5)
 			UiImage("menu/logo.png")
 		UiPop()
 		UiFont("regular.ttf", 36)
@@ -408,7 +408,7 @@ function mainMenu()
 			end
 
 			local buttonsIndent = 36
-			local menuBarOffset = (UiCanvasSize().w - #buttons*MainMenuButtons.width - (#buttons-1)*buttonsIndent)/2
+			local menuBarOffset = (UiWidth() - #buttons*MainMenuButtons.width - (#buttons-1)*buttonsIndent)/2
 			menuBarOffset = menuBarOffset + (#buttons-3)*36
 
 			if IsRunningOnPC() then

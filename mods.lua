@@ -26,7 +26,7 @@ settingsNode = "options.modmenu"
 prevSelectMod = ""
 initSelect = true
 
-menuVer = "v1.3.2"
+menuVer = "v1.3.3"
 initSettings = {
 	["showpath.1"] = {"bool", false},
 	["showpath.2"] = {"bool", false},
@@ -476,10 +476,8 @@ function getGlobalModCountCollection()
 end
 
 function activeCollection()
-	DebugWatch("run")
 	local collection = gCollections[gCollectionSelected].lookup
 	for i, mod in ipairs(ListKeys(collectionNode.."."..collection)) do
-		DebugWatch("test"..i, mod)
 		if not GetBool("mods.available."..mod..".active") or not GetBool(mod..".active") then Command("mods.activate", mod) end
 	end
 	updateMods()
