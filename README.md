@@ -1,4 +1,5 @@
 # Mod Menu Revamped
+[![Crowdin](https://badges.crowdin.net/yulun-td-mmre/localized.svg)](https://crowdin.com/project/yulun-td-mmre)
 
 This is a revamped version of vanilla mod menu.
 

@@ -3,30 +3,66 @@
 #include "buttons.lua"
 #include "game.lua"
 
+#include "mod_manager_locLang.lua"
+locLang = locLang or {}
+locLang.new = 				"New"
+locLang.rename = 			"Rename"
+locLang.duplicate = 		"Duplicate"
+locLang.delete = 			"Delete"
+locLang.delColConfirm = 	"Are you sure you want to delete this collection?"
+locLang.disableModsColAsk = "Do you want to disable all unlisted mods at the same time?"
+locLang.applyCol = 			"Apply collection"
+locLang.enableAll = 		"Enable all"
+locLang.disableAll = 		"Disable all"
+locLang.disuseCol = 		"Disuse collection"
+locLang.renameBracket = 	"[rename]"
+locLang.modsRefreshed = 	"Mods Refreshed"
+locLang.settings = 			"Settings"
+locLang.searchBracket = 	"[search mod]"
+locLang.newColBracket = 	"[new collection]"
+locLang.collection = 		"Collection"
+locLang.errorColShort = 	"Name too short, min 3 charactors"
+locLang.errorColLong = 		"Name too long, max 20 charactors"
+locLang.setting1 = 			"Built-in path"
+locLang.setting2 = 			"Workshop path"
+locLang.setting3 = 			"Initial category"
+locLang.setting4 = 			"Remember last"
+locLang.setting4ex = 		"overwrite previous"
 
-function updateLocaleStr()
+function updateLocLangStr()
 	local pouncStr = GetTranslatedStringByKey("UI_TEXT_TAGS")
 	local pouncStrLen = UiGetSymbolsCount(pouncStr)
-	locale_author = GetTranslatedStringByKey("UI_TEXT_AUTHOR")..UiTextSymbolsSub(pouncStr, pouncStrLen, pouncStrLen)
-	locale_updateAt = GetTranslatedStringByKey("UI_TEXT_UPDATED").." "
-	locale_workshopID = GetTranslatedStringByKey("UI_TEXT_WORKSHOP_ID").." "
-	locale_byAuthor = GetTranslatedStringByKey("UI_TEXT_BY").." "
-	locale_modTags = pouncStr.." "
-	locale_rename = "Rename"
-	locale_duplicate = "Duplicate"
-	locale_delete = "Delete"
-	locale_delColConfirm = "Are you sure you want to delete this collection?"
-	locale_disableModsColAsk = "Do you want to disable all unlisted mods at the same time?"
-	locale_applyCol = "Apply collection"
-	locale_enableAll = "Enable all"
-	locale_disableAll = "Disable all"
-	locale_disuseCol = "Disuse collection"
-	locale_renameBracket = "[rename]"
-	locale_modsRefreshed = "Mods Refreshed"
-	locale_settings = "Settings"
-	locale_searchBracket = "[search mod]"
-	locale_newColBracket = "[new collection]"
-	locale_collection= "Collection"
+	locLangStrAuthor = GetTranslatedStringByKey("UI_TEXT_AUTHOR")..UiTextSymbolsSub(pouncStr, pouncStrLen, pouncStrLen)
+	locLangStrUpdateAt = GetTranslatedStringByKey("UI_TEXT_UPDATED").." "
+	locLangStrWorkshopID = GetTranslatedStringByKey("UI_TEXT_WORKSHOP_ID").." "
+	locLangStrByAuthor = GetTranslatedStringByKey("UI_TEXT_BY").." "
+	locLangStrModTags = pouncStr.." "
+	
+	local langIndex = UiGetLanguage()+1
+	for _, locStrKey in pairs(locLangLookup) do
+		repeat
+			if not locLangLookup.locStrKey then break end
+			if not locLangLookup.locStrKey[langIndex] then break end
+			locLang.locStrKey = locLangLookup.locStrKey
+		until true
+	end
+
+	errorData = {
+		Code = 0,
+		Show = false,
+		Fade = 1,
+		List = {
+			nil,
+			locLang.errorColShort,
+			locLang.errorColLong
+		}
+	}
+	optionSettings = {
+		{locLang.setting1,	"showpath.1",	"bool"},
+		{locLang.setting2,	"showpath.2", 	"bool"},
+		{locLang.setting3,	"startcategory","int", 	3},
+		{locLang.setting4,	"rememberlast",	"bool", 0, locLang.setting4ex}
+	}
 end
 
 contextMenu = {
@@ -61,15 +97,8 @@ contextMenu.Collection = function(sel_collect)
 		UiColor(1, 1, 1)
 		UiImageBox("ui/common/box-outline-6.png", w, h, 6, 6, 1)
 
-		--lmb click outside
-		if InputPressed("esc") or (not UiIsMouseInRect(w, h) and InputPressed("lmb")) then
-			open = false
-		end
-
-		--rmb click outside
-		if InputPressed("esc") or (not UiIsMouseInRect(w, h) and InputPressed("rmb")) then
-			return false
-		end
+		if InputPressed("esc") or (not UiIsMouseInRect(w, h) and InputPressed("lmb")) then open = false end
+		if InputPressed("esc") or (not UiIsMouseInRect(w, h) and InputPressed("rmb")) then return false end
 
 		--Indent 12, 8
 		w = w - 24
@@ -93,7 +122,7 @@ contextMenu.Collection = function(sel_collect)
 				end
 			end
 			UiColor(1, 1, 1, 1)
-			UiText(locale_rename)
+			UiText(locLang.rename)
 			UiTranslate(0, 22)
 
 			--Duplicate collection
@@ -107,7 +136,7 @@ contextMenu.Collection = function(sel_collect)
 				end
 			end
 			UiColor(1, 1, 1, 1)
-			UiText(locale_duplicate)
+			UiText(locLang.duplicate)
 			UiTranslate(0, 22)
 
 			--Delete collection
@@ -115,12 +144,12 @@ contextMenu.Collection = function(sel_collect)
 				UiColor(1, 1, 1, 0.2)
 				UiRect(w, 22)
 				if InputPressed("lmb") then
-					yesNoPopInit(locale_delColConfirm, sel_collect, callback.DeleteCollection)
+					yesNoPopInit(locLang.delColConfirm, sel_collect, callback.DeleteCollection)
 					open = false
 				end
 			end
 			UiColor(1, 1, 1, 1)
-			UiText(locale_delete)
+			UiText(locLang.delete)
 			UiTranslate(0, 22)
 		end
 
@@ -129,12 +158,12 @@ contextMenu.Collection = function(sel_collect)
 			UiColor(1, 1, 1, 0.2)
 			UiRect(w, 22)
 			if InputPressed("lmb") then
-				yesNoPopInit(locale_disableModsColAsk, sel_collect, onlyActiveCollection, activeCollection)
+				yesNoPopInit(locLang.disableModsColAsk, sel_collect, onlyActiveCollection, activeCollection)
 				open = false
 			end
 		end
 		UiColor(1, 1, 1, 1)
-		UiText(contextMenu.IsCollection and locale_applyCol or locale_enableAll)
+		UiText(contextMenu.IsCollection and locLang.applyCol or locLang.enableAll)
 		UiTranslate(0, 22)
 
 		--Disable mods in collection
@@ -152,7 +181,7 @@ contextMenu.Collection = function(sel_collect)
 		else
 			UiColor(0.8, 0.8, 0.8, 1)
 		end
-		UiText(contextMenu.IsCollection and locale_disuseCol or locale_disableAll)
+		UiText(contextMenu.IsCollection and locLang.disuseCol or locLang.disableAll)
 		UiTranslate(0, 22)
 	UiPop()
 	UiModalEnd()
@@ -184,10 +213,7 @@ contextMenu.Common = function(sel_mod, fnCategory)
 		UiColor(1, 1, 1)
 		UiImageBox("ui/common/box-outline-6.png", w, h, 6, 6, 1)
 
-		--lmb click outside
 		if InputPressed("esc") or (not UiIsMouseInRect(w, h) and InputPressed("lmb")) then open = false end
-
-		--rmb click outside
 		if InputPressed("esc") or (not UiIsMouseInRect(w, h) and InputPressed("rmb")) then return false end
 
 		--Indent 12, 8
@@ -313,42 +339,24 @@ callback.DeleteMod = function()
 	end
 end
 
-collectionPop = false
-
-errorData = {
-	Code = 0,
-	Show = false,
-	Fade = 1,
-	List = {
-		"Collection already exists, use other names", -- removed
-		"Name too short, min 3 charactors",
-		"Name too long, max 20 charactors"
-	}
-}
-
-newList = {}
-
 nodes = {
 	OldCollection = "savegame.collection",
 	Collection = "options.collection",
 	Settings = "options.modmenu"
 }
 
+
+collectionPop = false
+newList = {}
 prevSelectMod = ""
 initSelect = true
-
 menuVer = "v1.3.2"
+
 initSettings = {
 	["showpath.1"] = {"bool", false},
 	["showpath.2"] = {"bool", false},
 	["startcategory"] = {"int", 0},
 	["rememberlast"] = {"bool", false}
-}
-optionSettings = {
-	{"Built-in path",	"showpath.1",	"bool"},
-	{"Workshop path",	"showpath.2", 	"bool"},
-	{"Initial category","startcategory","int", 3},
-	{"Remember last",	"rememberlast",	"bool", 0, "overwrite previous"}
 }
 
 category = {
@@ -503,8 +511,11 @@ end
 
 function initLoc()
 	transferCollection()
-	updateLocaleStr()
-	RegisterListenerTo("LanguageChanged", "updateLocaleStr")
+	updateLocLangStr()
+	RegisterListenerTo("LanguageChanged", "updateLocLangStr")
+	RegisterListenerTo("LanguageChanged", "updateMods")
+	RegisterListenerTo("LanguageChanged", "updateCollections")
+	RegisterListenerTo("LanguageChanged", "collectionReset")
 
 	gMods = {}
 	for i=1, 3 do
@@ -760,7 +771,6 @@ function getActiveModCountCollection()
 	for i, mod in ipairs(ListKeys(nodes.Collection.."."..collection)) do
 		if GetBool("mods.available."..mod..".active") or GetBool(mod..".active") then count = count+1 end
 	end
-
 	return count
 end
 
@@ -816,7 +826,6 @@ function getActiveModCount(fnCategory)
 			end
 		end
 	end
-
 	return count
 end
 
@@ -827,11 +836,18 @@ function deactivateMods(fnCategory)
 		local active = GetBool("mods.available."..mod..".active") or GetBool(mod..".active")
 		if active then
 			local modPrefix = mod:match("^(%w+)-")
-			if category.Lookup[modPrefix] == fnCategory then
-				Command("mods.deactivate", mod)
-			end
+			if category.Lookup[modPrefix] == fnCategory then Command("mods.deactivate", mod) end
 		end
 	end
+end
+
+function toggleMod(id, state)
+	if not state then
+		Command("mods.activate", list.items[i].id)
+		return true
+	end
+	Command("mods.deactivate", list.items[i].id)
+	return false
 end
 
 function updateSearch()
@@ -883,15 +899,13 @@ function browseOperation(value, pageSize, listMax)
 	return value
 end
 
-function listMods(list, w, h, issubscribedlist)
+function listMods(list, w, h, issubscribedlist, noRmb)
 	local needUpdate = false
 	local ret = ""
 	local rmb_pushed = false
 	local listingVal = math.ceil((h-10)/22)-1
 	local totalVal = #list.items
-	if list.isdragging and InputReleased("lmb") then
-		list.isdragging = false
-	end
+	if list.isdragging and InputReleased("lmb") then list.isdragging = false end
 	UiPush()
 		UiAlign("top left")
 		UiFont("regular.ttf", 22)
@@ -924,14 +938,10 @@ function listMods(list, w, h, issubscribedlist)
 				local bar_sizey = (h-4)*frac
 				UiPush()
 					UiTranslate(2, 2)
-					if bar_posy > 2 and UiIsMouseInRect(8, bar_posy-2) and InputPressed("lmb") then
-						list.pos = list.pos + frac * totalVal
-					end
+					if bar_posy > 2 and UiIsMouseInRect(8, bar_posy-2) and InputPressed("lmb") then list.pos = list.pos + frac * totalVal end
 					local h2 = h - 4 - bar_sizey - bar_posy
 					UiTranslate(0, bar_posy + bar_sizey)
-					if h2 > 0 and UiIsMouseInRect(10, h2) and InputPressed("lmb") then
-						list.pos = list.pos - frac * totalVal
-					end
+					if h2 > 0 and UiIsMouseInRect(10, h2) and InputPressed("lmb") then list.pos = list.pos - frac * totalVal end
 				UiPop()
 
 				UiTranslate(2, bar_posy)
@@ -964,164 +974,15 @@ function listMods(list, w, h, issubscribedlist)
 				UiTranslate(10, -18)
 				UiColor(0, 0, 0, 0)
 				local id = list.items[i].id
-				if gModSelected == id then
-					UiColor(1, 1, 1, 0.1)
-				else
-					if mouseOver and UiIsMouseInRect(228, 22) then
-						UiColor(0, 0, 0, 0.1)
-						if InputPressed("lmb") then
-							UiSound("terminal/message-select.ogg")
-							ret = id
-						end
-					end
-				end
-				if mouseOver and UiIsMouseInRect(228, 22) and InputPressed("rmb") then
-					ret = id
-					rmb_pushed = true
-				end
-				UiRect(w, 22)
-			UiPop()
-
-			if list.items[i].override then
-				UiPush()
-				UiTranslate(-10, -18)
-				if mouseOver and UiIsMouseInRect(22, 22) and InputPressed("lmb") then
-					if list.items[i].active then
-						list.items[i].active = false
-						Command("mods.deactivate", list.items[i].id)
-						needUpdate = true
-					else
-						list.items[i].active = true
-						Command("mods.activate", list.items[i].id)
-						needUpdate = true
-					end
-				end
-				UiPop()
-
-				UiPush()
-					UiTranslate(2, -6)
-					UiAlign("center middle")
-					UiScale(0.5)
-					if list.items[i].active then
-						UiColor(1, 1, 0.5)
-						UiImage("ui/menu/mod-active.png")
-					else
-						UiImage("ui/menu/mod-inactive.png")
-					end
-				UiPop()
-			end
-			UiPush()
-				UiTranslate(10, 0)
-				if issubscribedlist and list.items[i].showbold then
-					UiFont("bold.ttf", 20)
-				end
-				UiText(list.items[i].name)
-			UiPop()
-			UiTranslate(0, 22)
-		end
-
-		if not rmb_pushed and mouseOver and InputPressed("rmb") then
-			rmb_pushed = true
-		end
-	UiPop()
-
-	if needUpdate then
-		updateCollections(true)
-		updateMods()
-	end
-
-	return ret, rmb_pushed
-end
-
-function listSearchMods(list, w, h)
-	local needUpdate = false
-	local ret = ""
-	local listingVal = math.ceil((h-10)/22)-1
-	local totalVal = #list.items
-	if list.isdragging and InputReleased("lmb") then
-		list.isdragging = false
-	end
-	UiPush()
-		UiAlign("top left")
-		UiFont("regular.ttf", 22)
-
-		local mouseOver = UiIsMouseInRect(w+12, h)
-		if mouseOver then list.pos = browseOperation(list.pos, listingVal, totalVal) end
-		if not UiReceivesInput() then mouseOver = false end
-
-		local itemsInView = math.floor(h/UiFontHeight())
-		if totalVal > itemsInView then
-			w = w-14
-			local scrollCount = (totalVal-itemsInView)
-			if scrollCount < 0 then scrollCount = 0 end
-
-			local frac = itemsInView / totalVal
-			local pos = -list.possmooth / totalVal
-			if list.isdragging then
-				local posx, posy = UiGetMousePos()
-				local dy = 0.0445 * (posy - list.dragstarty)
-				list.pos = -dy / frac
-			end
-
-			UiPush()
-				UiTranslate(w, 0)
-				UiColor(1, 1, 1, 0.07)
-				UiImageBox("ui/common/box-solid-4.png", 14, h, 4, 4)
-				UiColor(1, 1, 1, 0.2)
-
-				local bar_posy = 2 + pos*(h-4)
-				local bar_sizey = (h-4)*frac
-				UiPush()
-					UiTranslate(2, 2)
-					if bar_posy > 2 and UiIsMouseInRect(8, bar_posy-2) and InputPressed("lmb") then
-						list.pos = list.pos + frac * totalVal
-					end
-					local h2 = h - 4 - bar_sizey - bar_posy
-					UiTranslate(0, bar_posy + bar_sizey)
-					if h2 > 0 and UiIsMouseInRect(10, h2) and InputPressed("lmb") then
-						list.pos = list.pos - frac * totalVal
-					end
-				UiPop()
-
-				UiTranslate(2, bar_posy)
-				UiImageBox("ui/common/box-solid-4.png", 10, bar_sizey, 4, 4)
-				if UiIsMouseInRect(10, bar_sizey) and InputPressed("lmb") then
-					local posx, posy = UiGetMousePos()
-					list.dragstarty = posy
-					list.isdragging = true
-				end
-			UiPop()
-			list.pos = clamp(list.pos, -scrollCount, 0)
-		else
-			list.pos = 0
-			list.possmooth = 0
-		end
-
-		UiWindow(w, h, true)
-		UiColor(1, 1, 1, 0.07)
-		UiImageBox("ui/common/box-solid-6.png", w, h, 6, 6)
-
-		UiTranslate(10, 24)
-		list.possmooth = list.pos
-		if math.abs(list.possmooth) < 0.001 then list.possmooth = 0 end
-
-		UiAlign("left")
-		UiColor(0.95, 0.95, 0.95, 1)
-		local listStart = math.floor(1-list.pos or 1)
-		for i=listStart, math.min(totalVal, listStart+listingVal) do
-			UiPush()
-				UiTranslate(10, -18)
-				UiColor(0, 0, 0, 0)
-				local id = list.items[i].id
-				if gModSelected == id then
-					UiColor(1, 1, 1, 0.1)
-				else
-					if mouseOver and UiIsMouseInRect(228, 22) then
-						UiColor(0, 0, 0, 0.1)
-						if InputPressed("lmb") then
-							UiSound("terminal/message-select.ogg")
-							ret = id
-						end
+				if gModSelected == id then UiColor(1, 1, 1, 0.1) end
+				if mouseOver and UiIsMouseInRect(228, 22) then
+					UiColor(0, 0, 0, 0.1)
+					if InputPressed("lmb") and gModSelected ~= id then
+						UiSound("terminal/message-select.ogg")
+						ret = id
+					elseif InputPressed("rmb") and not noRmb then
+						ret = id
+						rmb_pushed = true
 					end
 				end
 				UiRect(w, 22)
@@ -1130,16 +991,9 @@ function listSearchMods(list, w, h)
 			if list.items[i].override then
 				UiPush()
 					UiTranslate(-10, -18)
-					if UiIsMouseInRect(22, 22) and InputPressed("lmb") then
-						if list.items[i].active then
-							list.items[i].active = false
-							Command("mods.deactivate", list.items[i].id)
-							needUpdate = true
-						else
-							list.items[i].active = true
-							Command("mods.activate", list.items[i].id)
-							needUpdate = true
-						end
+					if mouseOver and UiIsMouseInRect(22, 22) and InputPressed("lmb") then
+						list.items[i].active = toggleMod(list.items[i].id, list.items[i].active)
+						needUpdate = true
 					end
 				UiPop()
 				UiPush()
@@ -1156,18 +1010,16 @@ function listSearchMods(list, w, h)
 			end
 			UiPush()
 				UiTranslate(10, 0)
+				if issubscribedlist and list.items[i].showbold then UiFont("bold.ttf", 20) end
 				UiText(list.items[i].name)
 			UiPop()
 			UiTranslate(0, 22)
 		end
+		if not rmb_pushed and mouseOver and InputPressed("rmb") then rmb_pushed = true end
 	UiPop()
 
-	if needUpdate then
-		updateCollections(true)
-		updateMods()
-	end
-
-	return ret
+	if needUpdate then updateCollections(true) updateMods() end
+	return ret, rmb_pushed
 end
 
 function listCollections(list, w, h)
@@ -1175,9 +1027,7 @@ function listCollections(list, w, h)
 	local rmb_pushed = false
 	local listingVal = math.ceil((h-10)/22)-1
 	local totalVal = #list
-	if gCollectionMain.isdragging and InputReleased("lmb") then
-		gCollectionMain.isdragging = false
-	end
+	if gCollectionMain.isdragging and InputReleased("lmb") then gCollectionMain.isdragging = false end
 
 	UiPush()
 		UiAlign("top left")
@@ -1250,21 +1100,17 @@ function listCollections(list, w, h)
 			UiPush()
 				UiTranslate(20, -18)
 				UiColor(0, 0, 0, 0)
-				if gCollectionSelected == i then
-					UiColor(1, 1, 1, 0.1)
-				else
-					if mouseOver and UiIsMouseInRect(228, 22) then
-						UiColor(0, 0, 0, 0.1)
-						if InputPressed("lmb") then
-							UiSound("terminal/message-select.ogg")
-							collectionReset()
-							ret = i
-						end
+				if gCollectionSelected == i then UiColor(1, 1, 1, 0.1) end
+				if mouseOver and UiIsMouseInRect(228, 22) then
+					UiColor(0, 0, 0, 0.1)
+					if InputPressed("lmb") and gCollectionSelected ~= i then
+						UiSound("terminal/message-select.ogg")
+						collectionReset()
+						ret = i
+					elseif InputPressed("rmb") then
+						ret = i
+						rmb_pushed = true
 					end
-				end
-				if mouseOver and UiIsMouseInRect(228, 22) and InputPressed("rmb") then
-					ret = i
-					rmb_pushed = true
 				end
 				UiRect(w, 22)
 			UiPop()
@@ -1289,10 +1135,8 @@ function listCollections(list, w, h)
 			UiPush()
 				UiTranslate(20, 0)
 				if gCollectionRename and gCollectionSelected == i then
-					if gCollectionName == "" then
-						UiColor(1, 1, 1, 0.5)
-					end
-					UiText(gCollectionName ~= "" and gCollectionName or locale_renameBracket)
+					if gCollectionName == "" then UiColor(1, 1, 1, 0.5) end
+					UiText(gCollectionName ~= "" and gCollectionName or locLang.renameBracket)
 				else
 					UiText(list[i].name)
 				end
@@ -1300,11 +1144,8 @@ function listCollections(list, w, h)
 			UiTranslate(0, 22)
 		end
 
-		if not rmb_pushed and mouseOver and InputPressed("rmb") then
-			rmb_pushed = true
-		end
+		if not rmb_pushed and mouseOver and InputPressed("rmb") then rmb_pushed = true end
 	UiPop()
-
 	return ret, rmb_pushed
 end
 
@@ -1314,9 +1155,7 @@ function listCollectionMods(mainList, w, h, selected)
 	local ret = ""
 	local rmb_pushed = false
 	local listingVal = math.ceil((h-10)/22)-1
-	if gCollectionList.isdragging and InputReleased("lmb") then
-		gCollectionList.isdragging = false
-	end
+	if gCollectionList.isdragging and InputReleased("lmb") then gCollectionList.isdragging = false end
 
 	UiPush()
 		UiAlign("top left")
@@ -1359,19 +1198,14 @@ function listCollectionMods(mainList, w, h, selected)
 				local bar_sizey = (h-4)*frac
 				UiPush()
 					UiTranslate(2, 2)
-					if bar_posy > 2 and UiIsMouseInRect(8, bar_posy-2) and InputPressed("lmb") then
-						gCollectionList.pos = gCollectionList.pos + frac * totalVal
-					end
+					if bar_posy > 2 and UiIsMouseInRect(8, bar_posy-2) and InputPressed("lmb") then gCollectionList.pos = gCollectionList.pos + frac * totalVal end
 					local h2 = h - 4 - bar_sizey - bar_posy
 					UiTranslate(0, bar_posy + bar_sizey)
-					if h2 > 0 and UiIsMouseInRect(10, h2) and InputPressed("lmb") then
-						gCollectionList.pos = gCollectionList.pos - frac * totalVal
-					end
+					if h2 > 0 and UiIsMouseInRect(10, h2) and InputPressed("lmb") then gCollectionList.pos = gCollectionList.pos - frac * totalVal end
 				UiPop()
 
 				UiTranslate(2, bar_posy)
 				UiImageBox("ui/common/box-solid-4.png", 10, bar_sizey, 4, 4)
-				--UiRect(10, bar_sizey)
 				if UiIsMouseInRect(10, bar_sizey) and InputPressed("lmb") then
 					local posx, posy = UiGetMousePos()
 					gCollectionList.dragstarty = posy
@@ -1400,20 +1234,16 @@ function listCollectionMods(mainList, w, h, selected)
 				UiTranslate(10, -18)
 				UiColor(0, 0, 0, 0)
 				local id = list.items[i].id
-				if gModSelected == id then
-					UiColor(1, 1, 1, 0.1)
-				else
-					if mouseOver and UiIsMouseInRect(228, 22) then
-						UiColor(0, 0, 0, 0.1)
-						if InputPressed("lmb") then
-							UiSound("terminal/message-select.ogg")
-							ret = id
-						end
+				if gModSelected == id then UiColor(1, 1, 1, 0.1) end
+				if mouseOver and UiIsMouseInRect(228, 22) then
+					UiColor(0, 0, 0, 0.1)
+					if InputPressed("lmb") and gModSelected ~= id then
+						UiSound("terminal/message-select.ogg")
+						ret = id
+					elseif InputPressed("rmb") then
+						ret = id
+						rmb_pushed = true
 					end
-				end
-				if mouseOver and UiIsMouseInRect(228, 22) and InputPressed("rmb") then
-					ret = id
-					rmb_pushed = true
 				end
 				UiRect(w, 22)
 			UiPop()
@@ -1422,15 +1252,8 @@ function listCollectionMods(mainList, w, h, selected)
 				UiPush()
 				UiTranslate(-10, -18)
 				if UiIsMouseInRect(22, 22) and InputPressed("lmb") then
-					if list.items[i].active then
-						list.items[i].active = false
-						Command("mods.deactivate", list.items[i].id)
-						needUpdate = true
-					else
-						list.items[i].active = true
-						Command("mods.activate", list.items[i].id)
-						needUpdate = true
-					end
+					list.items[i].active = toggleMod(list.items[i].id, list.items[i].active)
+					needUpdate = true
 				end
 				UiPop()
 
@@ -1452,18 +1275,10 @@ function listCollectionMods(mainList, w, h, selected)
 			UiPop()
 			UiTranslate(0, 22)
 		end
-
-		if not rmb_pushed and mouseOver and InputPressed("rmb") then
-			rmb_pushed = true
-		end
+		if not rmb_pushed and mouseOver and InputPressed("rmb") then rmb_pushed = true end
 	UiPop()
 
-	if needUpdate then
-		updateCollections(true)
-		updateMods()
-		updateSearch()
-	end
-
+	if needUpdate then updateCollections(true) updateMods() updateSearch() end
 	return ret, rmb_pushed
 end
 
@@ -1471,7 +1286,7 @@ function drawFilter(filter, sort, order, isWorkshop)
 	local needUpdate = false
 	local categoryText = {
 		"loc@UI_BUTTON_ALL",
-		"New",
+		locLang.new,
 		"loc@UI_BUTTON_GLOBAL",
 		"loc@UI_BUTTON_CONTENT",
 		"loc@UI_BUTTON_ENABLED"
@@ -1518,10 +1333,7 @@ function drawFilter(filter, sort, order, isWorkshop)
 			UiTranslate(14, -6)
 			UiAlign("center middle")
 			UiRotate(order and 90 or -90)
-			if UiImageButton("ui/common/play.png", 26, 28) then
-				order = not order
-				needUpdate = true
-			end
+			if UiImageButton("ui/common/play.png", 26, 28) then order = not order needUpdate = true end
 		UiPop()
 	UiPop()
 	return filter, sort, order, needUpdate
@@ -1580,7 +1392,7 @@ function drawCreate()
 					UiTranslate(0, -36)
 					UiFont("bold.ttf", 24)
 					UiColorFilter(0.8, 0.8, 0.8, refreshFade)
-					UiText(locale_modsRefreshed)
+					UiText(locLang.modsRefreshed)
 				UiPop()
 			end
 			if UiTextButton("loc@UI_TEXT_MODS", 134, 44) then
@@ -1617,7 +1429,7 @@ function drawCreate()
 				UiColor(0.85, 0.85, 0.85)
 				UiTranslate(26, 0)
 				UiFont("bold.ttf", 25)
-				UiText(locale_settings)
+				UiText(locLang.settings)
 				UiTranslate(105, 0)
 				UiFont("regular.ttf", 23)
 				for _, setting in ipairs(optionSettings) do
@@ -1711,16 +1523,13 @@ function drawCreate()
 					local selected, rmb_pushed
 
 					if gSearchText ~= "" then
-						selected = listSearchMods(gSearch, listW, h)
+						selected = listMods(gSearch, listW, h, false, true)
 						if selected ~= "" then selectMod(selected) end
 					else
 						selected, rmb_pushed = listMods(gMods[category.Index], listW, h, category.Index==2)
 						if selected ~= "" then
 							selectMod(selected)
-							if category.Index==2 then
-								updateMods()
-								updateCollections(true)
-							end
+							if category.Index==2 then updateMods() updateCollections(true) end
 						end
 					end
 
@@ -1854,7 +1663,7 @@ function drawCreate()
 							UiWindow(textWmax, poH, true)
 
 							if author ~= "" then
-								UiText(locale_author)
+								UiText(locLangStrAuthor)
 								UiAlign("top left")
 								UiTranslate(68, 0)
 								local countDist = 0
@@ -1863,9 +1672,7 @@ function drawCreate()
 									local authW, authH = UiGetTextSize(auth)
 									local transX, transY = authW+8, 0
 									if authH > 26 then
-										if countDist > 0 then
-											UiTranslate(-countDist, 24)
-										end
+										if countDist > 0 then UiTranslate(-countDist, 24) end
 										countDist = 0
 										transX, transY = 0, authH
 									elseif countDist + authW+8 > textWmax-68 then
@@ -1914,7 +1721,7 @@ function drawCreate()
 						UiTranslate(30, mainH - 24)
 						if timestamp ~= "" then
 							UiColor(0.5, 0.5, 0.5)
-							UiText(locale_updateAt..timestamp, true)
+							UiText(locLangStrUpdateAt..timestamp, true)
 						end
 					UiPop()
 
@@ -2065,14 +1872,12 @@ function drawCreate()
 						newSearch, gSearchTyping = UiTextInput(gSearchText, tw, th, gSearchFocus)
 					end
 				end
-				if string.len(newSearch) > 40 then
-					newSearch = string.sub(newSearch, 1, 40)
-				end
+				if string.len(newSearch) > 40 then newSearch = string.sub(newSearch, 1, 40) end
 				gSearchFocus = false
 				if gSearchText == "" then
 					UiColor(1, 1, 1, 0.5)
 					UiTranslate(0, 20)
-					UiText(locale_searchBracket)
+					UiText(locLang.searchBracket)
 					local modPrefix = gModSelected:match("^(%w+)-")
 					local index = category.Lookup[modPrefix]
 					category.Index = index and index or category.Index
@@ -2133,14 +1938,12 @@ function drawCreate()
 							newText, gCollectionTyping = UiTextInput(gCollectionName, tw, th, gCollectionFocus)
 						end
 					end
-					if string.len(newText) > 20 then
-						newText = string.sub(newText, 1, 20)
-					end
+					if string.len(newText) > 20 then newText = string.sub(newText, 1, 20) end
 					gCollectionFocus = false
 					if gCollectionName == "" then
 						UiColor(1, 1, 1, 0.5)
 						UiTranslate(0, 20)
-						UiText(gCollectionRename and locale_renameBracket or locale_newColBracket)
+						UiText(gCollectionRename and locLang.renameBracket or locLang.newColBracket)
 					else
 						UiTranslate(tw-24, 5)
 						UiColor(1, 1, 1)
@@ -2195,7 +1998,7 @@ function drawCreate()
 						UiFont("bold.ttf", 22)
 						UiAlign("left")
 						UiColor(0.96, 0.96, 0.96, 0.9)
-						UiText(locale_collection)
+						UiText(locLang.collection)
 					UiPop()
 
 					-- filter
@@ -2320,9 +2123,7 @@ function drawCreate()
 				UiTranslate(0, 400)
 				UiFont("bold.ttf", 32)
 				UiAlign("left")
-				if name ~= "" then
-					UiText(name)
-				else
+				if name ~= "" then UiText(name) else
 					UiColor(1, 0.2, 0.2)
 					UiText("loc@UI_TEXT_NAME_NOT")
 					UiColor(1, 1, 1)
@@ -2332,10 +2133,8 @@ function drawCreate()
 				UiTranslate(0, 20)
 				UiFont("regular.ttf", 20)
 
-				if id ~= "0" then UiText(locale_workshopID..id, true) end
-				if author ~= "" then
-					UiText(locale_byAuthor..author, true)
-				else
+				if id ~= "0" then UiText(locLangStrWorkshopID..id, true) end
+				if author ~= "" then UiText(locLangStrByAuthor..author, true) else
 					UiColor(1, 0.2, 0.2)
 					UiText("loc@UI_TEXT_AUTHOR_NOT", true)
 					UiColor(1, 1, 1)
@@ -2346,7 +2145,7 @@ function drawCreate()
 				if tags ~= "" then
 					UiTranslate(0, -16)
 					UiWindow(mw, 22, true)
-					UiText(locale_modTags..tags, true)
+					UiText(locLangStrModTags..tags, true)
 					UiTranslate(0, 16)
 				end
 				UiWordWrap(mw)
@@ -2384,16 +2183,10 @@ function drawCreate()
 				UiButtonImageBox("ui/common/box-outline-6.png", 6, 6, 1, 1, 1, 0.7)
 
 				if state == "uploading" then
-					if UiTextButton("loc@UI_BUTTON_CANCEL", 200, 40) then
-						Command("mods.publishcancel")
-					end
+					if UiTextButton("loc@UI_BUTTON_CANCEL", 200, 40) then Command("mods.publishcancel") end
 					local progress = GetFloat("mods.publish.progress")
-					if progress < 0.1 then
-						progress = 0.1
-					end
-					if progress > 0.9 then
-						progress = 0.9
-					end
+					if progress < 0.1 then progress = 0.1 end
+					if progress > 0.9 then progress = 0.9 end
 					UiTranslate(-600, -40)
 					UiAlign("top left")
 					UiColor(0, 0, 0)
@@ -2418,9 +2211,13 @@ function drawCreate()
 								UiColorFilter(1, 1, 1, 0.3)
 							end
 							local caption = "loc@CAPTION_PUBLISH"
-							if update then
-								caption = "loc@CAPTION_PUBLISH_UPDATE"
-							end
+							if update then caption = "loc@CAPTION_PUBLISH_UPDATE" end
+							local buttonTextLookup = {
+								"loc@UI_BUTTON_PUBLIC",
+								"loc@UI_BUTTON_FRIENDS",
+								"loc@UI_BUTTON_PRIVATE",
+								"loc@UI_BUTTON_UNLISTED"
+							}
 							UiPush()
 								UiAlign("center middle")
 								UiTranslate(-160, -65)
@@ -2430,29 +2227,9 @@ function drawCreate()
 								local val = GetInt("mods.publish.visibility")
 								UiButtonImageBox()
 								UiAlign("left")
-								if val == -1 then
-
-								elseif val == 0 then
-									if UiTextButton("loc@UI_BUTTON_PUBLIC", 200, 40) then
-										SetInt("mods.publish.visibility", 1)
-									end
-								elseif val == 1 then
-									if UiTextButton("loc@UI_BUTTON_FRIENDS", 200, 40) then
-										SetInt("mods.publish.visibility", 2)
-									end
-								elseif val == 2 then
-									if UiTextButton("loc@UI_BUTTON_PRIVATE", 200, 40) then
-										SetInt("mods.publish.visibility", 3)
-									end
-								else
-									if UiTextButton("loc@UI_BUTTON_UNLISTED", 200, 40) then
-										SetInt("mods.publish.visibility", 0)
-									end
-								end
+								if val == -1 then elseif UiTextButton(buttonTextLookup[val+1], 200, 40) then SetInt("mods.publish.visibility", (val+1)%4) end
 							UiPop()
-							if UiTextButton(caption, 200, 40) then
-								Command("mods.publishupload")
-							end				
+							if UiTextButton(caption, 200, 40) then Command("mods.publishupload") end				
 						end
 					UiPop()
 					if failMessage ~= "" then
@@ -2476,9 +2253,7 @@ function drawCreate()
 			contextMenu.GetMousePos = false
 		end
 		contextMenu.Show = contextMenu.Common(contextMenu.Item, contextMenu.Type)
-		if not contextMenu.Show then
-			contextMenu.Scale = 0
-		end
+		if not contextMenu.Show then contextMenu.Scale = 0 end
 	end
 
 	if collectionPop then
@@ -2487,20 +2262,14 @@ function drawCreate()
 			contextMenu.GetMousePos = false
 		end
 		collectionPop = contextMenu.Collection(contextMenu.Item)
-		if not collectionPop then
-			contextMenu.Scale = 0
-		end
+		if not collectionPop then contextMenu.Scale = 0 end
 	end
 
 	-- yes-no popup
 	if yesNoPopPopup.show and yesNoPop() then
 		yesNoPopPopup.show = false
-		if yesNoPopPopup.yes and yesNoPopPopup.yes_fn ~= nil then
-			yesNoPopPopup.yes_fn()
-		end
-		if yesNoPopPopup.no and yesNoPopPopup.no_fn ~= nil then
-			yesNoPopPopup.no_fn()
-		end
+		if yesNoPopPopup.yes and yesNoPopPopup.yes_fn ~= nil then yesNoPopPopup.yes_fn() end
+		if yesNoPopPopup.no and yesNoPopPopup.no_fn ~= nil then yesNoPopPopup.no_fn() end
 	end
 
 	-- last selected mod
@@ -2518,30 +2287,13 @@ ModManager.Window = Ui.Window
 			UiColor(0.25, 0.25, 0.25)
 			UiRect(1920, 1080)
 		UiPop()
+		if tonumber(InputLastPressedKey()) then LoadLanguageTable(InputLastPressedKey()) end
 		if not drawCreate() then Menu() end
 	end,
-
-	onCreate = function(self)
-		initLoc()
-	end,
-
-	onShow = function(self)
-		self:refresh()
-	end,
-
-	canRestore = function(self)
-		return GetString("menu.modmanager.selected") ~= ""
-	end,
-
-	onRestore = function(self)
-		self:refresh()
-	end,
-
-	onClose = function(self)
-		SetString("menu.modmanager.selected", "")
-    end,
-
-	refresh = function(self)
-		Command("mods.refresh")
-	end
+	onCreate = 		function(self) initLoc() end,
+	onShow = 		function(self) self:refresh() end,
+	canRestore = 	function(self) return GetString("menu.modmanager.selected") ~= "" end,
+	onRestore = 	function(self) self:refresh() end,
+	onClose = 		function(self) SetString("menu.modmanager.selected", "") end,
+	refresh = 		function(self) Command("mods.refresh") end
 }
