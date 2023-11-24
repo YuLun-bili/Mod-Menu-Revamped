@@ -3,7 +3,7 @@
 
 This is a revamped version of vanilla mod menu.
 
-<img src="https://user-images.githubusercontent.com/70589524/215516129-fe398945-84b0-48a9-8e66-1d69510ec950.png" width="576px" align="center">
+<img src="https://github.com/YuLun-bili/Mod-Menu-Revamped/assets/70589524/ac3a482f-5fe2-4c38-91a8-942c719d29ac" width="576px" align="center">
 
 ## New Features
 
