@@ -4,94 +4,117 @@
 #include "game.lua"
 
 #include "mod_manager_locLang.lua"
-locLang = locLang or {}
-locLang.new = 					"New"
-locLang.rename = 				"Rename"
-locLang.duplicate = 			"Duplicate"
-locLang.delete = 				"Delete"
-locLang.enableAll = 			"Enable all"
-locLang.disableAll = 			"Disable all"
-locLang.modsRefreshed = 		"Mods Refreshed"
-locLang.renameCol = 			"[rename]"
-locLang.searchMod = 			"[search mod]"
-locLang.newCol = 				"[new collection]"
-locLang.collection = 			"Collection"
-locLang.delColConfirm = 		"Are you sure you want to delete this collection?"
-locLang.disableModsColAsk = 	"Do you want to disable all unlisted mods at the same time?"
-locLang.applyCol = 				"Apply collection"
-locLang.disuseCol = 			"Disuse collection"
-locLang.errorColShort = 		"Name too short, min 3 charactors"
-locLang.errorColLong = 			"Name too long, max 20 charactors"
-locLang.settings = 				"Settings"
-locLang.setting1 = 				"Built-in mod path"
-locLang.setting2 = 				"Workshop mod path"
-locLang.setting3 = 				"Initial category"
-locLang.setting4 = 				"Remember last selected mod"
-locLang.setting4ex = 			"overwrite previous"
-locLang.cateLocalShort =		"Local"
-locLang.cateWorkshopShort =		"Workshop"
-locLang.cateBuiltInShort =		"Built-in"
-locLang.filterModeAlphabet =	"Alphabetical"
-locLang.filterModeUpdate =		"Updated"
-locLang.filterModeSubscribe =	"Subscribed"
+
+function locLangReset()
+	locLang = locLang or {}
+	locLang.new = 					"New"
+	locLang.rename = 				"Rename"
+	locLang.duplicate = 			"Duplicate"
+	locLang.delete = 				"Delete"
+	locLang.enableAll = 			"Enable all"
+	locLang.disableAll = 			"Disable all"
+	locLang.modsRefreshed = 		"Mods Refreshed"
+	locLang.renameCol = 			"[rename]"
+	locLang.searchMod = 			"[search mod]"
+	locLang.newCol = 				"[new collection]"
+	locLang.collection = 			"Collection"
+	locLang.delColConfirm = 		"Are you sure you want to delete this collection?"
+	locLang.disableModsColAsk = 	"Do you want to disable all unlisted mods at the same time?"
+	locLang.applyCol = 				"Apply collection"
+	locLang.disuseCol = 			"Disuse collection"
+	locLang.errorColShort = 		"Name too short, min 3 charactors"
+	locLang.errorColLong = 			"Name too long, max 20 charactors"
+	locLang.settings = 				"Settings"
+	locLang.setting1 = 				"Built-in mod path"
+	locLang.setting2 = 				"Workshop mod path"
+	locLang.setting3 = 				"Initial category"
+	locLang.setting4 = 				"Remember last selected mod"
+	locLang.setting4ex = 			"overwrite previous"
+	locLang.cateLocalShort =		"Local"
+	locLang.cateWorkshopShort =		"Workshop"
+	locLang.cateBuiltInShort =		"Built-in"
+	locLang.filterModeAlphabet =	"Alphabetical"
+	locLang.filterModeUpdate =		"Updated"
+	locLang.filterModeSubscribe =	"Subscribed"
+end
 
 function updateLocLangStr()
-	local pouncStr = GetTranslatedStringByKey("UI_TEXT_TAGS")
-	local pouncStrLen = UiGetSymbolsCount(pouncStr)
-	locLangStrAuthor = GetTranslatedStringByKey("UI_TEXT_AUTHOR")..UiTextSymbolsSub(pouncStr, pouncStrLen, pouncStrLen)
-	locLangStrUpdateAt = GetTranslatedStringByKey("UI_TEXT_UPDATED").." "
-	locLangStrWorkshopID = GetTranslatedStringByKey("UI_TEXT_WORKSHOP_ID").." "
-	locLangStrByAuthor = GetTranslatedStringByKey("UI_TEXT_BY").." "
-	locLangStrModTags = pouncStr.." "
+	UiPush()
+		locLangReset()
 
-	local langIndex = UiGetLanguage()+1
-	for locStrKey, locStrVal in pairs(locLangLookup) do
-		repeat
-			if not locLang[locStrKey] then break end
-			if not locStrVal then break end
-			if not locStrVal[langIndex] then break end
-			locLang[locStrKey] = locStrVal[langIndex]
-		until true
-	end
+		local pouncStr = GetTranslatedStringByKey("UI_TEXT_TAGS")
+		local pouncStrLen = UiGetSymbolsCount(pouncStr)
+		locLangStrAuthor = GetTranslatedStringByKey("UI_TEXT_AUTHOR")..UiTextSymbolsSub(pouncStr, pouncStrLen, pouncStrLen)
+		locLangStrUpdateAt = GetTranslatedStringByKey("UI_TEXT_UPDATED").." "
+		locLangStrWorkshopID = GetTranslatedStringByKey("UI_TEXT_WORKSHOP_ID").." "
+		locLangStrByAuthor = GetTranslatedStringByKey("UI_TEXT_BY").." "
+		locLangStrModTags = pouncStr.." "
 
-	errorData = {
-		Code = 0,
-		Show = false,
-		Fade = 1,
-		List = {
-			nil,
-			locLang.errorColShort,
-			locLang.errorColLong
+		local langIndex = UiGetLanguage()+1
+		for locStrKey, locStrVal in pairs(locLangLookup) do
+			repeat
+				if not locLang[locStrKey] then break end
+				if not locStrVal then break end
+				if not locStrVal[langIndex] then break end
+				locLang[locStrKey] = locStrVal[langIndex]
+			until true
+		end
+
+		errorData = {
+			Code = 0,
+			Show = false,
+			Fade = 1,
+			List = {
+				nil,
+				locLang.errorColShort,
+				locLang.errorColLong
+			}
 		}
-	}
-	optionSettings = {
-		{locLang.setting1,	"showpath.1",	"bool"},
-		{locLang.setting2,	"showpath.2", 	"bool"},
-		{locLang.setting3,	"startcategory","int", 	3},
-		{locLang.setting4,	"rememberlast",	"bool", 0, locLang.setting4ex}
-	}
-	categoryTextLookup = {
-		locLang.cateBuiltInShort,
-		locLang.cateWorkshopShort,
-		locLang.cateLocalShort
-	}
-	gMods = gMods or {}
-	for i=1, 3 do gMods[i]= gMods[i] or {} end
-	gMods[1].title = locLang.cateBuiltInShort
-	gMods[2].title = locLang.cateWorkshopShort
-	gMods[3].title = locLang.cateLocalShort
-	filterCategoryText = {
-		"loc@UI_BUTTON_ALL",
-		locLang.new,
-		"loc@UI_BUTTON_GLOBAL",
-		"loc@UI_BUTTON_CONTENT",
-		"loc@UI_BUTTON_ENABLED"
-	}
-	filterSortText = {
-		locLang.filterModeAlphabet,
-		locLang.filterModeUpdate,
-		locLang.filterModeSubscribe
-	}
+		optionSettings = {
+			{locLang.setting1,	"showpath.1",	"bool"},
+			{locLang.setting2,	"showpath.2", 	"bool"},
+			{locLang.setting3,	"startcategory","int", 	3},
+			{locLang.setting4,	"rememberlast",	"bool", 0, locLang.setting4ex}
+		}
+		categoryTextLookup = {
+			locLang.cateBuiltInShort,
+			locLang.cateWorkshopShort,
+			locLang.cateLocalShort
+		}
+		gMods = gMods or {}
+		for i=1, 3 do gMods[i]= gMods[i] or {} end
+		gMods[1].title = locLang.cateBuiltInShort
+		gMods[2].title = locLang.cateWorkshopShort
+		gMods[3].title = locLang.cateLocalShort
+		filterCategoryText = {
+			"loc@UI_BUTTON_ALL",
+			locLang.new,
+			"loc@UI_BUTTON_GLOBAL",
+			"loc@UI_BUTTON_CONTENT",
+			"loc@UI_BUTTON_ENABLED"
+		}
+		filterSortText = {
+			locLang.filterModeAlphabet,
+			locLang.filterModeUpdate,
+			locLang.filterModeSubscribe
+		}
+
+		UiFont("regular.ttf", 22)
+		contextMenu.MenuWidth = {
+			-- collection listing
+			collectionW = UiMeasureText(0, locLang.rename, locLang.duplicate, locLang.delete, locLang.applyCol, locLang.disuseCol) + 24,
+			-- collected mods
+			colModsW = UiMeasureText(0, locLang.enableAll, locLang.disableAll) + 24,
+			-- common listing
+			listCommonW = UiMeasureText(0, "loc@UI_TEXT_DISABLE_ALL") + 24,
+			-- workshop listing
+			listWorkshopW = UiMeasureText(0, "loc@UI_TEXT_UNSUBSCRIBE", "loc@UI_TEXT_DISABLE_ALL") + 24,
+			-- local listing
+			listLocalW = UiMeasureText(0, "loc@UI_TEXT_NEW_GLOBAL", "loc@UI_TEXT_NEW_CONTENT", "loc@UI_TEXT_DISABLE_ALL") + 24,
+			-- local selected listing
+			listLocalSelW = UiMeasureText(0, "loc@UI_TEXT_NEW_GLOBAL", "loc@UI_TEXT_NEW_CONTENT", "loc@UI_TEXT_DUPLICATE_MOD", "loc@UI_TEXT_DELETE_MOD", "loc@UI_TEXT_DISABLE_ALL") + 24
+		}
+	UiPop()
 end
 
 contextMenu = {
@@ -112,11 +135,11 @@ contextMenu.Collection = function(sel_collect)
 	local open = true
 	UiModalBegin()
 	UiPush()
-		local w = contextMenu.IsCollection and 170 or 115
+		local w = contextMenu.IsCollection and contextMenu.MenuWidth.collectionW or contextMenu.MenuWidth.colModsW
 		local h = contextMenu.IsCollection and 22*5+16 or 22*2+16
-
 		local x = contextMenu.PosX
 		local y = contextMenu.PosY
+
 		UiTranslate(x, y)
 		UiAlign("left top")
 		UiScale(1, contextMenu.Scale)
@@ -222,17 +245,13 @@ contextMenu.Common = function(sel_mod, fnCategory)
 	local open = true
 	UiModalBegin()
 	UiPush()
-		local w = 135
-		local h = 38
-		if fnCategory == 2 and sel_mod ~= "" then h = 63 end
-		if fnCategory == 3 then
-			w = 177
-			h = 128
-			if sel_mod == "" then h = 85 end
-		end
-
+		local w =	(fnCategory == 2 and sel_mod ~= "") and contextMenu.MenuWidth.listWorkshopW or
+					(fnCategory == 3) and (sel_mod ~= "" and contextMenu.MenuWidth.listLocalSelW or contextMenu.MenuWidth.listLocalW) or
+					contextMenu.MenuWidth.listCommonW
+		local h =	(fnCategory == 2 and sel_mod ~= "") and 63 or (fnCategory == 3) and (sel_mod ~= "" and 128 or 85) or 38
 		local x = contextMenu.PosX
 		local y = contextMenu.PosY
+
 		UiTranslate(x, y)
 		UiAlign("left top")
 		UiScale(1, contextMenu.Scale)
@@ -877,7 +896,7 @@ function updateSearch()
 		local index = category.Lookup[modPrefix]
 		local filter = gSearch.filter
 		if matchSearch and index then
-			if filter == 0 or (filter == 1 and not iscontentmod) or (filter == 2 and iscontentmod) or (filter == 3 and mod.active) then gSearch.items[#gSearch.items+1] = mod end
+			if filter == 0 or (filter == 2 and not iscontentmod) or (filter == 3 and iscontentmod) or (filter == 4 and mod.active) then gSearch.items[#gSearch.items+1] = mod end
 		end
 	end
 	
@@ -1606,29 +1625,29 @@ function drawCreate()
 				UiImageBox("ui/common/box-solid-6.png", mainW, mainH, 6, 6)
 				UiWindow(mainW, mainH)
 				if gModSelected ~= "" then
+					local modPrefix = gModSelected:match("^(%w+)-")
+					local modCategory = category.Lookup[modPrefix]
+					local unknownMod = false
+					local name = GetString(modKey..".name")
+					if gModSelected ~= "" and name == "" then name = "loc@NAME_UNKNOWN" unknownMod = true end
+					local author = GetString(modKey..".author")
+					if gModSelected ~= "" and author == "" then author = "loc@NAME_UNKNOWN" end
+					local authorList = strSplit(author, ",")
+					local tags = GetString(modKey..".tags")
+					local tagList = strSplit(tags, ",")
+					local description = GetString(modKey..".description")
+					local timestamp = GetString(modKey..".timestamp")
+					local modPath = GetString(modKey..".path")
+					if modCategory == 1 then modPath = GetString("game.path").."/"..modPath end
+					local previewPath = "RAW:"..modPath.."/preview.jpg"
+					if not HasFile(previewPath) then previewPath = "RAW:"..modPath.."/preview.png" end
+					local hasPreview = HasFile(previewPath)
+					local idPath = "RAW:"..modPath.."/id.txt"
+					local hasId = modPrefix == "steam"
+					if not hasId then hasId = HasFile(idPath) end
+					local isLocal = GetBool(modKey..".local")
+					
 					UiPush()
-						local modPrefix = gModSelected:match("^(%w+)-")
-						local modCategory = category.Lookup[modPrefix]
-						local unknownMod = false
-						local name = GetString(modKey..".name")
-						if gModSelected ~= "" and name == "" then name = "loc@NAME_UNKNOWN" unknownMod = true end
-						local author = GetString(modKey..".author")
-						if gModSelected ~= "" and author == "" then author = "loc@NAME_UNKNOWN" end
-						local authorList = strSplit(author, ",")
-						local tags = GetString(modKey..".tags")
-						local tagList = strSplit(tags, ",")
-						local description = GetString(modKey..".description")
-						local timestamp = GetString(modKey..".timestamp")
-						local modPath = GetString(modKey..".path")
-						if modCategory == 1 then modPath = GetString("game.path").."/"..modPath end
-						local previewPath = "RAW:"..modPath.."/preview.jpg"
-						if not HasFile(previewPath) then previewPath = "RAW:"..modPath.."/preview.png" end
-						local hasPreview = HasFile(previewPath)
-						local idPath = "RAW:"..modPath.."/id.txt"
-						local hasId = modPrefix == "steam"
-						if not hasId then hasId = HasFile(idPath) end
-						local isLocal = GetBool(modKey..".local")
-
 						UiAlign("top left")
 						UiTranslate(30, 16)
 						UiColor(1, 1, 1, 1)
@@ -1673,6 +1692,8 @@ function drawCreate()
 									UiTranslate(poW/2, poH/2)
 									UiColor(1, 0.2, 0.2)
 									UiAlign("center middle")
+									UiWordWrap(200)
+									UiTextAlignment("center")
 									UiText("loc@UI_TEXT_NO_PREVIEW")
 								UiPop()
 							end
@@ -1750,6 +1771,8 @@ function drawCreate()
 
 					local modButtonH = 40
 					local modButtonT = 50
+					-- redesign (webpages)
+					-- damn you saber for spending so long only to failed in implmenting UiButtonTextHandling() mode 1
 
 					-- edit/copy, details, publish
 					UiPush()
@@ -2306,7 +2329,7 @@ ModManager.Window = Ui.Window
 			UiColor(0.25, 0.25, 0.25)
 			UiRect(1920, 1080)
 		UiPop()
-		if tonumber(InputLastPressedKey()) then LoadLanguageTable(InputLastPressedKey()) end
+		-- if tonumber(InputLastPressedKey()) then LoadLanguageTable(InputLastPressedKey()) end
 		if not drawCreate() then Menu() end
 		UiModalEnd()
 	end,
