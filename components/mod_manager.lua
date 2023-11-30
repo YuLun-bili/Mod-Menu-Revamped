@@ -870,10 +870,10 @@ end
 
 function toggleMod(id, state)
 	if not state then
-		Command("mods.activate", list.items[i].id)
+		Command("mods.activate", id)
 		return true
 	end
-	Command("mods.deactivate", list.items[i].id)
+	Command("mods.deactivate", id)
 	return false
 end
 
