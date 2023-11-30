@@ -3,7 +3,7 @@
 
 This is a revamped version of vanilla mod menu.
 
-<img src="https://github.com/YuLun-bili/Mod-Menu-Revamped/assets/70589524/ac3a482f-5fe2-4c38-91a8-942c719d29ac" width="576px" align="center">
+<img src="https://github.com/YuLun-bili/Mod-Menu-Revamped/assets/70589524/0d9d590d-d283-4c78-aacd-e85ac8d6d7b3" width="576px" align="center">
 
 ## New Features
 
@@ -12,7 +12,8 @@ This is a revamped version of vanilla mod menu.
 * Search mod
 * More mods filtering & sorting options
 * Mod collections
-* Refresh mods
+* Manually Refresh mods
+* Click & View published local mod's workshop page
 
 ## [Download & Installation](../../releases)
 
