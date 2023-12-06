@@ -397,7 +397,7 @@ collectionPop = false
 newList = {}
 prevSelectMod = ""
 initSelect = true
-menuVer = "v1.4.0"
+menuVer = "v1.4.1"
 
 webLinks = {
 	gameModding = "https://www.teardowngame.com/modding",
@@ -533,6 +533,7 @@ function selectMod(mod)
 	if mod ~= "" then
 		Command("mods.updateselecttime", gModSelected)
 		Command("game.selectmod", gModSelected)
+		SetString("dev.modmanager.selectedmodmod", gModSelected)
 	end
 end
 
@@ -663,13 +664,9 @@ function updateMods()
 				gMods[index].items[#gMods[index].items+1] = mod
 			end
 		end
-		if gModSelected ~= "" and gModSelected == modNode then
-			foundSelected = true
-		end
+		if gModSelected ~= "" and gModSelected == modNode then foundSelected = true end
 	end
-	if gModSelected ~= "" and not foundSelected then
-		gModSelected = ""
-	end
+	if gModSelected ~= "" and not foundSelected then gModSelected = "" end
 
 	for i=1, 3 do
 		if gMods[i].sort == 0 then
@@ -1085,14 +1082,10 @@ function listCollections(list, w, h)
 				local bar_sizey = (h-4)*frac
 				UiPush()
 					UiTranslate(2, 2)
-					if bar_posy > 2 and UiIsMouseInRect(8, bar_posy-2) and InputPressed("lmb") then
-						gCollectionMain.pos = gCollectionMain.pos + frac * totalVal
-					end
+					if bar_posy > 2 and UiIsMouseInRect(8, bar_posy-2) and InputPressed("lmb") then gCollectionMain.pos = gCollectionMain.pos + frac * totalVal end
 					local h2 = h - 4 - bar_sizey - bar_posy
 					UiTranslate(0, bar_posy + bar_sizey)
-					if h2 > 0 and UiIsMouseInRect(10, h2) and InputPressed("lmb") then
-						gCollectionMain.pos = gCollectionMain.pos - frac * totalVal
-					end
+					if h2 > 0 and UiIsMouseInRect(10, h2) and InputPressed("lmb") then gCollectionMain.pos = gCollectionMain.pos - frac * totalVal end
 				UiPop()
 
 				UiTranslate(2, bar_posy)
@@ -2121,26 +2114,26 @@ function drawCreate()
 				UiText("loc@UI_TEXT_PUBLISH_MOD")
 			UiPop()
 			
-			local modKey = "mods.available."..gModSelected
 			UiPush()
 				UiTranslate(50, 100)
 				local mw = 335
 				local mh = mw
+				local id = GetString("mods.publish.id")
+				local modKey = "mods.available."..gModSelected
+				local name = GetString(modKey..".name")
+				local author = GetString(modKey..".author")
+				local tags = GetString(modKey..".tags")
+				local description = GetString(modKey..".description")
+				local previewPath = "RAW:"..GetString(modKey..".path").."/preview.jpg"
+				if not HasFile(previewPath) then previewPath = "RAW:"..GetString(modKey..".path").."/preview.png" end
+				local hasPreview = HasFile(previewPath)
+				local missingInfo = false
 				UiPush()
 					UiTranslate((w-100-mw)/2, 0)
 					UiPush()
 						UiColor(1, 1, 1, 0.05)
 						UiRect(mw, mh)
 					UiPop()
-					local id = GetString("mods.publish.id")
-					local name = GetString(modKey..".name")
-					local author = GetString(modKey..".author")
-					local tags = GetString(modKey..".tags")
-					local description = GetString(modKey..".description")
-					local previewPath = "RAW:"..GetString(modKey..".path").."/preview.jpg"
-					if not HasFile(previewPath) then previewPath = "RAW:"..GetString(modKey..".path").."/preview.png" end
-					local hasPreview = HasFile(previewPath)
-					local missingInfo = false
 					if hasPreview then
 						local pw, ph = UiGetImageSize(previewPath)
 						local scale = math.min(mw/pw, mh/ph)
@@ -2322,21 +2315,82 @@ end
 ModManager = {}
 ModManager.Window = Ui.Window
 {
-	draw = function(self)
-		UiModalBegin()
+	w = 1920,
+	h = 1080,
+	animator = { playTime = 0.25 },
+
+	onDraw = 		function(self)
 		UiPush()
-			UiAlign("top left")
-			UiColor(0.25, 0.25, 0.25)
-			UiRect(1920, 1080)
+			UiModalBegin()
+			-- if tonumber(InputLastPressedKey()) then LoadLanguageTable(InputLastPressedKey()) end
+			if not drawCreate() then resetAllWindows() end
+			UiModalEnd()
 		UiPop()
-		-- if tonumber(InputLastPressedKey()) then LoadLanguageTable(InputLastPressedKey()) end
-		if not drawCreate() then Menu() end
-		UiModalEnd()
 	end,
+
 	onCreate = 		function(self) initLoc() end,
-	onShow = 		function(self) self:refresh() end,
-	canRestore = 	function(self) return GetString("menu.modmanager.selected") ~= "" end,
-	onRestore = 	function(self) self:refresh() end,
-	onClose = 		function(self) SetString("menu.modmanager.selected", "") end,
+
+	onPreDraw = 	function(self)
+		if not self.animator.isFinished then UiIgnoreNavigation() end
+		SetFloat("game.music.volume", (1.0 - 0.8 * self.animator.factor))
+		UiSetCursorState(UI_CURSOR_SHOW)
+	end,
+
+	onShow = 		function(self)
+		self:refresh()
+		updateMods()
+		updateCollections()
+		initSelect = true
+		ModManager.WindowAnimation.duration = 0.25
+		ModManager.WindowAnimation:init(self)
+	end,
+
+	canRestore = 	function(self) return GetString("dev.modmanager.selectedmod") ~= "" end,
+
+	onRestore = 	function(self)
+		self:refresh()
+		updateMods()
+		updateCollections()
+		initSelect = true
+		ModManager.WindowAnimation.duration = 0.0
+		ModManager.WindowAnimation:init(self)
+	end,
+
+	onClose = 		function(self)
+		ModManager.WindowAnimation.duration = 0.25
+		ModManager.WindowAnimation:init(self)
+		ModManager.WindowAnimation:close(self)
+		SetString("dev.modmanager.selectedmod", "")
+	end,
+
 	refresh = 		function(self) Command("mods.refresh") end
+}
+
+
+ModManager.WindowAnimation = 
+{
+	duration = 0.25,
+	curve = "cosine",
+	progress = 0.0,
+
+
+	init = 		function(self, window)
+		self.duration = 0.25
+		self.curve = "cosine"
+		self.progress = 0.0
+	end,
+
+	play = 		function(self)
+		self:reset()
+		SetValueInTable(self, "progress", 1, self.curve, self.duration)
+	end,
+
+	close = 	function(self)
+		self:reset()
+		SetValueInTable(self, "progress", 0, self.curve, self.duration)
+	end,
+
+	reset = 	function(self)
+		self.progress = 0.0
+	end
 }
