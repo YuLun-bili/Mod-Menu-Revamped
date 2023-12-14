@@ -1986,8 +1986,7 @@ function drawCreate()
 							local id = gCollections[gCollectionSelected].lookup
 							failed, errorData.Code = renameCollection(id, gCollectionName)
 						else
-							print(pcall(newCollection, gCollectionName))
-							-- failed, errorData.Code = newCollection(gCollectionName)
+							failed, errorData.Code = newCollection(gCollectionName)
 						end
 						if failed then
 							errorData.Show = true

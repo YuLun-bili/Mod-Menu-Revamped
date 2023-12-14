@@ -311,7 +311,7 @@ locLangLookup = {
 		"字母",
 		"Alphabetical",
 		"По алфавиту",
-		"Alphabetical",
+		"Alfabetycznie",
 	},
 	filterModeUpdate =	{
 		"Updated",
@@ -322,7 +322,7 @@ locLangLookup = {
 		"更新",
 		"Updated",
 		"Обновленно",
-		"Updated",
+		"Zaktualizowano",
 	},
 	filterModeSubscribe ={
 		"Subscribed",
@@ -333,6 +333,6 @@ locLangLookup = {
 		"订阅",
 		"Subscribed",
 		"Подписанные",
-		"Subscribed",
+		"Subskrybowane",
 	}
 }
