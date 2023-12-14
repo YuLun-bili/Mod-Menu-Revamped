@@ -695,17 +695,12 @@ function newCollection(name)
 	local newID = "col"
 	local dupIndex = 0
 	local nameLength = UiGetSymbolsCount(name)
-	for str in name:gmatch("([%w-]+)") do
-		idLength = idLength + #str
-		newID = newID.."-"..str
-	end
+	for str in name:gmatch("([%w-]+)") do newID = newID.."-"..str end
 	if nameLength < 3 then return true, 2 end
 	if nameLength > 20 then return true, 3 end
 	newID = newID:lower()
 	if HasKey(nodes.Collection.."."..newID) then
-		repeat
-			dupIndex = dupIndex + 1
-		until not HasKey(nodes.Collection.."."..newID.."-"..dupIndex)
+		repeat dupIndex = dupIndex + 1 until not HasKey(nodes.Collection.."."..newID.."-"..dupIndex)
 		newID = newID.."-"..dupIndex
 	end
 	SetString(nodes.Collection.."."..newID, name)
@@ -1991,7 +1986,8 @@ function drawCreate()
 							local id = gCollections[gCollectionSelected].lookup
 							failed, errorData.Code = renameCollection(id, gCollectionName)
 						else
-							failed, errorData.Code = newCollection(gCollectionName)
+							print(pcall(newCollection, gCollectionName))
+							-- failed, errorData.Code = newCollection(gCollectionName)
 						end
 						if failed then
 							errorData.Show = true
