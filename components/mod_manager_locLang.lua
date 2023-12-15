@@ -5,17 +5,18 @@
 
 
 -- language index:
--- 1	en
--- 2	fr
--- 3	es
--- 4	it
--- 5	de
--- 6	zh
--- 7	jp
--- 8	ru
--- 9	pl
+-- 0	en
+-- 1	fr
+-- 2	es
+-- 3	it
+-- 4	de
+-- 5	zh
+-- 6	jp
+-- 7	ru
+-- 8	pl
 
 locLangLookup = {
+	INDEX = 			{0, 1, 2, 3, 4, 5, 6, 7, 8},
 	new = 				{
 		"New",
 		"Nouveau",
