@@ -2403,7 +2403,7 @@ ModManager.Window = Ui.Window
 {
 	w = 1920,
 	h = 1080,
-	animator = { playTime = 0.25 },
+	animator = { playTime = 0.2 },
 
 	onPreDraw = 	function(self)
 		if not self.animator.isFinished then UiIgnoreNavigation() end
@@ -2414,7 +2414,7 @@ ModManager.Window = Ui.Window
 	onDraw = 		function(self)
 		local menuOpen = false
 		UiPush()
-			if tonumber(InputLastPressedKey()) then LoadLanguageTable(InputLastPressedKey()) end
+			-- if tonumber(InputLastPressedKey()) then LoadLanguageTable(InputLastPressedKey()) end
 			menuOpen = drawCreate()
 			drawPopElements()
 			drawLargePreview(gLargePreview > 0)
@@ -2428,7 +2428,7 @@ ModManager.Window = Ui.Window
 	onShow = 		function(self)
 		self:refresh()
 		initSelect = true
-		ModManager.WindowAnimation.duration = 0.25
+		ModManager.WindowAnimation.duration = 0.2
 		ModManager.WindowAnimation:init(self)
 	end,
 
@@ -2442,7 +2442,7 @@ ModManager.Window = Ui.Window
 	end,
 
 	onClose = 		function(self)
-		ModManager.WindowAnimation.duration = 0.25
+		ModManager.WindowAnimation.duration = 0.2
 		ModManager.WindowAnimation:init(self)
 		SetString("dev.modmanager.selectedmod", "")
 	end,
