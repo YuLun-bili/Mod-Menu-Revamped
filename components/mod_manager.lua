@@ -400,7 +400,7 @@ collectionPop = false
 newList = {}
 prevSelectMod = ""
 initSelect = true
-menuVer = "v1.4.1"
+menuVer = "v1.4.2"
 
 webLinks = {
 	gameModding = "https://www.teardowngame.com/modding",
