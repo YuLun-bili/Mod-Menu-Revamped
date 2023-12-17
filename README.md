@@ -9,6 +9,7 @@
 ### This is a revamped version of vanilla mod menu.
 
 <img src="https://github.com/YuLun-bili/Mod-Menu-Revamped/assets/70589524/0d9d590d-d283-4c78-aacd-e85ac8d6d7b3" width="576px" align="center">
+<img src="https://github.com/YuLun-bili/Mod-Menu-Revamped/assets/70589524/d9366e42-d445-43bc-bf78-61602a2f502c" width="576px" align="center">
 
 ## New Features
 
@@ -19,6 +20,7 @@
 * Mod collections
 * Manually Refresh mods
 * Click & View published local mod's workshop page
+* Preview publish mod name & description in other languages
 
 ## [Download & Installation](../../releases)
 
