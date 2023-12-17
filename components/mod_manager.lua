@@ -7,6 +7,7 @@
 
 function locLangReset()
 	locLang = locLang or {}
+	locLang.INDEX =					0
 	locLang.new = 					"New"
 	locLang.rename = 				"Rename"
 	locLang.duplicate = 			"Duplicate"
@@ -47,7 +48,7 @@ function updateLocLangStr()
 		locLangStrAuthor = GetTranslatedStringByKey("UI_TEXT_AUTHOR")..UiTextSymbolsSub(pouncStr, pouncStrLen, pouncStrLen)
 		locLangStrUpdateAt = GetTranslatedStringByKey("UI_TEXT_UPDATED").." "
 		locLangStrWorkshopID = GetTranslatedStringByKey("UI_TEXT_WORKSHOP_ID").." "
-		locLangStrByAuthor = GetTranslatedStringByKey("UI_TEXT_BY").." "
+		locLangStrByAuthor = GetTranslatedStringByKey("UI_TEXT_BY")..UiTextSymbolsSub(pouncStr, pouncStrLen, pouncStrLen).." "
 		locLangStrModTags = pouncStr.." "
 
 		local langIndex = UiGetLanguage()+1
@@ -114,6 +115,8 @@ function updateLocLangStr()
 			-- local selected listing
 			listLocalSelW = UiMeasureText(0, "loc@UI_TEXT_NEW_GLOBAL", "loc@UI_TEXT_NEW_CONTENT", "loc@UI_TEXT_DUPLICATE_MOD", "loc@UI_TEXT_DELETE_MOD", "loc@UI_TEXT_DISABLE_ALL") + 24
 		}
+
+		gPublishLangIndex = locLang.INDEX
 	UiPop()
 end
 
@@ -621,8 +624,12 @@ function initLoc()
 	gLargePreview = 0
 	gQuitLarge = false
 
-	gCreateScale = 0
 	gPublishScale = 0
+	gPublishDropdown = false
+	gPublishLangIndex = 0
+	gPublishLangReload = false
+	gPublishLangTitle = nil
+	gPublishLangDesc = nil
 	
 	gRefreshFade = 0
 	gShowSetting = false
@@ -695,17 +702,12 @@ function newCollection(name)
 	local newID = "col"
 	local dupIndex = 0
 	local nameLength = UiGetSymbolsCount(name)
-	for str in name:gmatch("([%w-]+)") do
-		idLength = idLength + #str
-		newID = newID.."-"..str
-	end
+	for str in name:gmatch("([%w-]+)") do newID = newID.."-"..str end
 	if nameLength < 3 then return true, 2 end
 	if nameLength > 20 then return true, 3 end
 	newID = newID:lower()
 	if HasKey(nodes.Collection.."."..newID) then
-		repeat
-			dupIndex = dupIndex + 1
-		until not HasKey(nodes.Collection.."."..newID.."-"..dupIndex)
+		repeat dupIndex = dupIndex + 1 until not HasKey(nodes.Collection.."."..newID.."-"..dupIndex)
 		newID = newID.."-"..dupIndex
 	end
 	SetString(nodes.Collection.."."..newID, name)
@@ -1348,7 +1350,6 @@ function drawCreate()
 		if not HasKey("mods.available."..gModSelected) then gModSelected = "" end
 		initSelect = false
 	end
-	SetFloat("game.music.volume", (1.0 - 0.8*gCreateScale))
 
 	local w = 758 + 810
 	local h = 940
@@ -1359,8 +1360,6 @@ function drawCreate()
 	local buttonW = 270
 	UiPush()
 		UiTranslate(UiCenter(), UiMiddle())
-		UiScale(gCreateScale)
-		UiColorFilter(1, 1, 1, gCreateScale)
 		UiColor(0, 0, 0, 0.5)
 		UiAlign("center middle")
 		UiImageBox("ui/common/box-solid-shadow-50.png", w, h, -50, -50)
@@ -1784,6 +1783,11 @@ function drawCreate()
 									UiColorFilter(1, 1, 1, 0.5)
 								end
 								if UiTextButton("loc@UI_BUTTON_PUBLISH", buttonW, modButtonH) then
+									gPublishLangTitle = nil
+									gPublishLangDesc = nil
+									gPublishLangIndex = locLang.INDEX
+									gPublishDropdown = false
+									gPublishLangReload = false
 									SetValue("gPublishScale", 1, "cosine", 0.25)
 									Command("mods.publishbegin", gModSelected)
 								end
@@ -2060,103 +2064,94 @@ function drawCreate()
 			UiPop()
 		UiPop()
 	UiPop()
+	return open
+end
 
-	--------------------------------- LARGE PREVIEW -------------------------------------------
-	if gLargePreview > 0 then
-		local largeW, largeH = UiHeight()*0.9, UiHeight()*0.9
-		local pw, ph = UiGetImageSize(gLoadedPreview)
-		UiPush()
-			UiAlign("center middle")
-			UiTranslate(UiCenter(), UiMiddle())
-			UiModalBegin()
-			UiBlur(gLargePreview)
-			UiScale(gLargePreview)
-			UiScale(math.min(largeW/pw, largeH/ph))
-			UiColor(1, 1, 1, gLargePreview)
-			UiImage(gLoadedPreview)
-			if not gQuitLarge and InputPressed("esc") or InputPressed("lmb") or InputPressed("rmb") then
-				SetValue("gLargePreview", 0, "easein", 0.1)
-				gQuitLarge = true
-			end
-		UiPop()
-	end
-
-	------------------------------------ PUBLISH ----------------------------------------------
-	if gPublishScale > 0 then
-		open = true
+function drawLargePreview(show)
+	if not show then return end
+	local largeW, largeH = UiHeight()*0.9, UiHeight()*0.9
+	local pw, ph = UiGetImageSize(gLoadedPreview)
+	UiPush()
+		UiAlign("center middle")
+		UiTranslate(UiCenter(), UiMiddle())
 		UiModalBegin()
-		UiBlur(gPublishScale)
-		UiPush()
-			local w = 700
-			local h = 800
-			UiTranslate(UiCenter(), UiMiddle())
-			UiScale(gPublishScale)
-			UiColorFilter(1, 1, 1, gCreateScale)
-			UiColor(0, 0, 0, 0.5)
-			UiAlign("center middle")
-			UiImageBox("ui/common/box-solid-shadow-50.png", w, h, -50, -50)
-			UiWindow(w, h)
-			UiAlign("left top")
-			UiColor(1, 1, 1)
+		UiBlur(gLargePreview)
+		UiScale(gLargePreview)
+		UiScale(math.min(largeW/pw, largeH/ph))
+		UiColor(1, 1, 1, gLargePreview)
+		UiImage(gLoadedPreview)
+		if not gQuitLarge and InputPressed("esc") or InputPressed("lmb") or InputPressed("rmb") then
+			SetValue("gLargePreview", 0, "easein", 0.1)
+			gQuitLarge = true
+		end
+	UiPop()
+end
 
-			local publish_state = GetString("mods.publish.state")
-			local canEsc = publish_state ~= "uploading"
-			if canEsc and (InputPressed("esc") or (not UiIsMouseInRect(UiWidth(), UiHeight()) and InputPressed("lmb"))) then
-				SetValue("gPublishScale", 0, "cosine", 0.25)
-				Command("mods.publishend")
-			end
-			
+function drawPublish(show)
+	if not show then return nil end
+	UiModalBegin()
+	UiBlur(gPublishScale)
+	UiPush()
+		local w = 900
+		local h = 740
+		UiTranslate(UiCenter(), UiMiddle())
+		UiScale(gPublishScale)
+		UiColor(0, 0, 0, 0.5)
+		UiAlign("center middle")
+		UiImageBox("ui/common/box-solid-shadow-50.png", w, h, -50, -50)
+		UiWindow(w, h)
+		UiAlign("left top")
+		UiColor(1, 1, 1)
+
+		local publish_state = GetString("mods.publish.state")
+		local canEsc = publish_state ~= "uploading"
+		if canEsc and (InputPressed("esc") or (not UiIsMouseInRect(UiWidth(), UiHeight()) and InputPressed("lmb"))) then
+			SetValue("gPublishScale", 0, "cosine", 0.25)
+			Command("mods.publishend")
+		end
+		
+		UiPush()
+			UiFont("bold.ttf", 55)
+			UiColor(1, 1, 1)
+			UiAlign("center")
+			UiTranslate(UiCenter(), 64)
+			UiText("loc@UI_TEXT_PUBLISH_MOD")
+		UiPop()
+		
+		local mw, mh = 320, 320
+		local descW = 460
+		local gap = 40
+
+		local id = GetString("mods.publish.id")
+		local modKey = "mods.available."..gModSelected
+		local name = gPublishLangTitle or GetString(modKey..".name")
+		local author = GetString(modKey..".author")
+		local tags = GetString(modKey..".tags")
+		local description = gPublishLangDesc or GetString(modKey..".description")
+		local previewPath = "RAW:"..GetString(modKey..".path").."/preview.jpg"
+		if not HasFile(previewPath) then previewPath = "RAW:"..GetString(modKey..".path").."/preview.png" end
+		local hasPreview = HasFile(previewPath)
+		local missingInfo = false
+
+		if gPublishLangReload then
+			gPublishLangReload = false
+			local orgIndex = locLang.INDEX
+			local selectIndex = gPublishLangIndex
+			LoadLanguageTable(gPublishLangIndex)
+			gPublishLangTitle = GetString(modKey..".name")
+			gPublishLangDesc = GetString(modKey..".description")
+			LoadLanguageTable(orgIndex)
+			name = gPublishLangTitle
+			description = gPublishLangDesc
+			gPublishLangIndex = selectIndex
+		end
+
+		UiPush()
+			UiTranslate(gap, 120)
 			UiPush()
-				UiFont("bold.ttf", 48)
-				UiColor(1, 1, 1)
-				UiAlign("center")
-				UiTranslate(UiCenter(), 60)
-				UiText("loc@UI_TEXT_PUBLISH_MOD")
-			UiPop()
-			
-			UiPush()
-				UiTranslate(50, 100)
-				local mw = 335
-				local mh = mw
-				local id = GetString("mods.publish.id")
-				local modKey = "mods.available."..gModSelected
-				local name = GetString(modKey..".name")
-				local author = GetString(modKey..".author")
-				local tags = GetString(modKey..".tags")
-				local description = GetString(modKey..".description")
-				local previewPath = "RAW:"..GetString(modKey..".path").."/preview.jpg"
-				if not HasFile(previewPath) then previewPath = "RAW:"..GetString(modKey..".path").."/preview.png" end
-				local hasPreview = HasFile(previewPath)
-				local missingInfo = false
-				UiPush()
-					UiTranslate((w-100-mw)/2, 0)
-					UiPush()
-						UiColor(1, 1, 1, 0.05)
-						UiRect(mw, mh)
-					UiPop()
-					if hasPreview then
-						local pw, ph = UiGetImageSize(previewPath)
-						local scale = math.min(mw/pw, mh/ph)
-						UiPush()
-							UiTranslate(mw/2, mh/2)
-							UiAlign("center middle")
-							UiColor(1, 1, 1)
-							UiScale(scale)
-							UiImage(previewPath)
-						UiPop()
-					else
-						UiPush()
-							UiFont("regular.ttf", 20)
-							UiTranslate(mw/2, mh/2)
-							UiColor(1, 0.2, 0.2)
-							UiAlign("center middle")
-							UiText("loc@UI_TEXT_NO_PREVIEW", true)
-						UiPop()
-					end
-				UiPop()
-				UiTranslate(0, 400)
-				UiFont("bold.ttf", 32)
-				UiAlign("left")
+				UiWordWrap(descW)
+				UiFont("bold.ttf", 40)
+				UiAlign("left top")
 				if name ~= "" then UiText(name) else
 					UiColor(1, 0.2, 0.2)
 					UiText("loc@UI_TEXT_NAME_NOT")
@@ -2164,7 +2159,7 @@ function drawCreate()
 					missingInfo = true
 				end
 
-				UiTranslate(0, 20)
+				UiTranslate(0, 90)
 				UiFont("regular.ttf", 20)
 
 				if id ~= "0" then UiText(locLangStrWorkshopID..id, true) end
@@ -2174,20 +2169,17 @@ function drawCreate()
 					UiColor(1, 1, 1)
 					missingInfo = true
 				end
-
-				UiAlign("left top")
 				if tags ~= "" then
-					UiTranslate(0, -16)
-					UiWindow(mw, 22, true)
+					UiWindow(descW, 22, true)
 					UiText(locLangStrModTags..tags, true)
 					UiTranslate(0, 16)
 				end
-				UiWordWrap(mw)
+
 				UiFont("regular.ttf", 20)
 				UiColor(.8, .8, .8)
 
 				if description ~= "" then
-					UiWindow(mw, 104, true)
+					UiWindow(descW, 104, true)
 					UiText(description, true)
 				else
 					UiColor(1, 0.2, 0.2)
@@ -2197,89 +2189,184 @@ function drawCreate()
 				end
 			UiPop()
 			UiPush()
-				local state = GetString("mods.publish.state")
-				local canPublish = (state == "ready" or state == "failed")
-				local update = (id ~= "0")
-				local done = (state == "done")
-				local failMessage = GetString("mods.publish.message")
-					
-				if missingInfo then
-					canPublish = false
-					failMessage = "loc@FAILMESSAGE_INCOMPLETE_INFORMATION"
-				elseif not hasPreview then
-					canPublish = false
-					failMessage = "loc@FAILMESSAGE_PREVIEW_IMAGE"
-				end
-
-				UiTranslate(w-50, h-30)
-				UiAlign("bottom right")
-				UiFont("regular.ttf", 24)
-				UiButtonImageBox("ui/common/box-outline-6.png", 6, 6, 1, 1, 1, 0.7)
-
-				if state == "uploading" then
-					if UiTextButton("loc@UI_BUTTON_CANCEL", 200, 40) then Command("mods.publishcancel") end
-					local progress = GetFloat("mods.publish.progress")
-					if progress < 0.1 then progress = 0.1 end
-					if progress > 0.9 then progress = 0.9 end
-					UiTranslate(-600, -40)
-					UiAlign("top left")
-					UiColor(0, 0, 0)
-					UiRect(350, 40)
-					UiColor(1, 1, 1)
-					UiTranslate(2, 2)
-					UiRect(346*progress, 36)
-					UiColor(0.5, 0.5, 0.5)
-					UiTranslate(175, 20)
-					UiAlign("center middle")
-					UiText("loc@UI_TEXT_UPLOADING")
+				UiTranslate(w-gap*2-mw, 0)
+				UiPush()
+					UiColor(1, 1, 1, 0.05)
+					UiRect(mw, mh)
+				UiPop()
+				if hasPreview then
+					local pw, ph = UiGetImageSize(previewPath)
+					local scale = math.min(mw/pw, mh/ph)
+					UiPush()
+						UiTranslate(mw/2, mh/2)
+						UiAlign("center middle")
+						UiColor(1, 1, 1)
+						UiScale(scale)
+						UiImage(previewPath)
+					UiPop()
 				else
 					UiPush()
-						if done then
-							if UiTextButton("loc@UI_BUTTON_DONE", 200, 40) then
-								SetValue("gPublishScale", 0, "easein", 0.25)
-								Command("mods.publishend")
-							end				
-						else
-							if not canPublish then
-								UiDisableInput()
-								UiColorFilter(1, 1, 1, 0.3)
-							end
-							local caption = "loc@CAPTION_PUBLISH"
-							if update then caption = "loc@CAPTION_PUBLISH_UPDATE" end
-							local buttonTextLookup = {
-								"loc@UI_BUTTON_PUBLIC",
-								"loc@UI_BUTTON_FRIENDS",
-								"loc@UI_BUTTON_PRIVATE",
-								"loc@UI_BUTTON_UNLISTED"
-							}
-							UiPush()
-								UiAlign("center middle")
-								UiTranslate(-160, -65)
-								UiText("loc@UI_TEXT_VISIBILITY")
-								UiTranslate(55, 5)
-								UiColor(1, 1, 0.7)
-								local val = GetInt("mods.publish.visibility")
-								UiButtonImageBox()
-								UiAlign("left")
-								if val == -1 then elseif UiTextButton(buttonTextLookup[val+1], 200, 40) then SetInt("mods.publish.visibility", (val+1)%4) end
-							UiPop()
-							if UiTextButton(caption, 200, 40) then Command("mods.publishupload") end				
-						end
-					UiPop()
-					if failMessage ~= "" then
-						UiColor(1, 0.2, 0.2)
-						UiTranslate(-600, -20)
-						UiAlign("left middle")
 						UiFont("regular.ttf", 20)
-						UiWordWrap(350)
-						UiText(failMessage)
-					end
+						UiTranslate(mw/2, mh/2)
+						UiColor(1, 0.2, 0.2)
+						UiAlign("center middle")
+						UiText("loc@UI_TEXT_NO_PREVIEW", true)
+					UiPop()
 				end
 			UiPop()
 		UiPop()
-		UiModalEnd()
-	end
-	
+		
+		local state = GetString("mods.publish.state")
+		local canPublish = (state == "ready" or state == "failed")
+		local update = (id ~= "0")
+		local failMessage = GetString("mods.publish.message")
+
+		local buttonW, buttonH, buttonGap = 190, 45, 10
+
+		UiPush()
+			if missingInfo then
+				canPublish = false
+				failMessage = "loc@FAILMESSAGE_INCOMPLETE_INFORMATION"
+			elseif not hasPreview then
+				canPublish = false
+				failMessage = "loc@FAILMESSAGE_PREVIEW_IMAGE"
+			end
+
+			UiAlign("bottom right")
+			UiFont("regular.ttf", 24)
+			UiButtonImageBox("ui/common/box-outline-6.png", 6, 6, 1, 1, 1, 0.7)
+
+			if state == "uploading" then
+				UiPush()
+					UiButtonImageBox("ui/common/box-outline-6.png", 6, 6, 1, 0.55, 0.15, 0.7)
+					UiColor(1, 0.55, 0.15)
+					UiTranslate(w-50, h-30)
+					if UiTextButton("loc@UI_BUTTON_CANCEL", buttonW, buttonH) then Command("mods.publishcancel") end
+				UiPop()
+				local progress = GetFloat("mods.publish.progress")
+				if progress < 0.1 then progress = 0.1 end
+				if progress > 0.9 then progress = 0.9 end
+				UiPush()
+					UiTranslate((w-350)/2, h-30-40)
+					UiAlign("top left")
+					UiColor(0, 0, 0)
+					UiRect(350, 36)
+					UiColor(1, 1, 1)
+					UiTranslate(2, 2)
+					UiRect(346*progress, 32)
+					UiColor(0.5, 0.5, 0.5)
+					UiTranslate(175, 18)
+					UiAlign("center middle")
+					UiText("loc@UI_TEXT_UPLOADING")
+				UiPop()
+			elseif state == "done" then
+				UiPush()
+					UiTranslate(w-50, h-30)
+					if UiTextButton("loc@UI_BUTTON_DONE", buttonW, buttonH) then
+						SetValue("gPublishScale", 0, "easein", 0.25)
+						Command("mods.publishend")
+					end
+				UiPop()			
+			else
+				UiPush()
+					local caption = update and "loc@CAPTION_PUBLISH_UPDATE" or "loc@CAPTION_PUBLISH"
+					local val = GetInt("mods.publish.visibility")
+					local buttonTextLookup = {
+						"loc@UI_BUTTON_PUBLIC",
+						"loc@UI_BUTTON_FRIENDS",
+						"loc@UI_BUTTON_PRIVATE",
+						"loc@UI_BUTTON_UNLISTED"
+					}
+					local indexLookup = {
+						"loc@UI_ENGLISH",
+						"loc@UI_FRENCH",
+						"loc@UI_SPANISH",
+						"loc@UI_ITALIAN",
+						"loc@UI_GERMAN",
+						"loc@UI_SCHINESE",
+						"loc@UI_JAPANESE",
+						"loc@UI_RUSSIAN",
+						"loc@UI_POLISH",
+					}
+
+					UiTranslate(w-50, h-30)
+					if not canPublish then
+						UiDisableInput()
+						UiColorFilter(1, 1, 1, 0.3)
+					end
+
+					if UiTextButton(caption, buttonW, buttonH) then Command("mods.publishupload") end
+
+					UiTranslate(0, -(buttonH+buttonGap))
+					if val == -1 then UiTextButton("loc@NAME_UNKNOWN", buttonW, buttonH) elseif UiTextButton(buttonTextLookup[val+1], buttonW, buttonH) then SetInt("mods.publish.visibility", (val+1)%4) end
+					
+					UiTranslate(0, -150)
+					if UiTextButton(indexLookup[gPublishLangIndex+1], buttonW, buttonH) then gPublishDropdown = not gPublishDropdown end
+					
+					if gPublishDropdown then
+						local dropH, dropGap = 30, 2
+						local dropListH = buttonH+dropH*9+dropGap
+						local close = false
+
+						UiPush()
+							UiModalBegin()
+							UiAlign("center middle")
+							UiTranslate(-buttonW/2, dropListH/2-buttonH)
+							
+							if InputPressed("esc") then gPublishDropdown, close = false, true end
+							if not UiIsMouseInRect(buttonW, dropListH) and InputPressed("lmb") or InputPressed("rmb") then gPublishDropdown, close = false, true end
+
+							UiColor(0.25, 0.25, 0.25, 0.875)
+							UiImageBox("ui/common/box-solid-6.png", buttonW, dropListH, 6, 6)
+							UiPush()
+								UiTranslate(0, (buttonH-dropListH)/2)
+								UiColor(1, 1, 1, 1)
+								UiButtonImageBox("", 0, 0)
+								if UiTextButton(indexLookup[gPublishLangIndex+1]) and not close then gPublishDropdown = not gPublishDropdown end
+								UiTranslate(0, buttonH/2-1)
+								UiColor(1, 1, 1, 0.7)
+								UiRect(buttonW-4, 1)
+							UiPop()
+							UiColor(1, 1, 1, 0.7)
+							UiImageBox("ui/common/box-outline-6.png", buttonW, dropListH, 6, 6)
+
+							UiColor(1, 1, 1, 1)
+							UiTranslate(0, buttonH-dropListH/2+dropH/2)
+
+							for i=0, 8 do
+								local rectW = buttonW-2*dropGap
+								UiPush()
+									UiButtonImageBox("ui/common/box-2.png", 0, 0, 0, 0, 0, 0)
+									if i%2 == 0 then UiButtonImageBox("ui/common/box-2.png", 1, 1, 0.5, 0.5, 0.5, 0.125) end
+									if UiTextButton(indexLookup[i+1], buttonW-dropGap*2, dropH) and not close then
+										gPublishDropdown = false
+										gPublishLangReload = true
+										gPublishLangIndex = i
+									end
+								UiPop()
+								UiTranslate(0, dropH)
+							end
+						UiPop()
+					end
+				UiPop()
+				UiPush()
+					if failMessage ~= "" then
+						UiColor(1, 0.2, 0.2)
+						UiTranslate(w/2, h-30-40)
+						UiAlign("center middle")
+						UiFont("regular.ttf", 20)
+						UiWordWrap(370)
+						UiText(failMessage)
+					end
+				UiPop()
+			end
+		UiPop()
+	UiPop()
+	UiModalEnd()
+	return true
+end
+
+function drawPopElements()
 	-- context menu
 	if contextMenu.Show then
 		if contextMenu.GetMousePos then
@@ -2308,27 +2395,15 @@ function drawCreate()
 
 	-- last selected mod
 	if prevSelectMod ~= gModSelected and gModSelected ~= "" then SetString(nodes.Settings..".rememberlast.last", gModSelected) prevSelectMod = gModSelected end
-
-	return open
 end
+
 
 ModManager = {}
 ModManager.Window = Ui.Window
 {
 	w = 1920,
 	h = 1080,
-	animator = { playTime = 0.25 },
-
-	onDraw = 		function(self)
-		UiPush()
-			UiModalBegin()
-			-- if tonumber(InputLastPressedKey()) then LoadLanguageTable(InputLastPressedKey()) end
-			if not drawCreate() then resetAllWindows() end
-			UiModalEnd()
-		UiPop()
-	end,
-
-	onCreate = 		function(self) initLoc() end,
+	animator = { playTime = 0.2 },
 
 	onPreDraw = 	function(self)
 		if not self.animator.isFinished then UiIgnoreNavigation() end
@@ -2336,12 +2411,24 @@ ModManager.Window = Ui.Window
 		UiSetCursorState(UI_CURSOR_SHOW)
 	end,
 
+	onDraw = 		function(self)
+		local menuOpen = false
+		UiPush()
+			-- if tonumber(InputLastPressedKey()) then LoadLanguageTable(InputLastPressedKey()) end
+			menuOpen = drawCreate()
+			drawPopElements()
+			drawLargePreview(gLargePreview > 0)
+			menuOpen = drawPublish(gPublishScale > 0) or menuOpen
+			if not menuOpen then self:hide() end
+		UiPop()
+	end,
+
+	onCreate = 		function(self) initLoc() end,
+
 	onShow = 		function(self)
 		self:refresh()
-		updateMods()
-		updateCollections()
 		initSelect = true
-		ModManager.WindowAnimation.duration = 0.25
+		ModManager.WindowAnimation.duration = 0.2
 		ModManager.WindowAnimation:init(self)
 	end,
 
@@ -2349,21 +2436,22 @@ ModManager.Window = Ui.Window
 
 	onRestore = 	function(self)
 		self:refresh()
-		updateMods()
-		updateCollections()
 		initSelect = true
 		ModManager.WindowAnimation.duration = 0.0
 		ModManager.WindowAnimation:init(self)
 	end,
 
 	onClose = 		function(self)
-		ModManager.WindowAnimation.duration = 0.25
+		ModManager.WindowAnimation.duration = 0.2
 		ModManager.WindowAnimation:init(self)
-		ModManager.WindowAnimation:close(self)
 		SetString("dev.modmanager.selectedmod", "")
 	end,
 
-	refresh = 		function(self) Command("mods.refresh") end
+	refresh = 		function(self)
+		Command("mods.refresh")
+		updateMods()
+		updateCollections()
+	end
 }
 
 
@@ -2383,11 +2471,6 @@ ModManager.WindowAnimation =
 	play = 		function(self)
 		self:reset()
 		SetValueInTable(self, "progress", 1, self.curve, self.duration)
-	end,
-
-	close = 	function(self)
-		self:reset()
-		SetValueInTable(self, "progress", 0, self.curve, self.duration)
 	end,
 
 	reset = 	function(self)
