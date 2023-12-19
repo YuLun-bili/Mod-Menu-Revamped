@@ -400,7 +400,7 @@ collectionPop = false
 newList = {}
 prevSelectMod = ""
 initSelect = true
-menuVer = "v1.4.1"
+menuVer = "v1.4.2"
 
 webLinks = {
 	gameModding = "https://www.teardowngame.com/modding",
@@ -2457,13 +2457,13 @@ ModManager.Window = Ui.Window
 
 ModManager.WindowAnimation = 
 {
-	duration = 0.25,
+	duration = 0.2,
 	curve = "cosine",
 	progress = 0.0,
 
 
 	init = 		function(self, window)
-		self.duration = 0.25
+		self.duration = 0.2
 		self.curve = "cosine"
 		self.progress = 0.0
 	end,
