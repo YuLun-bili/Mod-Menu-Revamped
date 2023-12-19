@@ -2457,13 +2457,13 @@ ModManager.Window = Ui.Window
 
 ModManager.WindowAnimation = 
 {
-	duration = 0.25,
+	duration = 0.2,
 	curve = "cosine",
 	progress = 0.0,
 
 
 	init = 		function(self, window)
-		self.duration = 0.25
+		self.duration = 0.2
 		self.curve = "cosine"
 		self.progress = 0.0
 	end,
