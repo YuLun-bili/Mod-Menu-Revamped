@@ -400,10 +400,9 @@ collectionPop = false
 newList = {}
 prevSelectMod = ""
 initSelect = true
-menuVer = "v1.4.2"
+menuVer = "v1.4.3"
 
 webLinks = {
-	gameModding = "https://www.teardowngame.com/modding",
 	projectGithub = "https://github.com/YuLun-bili/Mod-Menu-Revamped",
 	projectCrowdin = "https://crowdin.com/project/yulun-td-mmre"
 }
@@ -1426,9 +1425,6 @@ function drawCreate()
 					UiColor(0.8, 0.8, 0.8)
 					UiWordWrap(780)
 					UiText("loc@UI_TEXT_CREATE_YOUR", true)
-					UiFont("bold.ttf", 22)
-					UiColor(0.95, 0.8, 0.5)
-					if UiTextButton("www.teardowngame.com/modding") then Command("game.openurl", webLinks.gameModding) end
 				UiPop()
 			else
 				local boxSize = 36
