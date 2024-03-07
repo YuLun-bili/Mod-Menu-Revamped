@@ -424,6 +424,18 @@ category = {
 	}
 }
 
+tooltip = {
+	x = 0,
+	y = 0,
+	text = "",
+	mode = 1	-- 1: full, 2: partial
+}
+
+tooltipHoverId = ""
+tooltipPrevId = ""
+tooltipTimer = 0
+tooltipCooldown = 0
+
 -- Yes-No popup
 yesNoPopPopup = {
 	show	= false,
@@ -992,12 +1004,14 @@ function listMods(list, w, h, issubscribedlist, noRmb)
 		UiColor(0.95, 0.95, 0.95, 1)
 		local listStart = math.floor(1-list.pos or 1)
 		for i=listStart, math.min(totalVal, listStart+listingVal) do
+			local mouseOverThisMod = false
+			local id = list.items[i].id
 			UiPush()
 				UiTranslate(10, -18)
 				UiColor(0, 0, 0, 0)
-				local id = list.items[i].id
 				if gModSelected == id then UiColor(1, 1, 1, 0.1) end
-				if mouseOver and UiIsMouseInRect(228, 22) then
+				if mouseOver and UiIsMouseInRect(w-20, 22) then
+					mouseOverThisMod = true
 					UiColor(0, 0, 0, 0.1)
 					if InputPressed("lmb") and gModSelected ~= id then
 						UiSound("terminal/message-select.ogg")
@@ -1033,7 +1047,13 @@ function listMods(list, w, h, issubscribedlist, noRmb)
 			UiPush()
 				UiTranslate(10, 0)
 				if issubscribedlist and list.items[i].showbold then UiFont("bold.ttf", 20) end
-				UiText(list.items[i].name)
+				local modName = list.items[i].name
+				local nameLength = UiText(modName)
+				if mouseOverThisMod and nameLength > w-20 then
+					tooltipHoverId = id
+					local curX, curY = UiGetCursorPos()
+					tooltip = {x = curX, y = curY, text = modName, mode = 2}
+				end
 			UiPop()
 			UiTranslate(0, 22)
 		end
@@ -1116,7 +1136,7 @@ function listCollections(list, w, h)
 				UiTranslate(20, -18)
 				UiColor(0, 0, 0, 0)
 				if gCollectionSelected == i then UiColor(1, 1, 1, 0.1) end
-				if mouseOver and UiIsMouseInRect(228, 22) then
+				if mouseOver and UiIsMouseInRect(w-30, 22) then
 					UiColor(0, 0, 0, 0.1)
 					if InputPressed("lmb") and gCollectionSelected ~= i then
 						UiSound("terminal/message-select.ogg")
@@ -1242,12 +1262,14 @@ function listCollectionMods(mainList, w, h, selected)
 		UiColor(0.95, 0.95, 0.95, 1)
 		local listStart = math.floor(1-gCollectionList.pos or 1)
 		for i=listStart, math.min(totalVal, listStart+listingVal) do
+			local mouseOverThisMod = false
+			local id = list.items[i].id
 			UiPush()
 				UiTranslate(10, -18)
 				UiColor(0, 0, 0, 0)
-				local id = list.items[i].id
 				if gModSelected == id then UiColor(1, 1, 1, 0.1) end
-				if mouseOver and UiIsMouseInRect(228, 22) then
+				if mouseOver and UiIsMouseInRect(w-20, 22) then
+					mouseOverThisMod = true
 					UiColor(0, 0, 0, 0.1)
 					if InputPressed("lmb") and gModSelected ~= id then
 						UiSound("terminal/message-select.ogg")
@@ -1283,7 +1305,13 @@ function listCollectionMods(mainList, w, h, selected)
 			end
 			UiPush()
 				UiTranslate(10, 0)
-				UiText(list.items[i].name)
+				local modName = list.items[i].name
+				local nameLength = UiText(modName)
+				if mouseOverThisMod and nameLength > w-20 then
+					tooltipHoverId = tostring(selected).."-"..id
+					local curX, curY = UiGetCursorPos()
+					tooltip = {x = curX, y = curY, text = modName, mode = 2}
+				end
 			UiPop()
 			UiTranslate(0, 22)
 		end
@@ -1792,7 +1820,6 @@ function drawCreate()
 					local modButtonH = 40
 					local modButtonT = 50
 					-- redesign (webpages)
-					-- damn you saber for spending so long only to failed in implmenting UiButtonTextHandling() mode 1
 
 					-- edit/copy, details, publish
 					UiPush()
@@ -2443,12 +2470,64 @@ ModManager.Window = Ui.Window
 		local menuOpen = false
 		UiPush()
 			-- if tonumber(InputLastPressedKey()) then LoadLanguageTable(InputLastPressedKey()) end
+			-- UiPush()
+			-- 	UiColor(1, 1, 1)
+			-- 	UiAlign("top left")
+			-- 	UiFont("bold.ttf", 24)
+			-- 	UiButtonTextHandling(math.floor((GetTime()/10)%5))
+			-- 	UiButtonImageBox("ui/common/box-outline-6.png", 6, 6)
+			-- 	UiTextButton("euvngpQOE7RNTV[], 4Y N8WENF PUGNVFPasiudfgvblafgb poadnh UA asduk  fbmasovn, opt_h", 60, 30)
+			-- 	UiTranslate(0, 40)
+			-- 	UiText(math.floor((GetTime()/10)%5))
+			-- UiPop()
+			-- damn you saber for spending so long only to failed in implmenting UiButtonTextHandling() mode 1 & 3
 			menuOpen = drawCreate()
 			drawPopElements()
 			drawLargePreview(gLargePreview > 0)
 			menuOpen = drawPublish(gPublishScale > 0) or menuOpen
 			if not menuOpen then self:hide() end
 		UiPop()
+	end,
+
+	onPostDraw =	function(self)
+		UiPush()
+			if tooltipHoverId == "" then
+				if tooltipPrevId ~= "" then
+					tooltipCooldown = 1
+					SetValue("tooltipCooldown", 0, "linear", 1)
+				end
+				tooltipPrevId = tooltipHoverId
+				tooltipTimer = 0
+				tooltip = {x = 0, y = 0, text = "", mode = 1}
+				return
+			end
+			local maxTimer = tooltipCooldown > 0.001 and 0.25 or 1
+			if tooltipPrevId ~= tooltipHoverId then
+				tooltipTimer = 0
+				tooltipCooldown = 1
+				SetValue("tooltipCooldown", 0, "linear", 1)
+			end
+			tooltipTimer = tooltipTimer + GetTimeStep()
+			tooltipPrevId = tooltipHoverId
+			if tooltipTimer < maxTimer then return end
+			if tooltip.mode == 1 then
+			elseif tooltip.mode == 2 then
+				UiAlign("left")
+				UiTranslate(tooltip.x, tooltip.y)
+				UiFont("regular.ttf", 22)
+				local txw = UiMeasureText(0, tooltip.text)
+				UiPush()
+					UiTranslate(txw-175, -18)
+					UiColor(0.375, 0.375, 0.375)
+					UiImageBox("ui/common/hgradient-right-64.png", 100, 22, 0, 0)
+					UiTranslate(100, 0)
+					UiRect(80, 22)
+				UiPop()
+				UiColor(0.95, 0.95, 0.95)
+				UiText(tooltip.text)
+			end
+		UiPop()
+		tooltipHoverId = ""
 	end,
 
 	onCreate = 		function(self) initLoc() end,
