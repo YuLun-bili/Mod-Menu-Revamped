@@ -335,5 +335,16 @@ locLangLookup = {
 		"Subscribed",
 		"Подписанные",
 		"Subskrybowane",
+	},
+	modSavegameSpace =	{
+		"Savegame Space: ",
+		"Savegame Space: ",
+		"Savegame Space: ",
+		"Savegame Space: ",
+		"Savegame Space: ",
+		"存档空间：",
+		"Savegame Space: ",
+		"Savegame Space: ",
+		"Savegame Space: ",
 	}
 }

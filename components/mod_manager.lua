@@ -37,6 +37,7 @@ function locLangReset()
 	locLang.filterModeAlphabet =	"Alphabetical"
 	locLang.filterModeUpdate =		"Updated"
 	locLang.filterModeSubscribe =	"Subscribed"
+	locLang.modSavegameSpace =		"Savegame Space: "
 end
 
 function updateLocLangStr()
@@ -1293,6 +1294,31 @@ function listCollectionMods(mainList, w, h, selected)
 	return ret, rmb_pushed
 end
 
+function getNodeBytes(keyNode, indentLevel)
+	local totalBytes = 0
+	for _, nextNode in ipairs(ListKeys(keyNode)) do
+		repeat
+			local nextKeyNode = keyNode.."."..nextNode
+			local nextIndent = indentLevel + 1
+			local nodeNameBytes = #nextNode
+			local nodeValueBytes = #GetString(nextKeyNode)
+			if #ListKeys(nextKeyNode) > 0 then
+				totalBytes = totalBytes + getNodeBytes(nextKeyNode, nextIndent)
+				totalBytes = totalBytes + nextIndent*2 + nodeNameBytes*2 + 7 + (nodeValueBytes > 0 and (9+nodeValueBytes) or 0)
+				break
+			end
+			totalBytes = totalBytes + nextIndent + nodeNameBytes + 4 + (nodeValueBytes > 0 and (9+nodeValueBytes) or 0)
+		until true
+	end
+	return totalBytes
+end
+
+function getSavegameNodeBytes(modNode)
+	local fullKeyNode = "savegame.mod."..modNode
+	local modNodeValueBytes = #GetString(fullKeyNode)
+	return getNodeBytes(fullKeyNode, 3) + 3*2 + #modNode*2 + 7 + (modNodeValueBytes > 0 and (9+modNodeValueBytes) or 0)
+end
+
 function drawFilter(filter, sort, order, isWorkshop)
 	local button1w = 120
 	local button2w = 184
@@ -1689,67 +1715,73 @@ function drawCreate()
 							UiTranslate(poW+30, 0)
 							UiWindow(textWmax, poH, true)
 
-							if author ~= "" then
-								UiText(locLangStrAuthor)
-								UiAlign("top left")
-								UiTranslate(68, 0)
-								local countDist = 0
-								for i, auth in ipairs(authorList) do
-									UiWordWrap(textWmax-68)
-									local authW, authH = UiGetTextSize(auth)
-									local transX, transY = authW+authGap, 0
-									if authH > 26 then
-										if countDist > 0 then UiTranslate(-countDist, 24) end
-										countDist = 0
-										transX, transY = 0, authH
-									elseif countDist + authW+authGap > textWmax-68 then
-										UiTranslate(-countDist, 24)
-										countDist = 0
-										transX = authW+authGap
+							UiPush()
+								if author ~= "" then
+									UiText(locLangStrAuthor)
+									UiAlign("top left")
+									UiTranslate(68, 0)
+									local countDist = 0
+									for i, auth in ipairs(authorList) do
+										UiWordWrap(textWmax-68)
+										local authW, authH = UiGetTextSize(auth)
+										local transX, transY = authW+authGap, 0
+										if authH > 26 then
+											if countDist > 0 then UiTranslate(-countDist, 24) end
+											countDist = 0
+											transX, transY = 0, authH
+										elseif countDist + authW+authGap > textWmax-68 then
+											UiTranslate(-countDist, 24)
+											countDist = 0
+											transX = authW+authGap
+										end
+										UiTextButton(auth)
+										UiTranslate(transX, transY)
+										countDist = countDist + transX
 									end
-									UiTextButton(auth)
-									UiTranslate(transX, transY)
-									countDist = countDist + transX
+									UiTranslate(-68-countDist, 24)
 								end
-								UiTranslate(-68-countDist, 24)
-							end
-							if tags ~= "" then
-								UiText("loc@UI_TEXT_TAGS", true)
-								UiTranslate(0, 4)
-								UiButtonImageBox("ui/common/box-outline-4.png", 8, 8, 1, 1, 1, 0.7)
-								UiButtonHoverColor(1, 1, 1)
-								UiButtonPressColor(1, 1, 1)
-								UiButtonPressDist(0)
-								local countDist = 0
-								for i, tag in ipairs(tagList) do
-									local tagW, tagH = UiGetTextSize(tag)
-									if countDist + tagW+24 > textWmax then
-										UiTranslate(-countDist, 26)
-										countDist = 0
+								if tags ~= "" then
+									UiText("loc@UI_TEXT_TAGS", true)
+									UiTranslate(0, 4)
+									UiButtonImageBox("ui/common/box-outline-4.png", 8, 8, 1, 1, 1, 0.7)
+									UiButtonHoverColor(1, 1, 1)
+									UiButtonPressColor(1, 1, 1)
+									UiButtonPressDist(0)
+									local countDist = 0
+									for i, tag in ipairs(tagList) do
+										local tagW, tagH = UiGetTextSize(tag)
+										if countDist + tagW+24 > textWmax then
+											UiTranslate(-countDist, 26)
+											countDist = 0
+										end
+										UiTextButton(tag, tagW+6, 24)
+										UiTranslate(tagW+24)
+										countDist = countDist + tagW+24
 									end
-									UiTextButton(tag, tagW+6, 24)
-									UiTranslate(tagW+24)
-									countDist = countDist + tagW+24
 								end
-							end
+							UiPop()
+
+							UiPush()
+								UiTranslate(0, poH-8)
+								UiFont("regular.ttf", 16)
+								UiColor(0.75, 0.75, 0.75)
+								if HasKey("savegame.mod."..gModSelected) then
+									UiTranslate(0, -22)
+									UiText(string.format("%s%d B", locLang.modSavegameSpace, getSavegameNodeBytes(gModSelected)))
+								end
+								if timestamp ~= "" then
+									UiTranslate(0, -22)
+									UiText(locLangStrUpdateAt..timestamp)
+								end
+							UiPop()
 						UiPop()
 						UiTranslate(0, poH+16)
 
-						UiWindow(mainW-30*3-buttonW, 240, true)
+						UiWindow(mainW-30*3-buttonW, mainH-poH-16*2-40-20, true)
 						UiWordWrap(mainW-30*3-buttonW-5)
 						UiFont("regular.ttf", 20)
 						UiColor(.9, .9, .9)
 						UiText(description)
-					UiPop()
-
-					UiPush()
-						UiColor(1, 1, 1, 1)
-						UiFont("regular.ttf", 16)
-						UiTranslate(30, mainH - 24)
-						if timestamp ~= "" then
-							UiColor(0.5, 0.5, 0.5)
-							UiText(locLangStrUpdateAt..timestamp, true)
-						end
 					UiPop()
 
 					UiColor(1, 1, 1)
