@@ -73,7 +73,6 @@ function updateLocLangStr()
 			}
 		}
 		optionSettings = {
-			{locLang.setting1,	"showpath.1",	"bool"},
 			{locLang.setting2,	"showpath.2", 	"bool"},
 			{locLang.setting3,	"startcategory","int", 	3},
 			{locLang.setting4,	"rememberlast",	"bool", 0, locLang.setting4ex}
@@ -409,7 +408,6 @@ webLinks = {
 }
 
 initSettings = {
-	["showpath.1"] = {"bool", false},
 	["showpath.2"] = {"bool", false},
 	["startcategory"] = {"int", 0},
 	["rememberlast"] = {"bool", false}
@@ -435,6 +433,7 @@ tooltipHoverId = ""
 tooltipPrevId = ""
 tooltipTimer = 0
 tooltipCooldown = 0
+tooltipDisable = false
 
 -- Yes-No popup
 yesNoPopPopup = {
@@ -562,6 +561,7 @@ function initModMenuSettings()
 			if setVal[1] == "int" then SetInt(settingNode, setVal[2]) end
 		until true
 	end
+	ClearKey(nodes.Settings..".showpath.1") -- built-in, removed
 	SetString(nodes.Settings, menuVer)
 end
 
@@ -920,20 +920,16 @@ end
 
 function browseOperation(value, pageSize, listMax)
 	local wheelValue = InputValue("mousewheel")
+	tooltipDisable = false
 	if wheelValue ~= 0 then
+		tooltipDisable = true
 		value = value + wheelValue*(InputDown("shift") and 10 or 1)
 	else
-		local press = 0
-		if InputPressed("pgup") then press = press + 1 end
-		if InputPressed("pgdown") then press = press - 1 end
-		value = value + press*pageSize
-		press = 0
-		if InputPressed("home") then press = press + 1 end
-		if InputPressed("end") then press = press - 1 end
+		value = value + ((InputPressed("pgup") and 1 or 0) - (InputPressed("pgdown") and 1 or 0))*pageSize
+		local press = InputValue("home") - InputValue("end")
 		value = ((press == 1) and 0) or ((press == -1) and -listMax) or value
 	end
-	if value > 0 then value = 0 end
-	return value
+	return math.min(value, 0)
 end
 
 function listMods(list, w, h, issubscribedlist, noRmb)
@@ -1680,7 +1676,6 @@ function drawCreate()
 					local description = GetString(modKey..".description")
 					local timestamp = GetString(modKey..".timestamp")
 					local modPath = GetString(modKey..".path")
-					if modCategory == 1 then modPath = GetString("game.path").."/"..modPath end
 					local previewPath = "RAW:"..modPath.."/preview.jpg"
 					if not HasFile(previewPath) then previewPath = "RAW:"..modPath.."/preview.png" end
 					local hasPreview = HasFile(previewPath)
@@ -2509,6 +2504,11 @@ ModManager.Window = Ui.Window
 			end
 			tooltipTimer = tooltipTimer + GetTimeStep()
 			tooltipPrevId = tooltipHoverId
+			if tooltipDisable then
+				tooltipTimer = 0
+				tooltip = {x = 0, y = 0, text = "", mode = 1}
+				return
+			end
 			if tooltipTimer < maxTimer then return end
 			if tooltip.mode == 1 then
 			elseif tooltip.mode == 2 then
