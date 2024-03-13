@@ -548,7 +548,7 @@ function selectMod(mod)
 	if mod ~= "" then
 		Command("mods.updateselecttime", gModSelected)
 		Command("game.selectmod", gModSelected)
-		SetString("dev.modmanager.selectedmod", gModSelected)
+		SetString("mods.modmanager.selectedmod", gModSelected)
 	end
 end
 
@@ -2539,7 +2539,7 @@ ModManager.Window = Ui.Window
 		ModManager.WindowAnimation:init(self)
 	end,
 
-	canRestore = 	function(self) return GetString("dev.modmanager.selectedmod") ~= "" end,
+	canRestore = 	function(self) return GetString("mods.modmanager.selectedmod") ~= "" end,
 
 	onRestore = 	function(self)
 		self:refresh()
@@ -2551,7 +2551,7 @@ ModManager.Window = Ui.Window
 	onClose = 		function(self)
 		ModManager.WindowAnimation.duration = 0.2
 		ModManager.WindowAnimation:init(self)
-		SetString("dev.modmanager.selectedmod", "")
+		SetString("mods.modmanager.selectedmod", "")
 	end,
 
 	refresh = 		function(self)
