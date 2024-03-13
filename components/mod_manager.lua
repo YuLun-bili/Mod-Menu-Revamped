@@ -548,7 +548,7 @@ function selectMod(mod)
 	if mod ~= "" then
 		Command("mods.updateselecttime", gModSelected)
 		Command("game.selectmod", gModSelected)
-		SetString("dev.modmanager.selectedmodmod", gModSelected)
+		SetString("dev.modmanager.selectedmod", gModSelected)
 	end
 end
 
