@@ -7,37 +7,40 @@
 
 function locLangReset()
 	locLang = locLang or {}
-	locLang.INDEX =					0
-	locLang.new = 					"New"
-	locLang.rename = 				"Rename"
-	locLang.duplicate = 			"Duplicate"
-	locLang.delete = 				"Delete"
-	locLang.enableAll = 			"Enable all"
-	locLang.disableAll = 			"Disable all"
-	locLang.modsRefreshed = 		"Mods Refreshed"
-	locLang.renameCol = 			"[rename]"
-	locLang.searchMod = 			"[search mod]"
-	locLang.newCol = 				"[new collection]"
-	locLang.collection = 			"Collection"
-	locLang.delColConfirm = 		"Are you sure you want to delete this collection?"
-	locLang.disableModsColAsk = 	"Do you want to disable all unlisted mods at the same time?"
-	locLang.applyCol = 				"Apply collection"
-	locLang.disuseCol = 			"Disuse collection"
-	locLang.errorColShort = 		"Name too short, min 3 charactors"
-	locLang.errorColLong = 			"Name too long, max 20 charactors"
-	locLang.settings = 				"Settings"
-	locLang.setting1 = 				"Built-in mod path"
-	locLang.setting2 = 				"Workshop mod path"
-	locLang.setting3 = 				"Initial category"
-	locLang.setting4 = 				"Remember last selected mod"
-	locLang.setting4ex = 			"overwrite previous"
-	locLang.cateLocalShort =		"Local"
-	locLang.cateWorkshopShort =		"Workshop"
-	locLang.cateBuiltInShort =		"Built-in"
-	locLang.filterModeAlphabet =	"Alphabetical"
-	locLang.filterModeUpdate =		"Updated"
-	locLang.filterModeSubscribe =	"Subscribed"
-	locLang.modSavegameSpace =		"Savegame Space: "
+	locLang.INDEX =						0
+	locLang.new = 						"New"
+	locLang.rename = 					"Rename"
+	locLang.duplicate = 				"Duplicate"
+	locLang.delete = 					"Delete"
+	locLang.enableAll = 				"Enable all"
+	locLang.disableAll = 				"Disable all"
+	locLang.modsRefreshed = 			"Mods Refreshed"
+	locLang.renameCol = 				"[rename]"
+	locLang.searchMod = 				"[search mod]"
+	locLang.newCol = 					"[new collection]"
+	locLang.collection = 				"Collection"
+	locLang.delColConfirm = 			"Are you sure you want to delete this collection?"
+	locLang.disableModsColAsk = 		"Do you want to disable all unlisted mods at the same time?"
+	locLang.applyCol = 					"Apply collection"
+	locLang.disuseCol = 				"Disuse collection"
+	locLang.errorColShort = 			"Name too short, min 3 charactors"
+	locLang.errorColLong = 				"Name too long, max 20 charactors"
+	locLang.settings = 					"Settings"
+	locLang.setting1 = 					"Built-in mod path"
+	locLang.setting2 = 					"Workshop mod path"
+	locLang.setting3 = 					"Initial category"
+	locLang.setting4 = 					"Remember last selected mod"
+	locLang.setting4ex = 				"overwrite previous"
+	locLang.cateLocalShort =			"Local"
+	locLang.cateWorkshopShort =			"Workshop"
+	locLang.cateBuiltInShort =			"Built-in"
+	locLang.filterModeAlphabet =		"Alphabetical"
+	locLang.filterModeUpdate =			"Updated"
+	locLang.filterModeSubscribe =		"Subscribed"
+	locLang.modSavegameSpace =			"Savegame Space: "
+	locLang.clearModData =				"This mod occupied %d B in savegame file. Do you want to clear it?"
+	locLang.clearUnknownData =			"Unknown mods (e.g.: deleted) occupied %d B in savegame file in total. Do you want to clear them?"
+	locLang.tooltipClearUnknownData =	"Clean-up unknown savegame data"
 end
 
 function updateLocLangStr()
@@ -435,7 +438,7 @@ tooltipTimer = 0
 tooltipCooldown = 0
 tooltipDisable = false
 
--- Yes-No popup
+
 yesNoPopPopup = {
 	show	= false,
 	yes		= false,
@@ -459,10 +462,11 @@ end
 function yesNoPop()
 	local clicked = false
 	UiModalBegin()
+	UiBlur(0.5)
 	UiPush()
-		local w = yesNoPopPopup.no_fn and 530 or 500
-		local h = 160
-		UiTranslate(UiCenter()-w/2, UiMiddle()-85)
+		local w = yesNoPopPopup.no_fn and 560 or 510
+		local h = 240
+		UiTranslate(UiCenter()-w/2, UiMiddle()-h/2)
 		UiAlign("top left")
 		UiWindow(w, h)
 		UiColor(0.2, 0.2, 0.2)
@@ -479,54 +483,62 @@ function yesNoPop()
 		UiColor(1, 1, 1, 1)
 		UiTranslate(16, 16)
 		UiPush()
-			UiAlign("top center")
-			UiTranslate(w/2-16, 20)
-			UiFont("regular.ttf", 22)
+			UiAlign("middle center")
+			UiTranslate(w/2-16, 75)
+			UiFont("regular.ttf", 28)
 			UiColor(1, 1, 1)
+			UiWordWrap(w-80)
 			UiText(yesNoPopPopup.text)
 		UiPop()
 		
 		UiButtonImageBox("common/box-outline-6.png", 6, 6, 1, 1, 1)
-		UiTranslate(77, 70)
+		UiTranslate(0, h-100)
 		if yesNoPopPopup.no_fn then
-			UiTranslate(15, 0)
+			local buttonW = 130
+			local buttonGap = 35
+			UiTranslate((w-16*2-buttonW*3-buttonGap*2)/2, 0)
 			UiPush()
 				UiColor(0.6, 0.3, 0.2)
-				UiImageBox("common/box-solid-6.png", 80, 40, 6, 6)
-				UiTranslate(80+35, 0)
+				UiImageBox("common/box-solid-6.png", buttonW, 40, 6, 6)
+				UiTranslate(buttonW+buttonGap, 0)
 				UiColor(0.35, 0.5, 0.2)
-				UiImageBox("common/box-solid-6.png", 80, 40, 6, 6)
+				UiImageBox("common/box-solid-6.png", buttonW, 40, 6, 6)
 			UiPop()
-		else
-			UiColor(0.6, 0.2, 0.2)
-			UiImageBox("common/box-solid-6.png", 140, 40, 6, 6)
-		end
-		UiFont("regular.ttf", 26)
-		UiColor(1, 1, 1, 1)
-		if yesNoPopPopup.no_fn then
-			if UiTextButton("loc@UI_BUTTON_YES", 80, 40) then
+
+			UiFont("regular.ttf", 26)
+			UiColor(1, 1, 1, 1)
+
+			if UiTextButton("loc@UI_BUTTON_YES", buttonW, 40) then
 				yesNoPopPopup.yes = true
 				clicked = true
 			end
 
-			UiTranslate(80+35, 0)
-			if UiTextButton("loc@UI_BUTTON_NO", 80, 40) then
+			UiTranslate(buttonW+buttonGap, 0)
+			if UiTextButton("loc@UI_BUTTON_NO", buttonW, 40) then
 				yesNoPopPopup.no = true
 				clicked = true
 			end
 
-			UiTranslate(80+35, 0)
-			if UiTextButton("loc@UI_BUTTON_CANCEL", 80, 40) then
+			UiTranslate(buttonW+buttonGap, 0)
+			if UiTextButton("loc@UI_BUTTON_CANCEL", buttonW, 40) then
 				clicked = true
 			end
 		else
-			if UiTextButton("loc@UI_BUTTON_YES", 140, 40) then
+			local buttonW = 140
+			local buttonGap = 40
+			UiTranslate((w-16*2-buttonW*2-buttonGap)/2, 0)
+			UiColor(0.6, 0.2, 0.2)
+			UiImageBox("common/box-solid-6.png", buttonW, 40, 6, 6)
+			UiFont("regular.ttf", 26)
+			UiColor(1, 1, 1, 1)
+
+			if UiTextButton("loc@UI_BUTTON_YES", buttonW, 40) then
 				yesNoPopPopup.yes = true
 				clicked = true
 			end
 
-			UiTranslate(170, 0)
-			if UiTextButton("loc@UI_BUTTON_NO", 140, 40) then
+			UiTranslate(buttonW+buttonGap, 0)
+			if UiTextButton("loc@UI_BUTTON_NO", buttonW, 40) then
 				yesNoPopPopup.no = true
 				clicked = true
 			end
@@ -534,6 +546,12 @@ function yesNoPop()
 	UiPop()
 	UiModalEnd()
 	return clicked
+end
+
+function clearModsSavegameData()
+	for _, modKey in ipairs(yesNoPopPopup.item) do
+		ClearKey("savegame.mod."..modKey)
+	end
 end
 
 function strSplit(str, splitAt)
@@ -1456,10 +1474,44 @@ function drawCreate()
 					end
 				UiPop()
 				UiPush()
-					UiTranslate(30, 136)
-					UiFont("bold.ttf", 25)
-					if gShowSetting then UiColor(0.95, 0.8, 0.5) end
-					if UiTextButton(locLang.settings) then gShowSetting = not gShowSetting end
+					UiTranslate(0, 136)
+					UiPush()
+						UiTranslate(30, 0)
+						UiFont("bold.ttf", 25)
+						if gShowSetting then UiColor(0.95, 0.8, 0.5) end
+						if UiTextButton(locLang.settings) then gShowSetting = not gShowSetting end
+					UiPop()
+					UiPush()
+						UiTranslate(listW, 1)
+						UiAlign("top right")
+						UiButtonHoverColor(1, 0.15, 0.15)
+						UiButtonPressColor(0.85, 0.12, 0.12)
+						UiButtonPressDist(0.25)
+						UiPush()
+							UiScale(0.32)
+							if UiIsMouseInRect(64, 64) then
+								tooltipHoverId = "clearUnknownData"
+								local mouX, mouY = UiGetMousePos()
+								tooltip = {x = mouX, y = mouY, text = locLang.tooltipClearUnknownData, mode = 1}
+							end
+							if UiImageButton("ui/components/mod_manager_img/trash-solid.png") then
+								local unknownList = {}
+								local unknownIndex = 1
+								local unknownData = 0
+								local allSavedModData = ListKeys("savegame.mod")
+								local totalVal = #allSavedModData
+								for i=1, totalVal do
+									local currCheckMod = allSavedModData[i]
+									if not HasKey("mods.available."..currCheckMod) then
+										unknownList[unknownIndex] = currCheckMod
+										unknownIndex = unknownIndex + 1
+										unknownData = unknownData + getSavegameNodeBytes(currCheckMod)
+									end
+								end
+								yesNoPopInit(string.format(locLang.clearUnknownData, unknownData), unknownList, clearModsSavegameData)
+							end
+						UiPop()
+					UiPop()
 				UiPop()
 				UiTranslate(listW+30, 40)
 				UiColor(0.8, 0.8, 0.8, 0.75)
@@ -1787,10 +1839,20 @@ function drawCreate()
 							UiPush()
 								UiTranslate(0, poH-8)
 								UiFont("regular.ttf", 16)
-								UiColor(0.75, 0.75, 0.75)
+								UiColor(0.9, 0.9, 0.9)
 								if HasKey("savegame.mod."..gModSelected) then
 									UiTranslate(0, -22)
-									UiText(string.format("%s%d B", locLang.modSavegameSpace, getSavegameNodeBytes(gModSelected)))
+									local modSavegameBytes = getSavegameNodeBytes(gModSelected)
+									UiButtonHoverColor(0.75, 0.75, 0.3)
+									UiButtonPressColor(0.75, 0.75, 0.75)
+									UiButtonPressDist(0.1)
+									UiPush()
+										UiTranslate(-10, 0)
+										if UiTextButton(string.format("%s%d B", locLang.modSavegameSpace, modSavegameBytes)) then
+											local function clearModSavegameData() ClearKey("savegame.mod."..gModSelected) end
+											yesNoPopInit(string.format(locLang.clearModData, modSavegameBytes), "", clearModSavegameData)
+										end
+									UiPop()
 								end
 								if timestamp ~= "" then
 									UiTranslate(0, -22)
@@ -2464,7 +2526,7 @@ ModManager.Window = Ui.Window
 	onDraw = 		function(self)
 		local menuOpen = false
 		UiPush()
-			-- if tonumber(InputLastPressedKey()) then LoadLanguageTable(InputLastPressedKey()) end
+			if tonumber(InputLastPressedKey()) then LoadLanguageTable(InputLastPressedKey()) end
 			-- UiPush()
 			-- 	UiColor(1, 1, 1)
 			-- 	UiAlign("top left")
@@ -2485,6 +2547,7 @@ ModManager.Window = Ui.Window
 	end,
 
 	onPostDraw =	function(self)
+		if tonumber(InputLastPressedKey()) then LoadLanguageTable(InputLastPressedKey()) end
 		UiPush()
 			if tooltipHoverId == "" then
 				if tooltipPrevId ~= "" then
@@ -2511,6 +2574,16 @@ ModManager.Window = Ui.Window
 			end
 			if tooltipTimer < maxTimer then return end
 			if tooltip.mode == 1 then
+				local mouX, mouY = UiGetMousePos()
+				UiAlign("top left")
+				UiTranslate(mouX, mouY+16)
+				UiFont("regular.ttf", 20)
+				local txw, txh = UiMeasureText(0, tooltip.text)
+				UiColor(0.125, 0.125, 0.125)
+				UiImageBox("ui/common/box-solid-4.png", txw+8, txh+8, 4, 4)
+				UiColor(0.95, 0.95, 0.95)
+				UiTranslate(4, 4)
+				UiText(tooltip.text)
 			elseif tooltip.mode == 2 then
 				UiAlign("left")
 				UiTranslate(tooltip.x, tooltip.y)
