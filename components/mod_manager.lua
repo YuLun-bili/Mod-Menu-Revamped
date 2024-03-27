@@ -7,36 +7,41 @@
 
 function locLangReset()
 	locLang = locLang or {}
-	locLang.INDEX =					0
-	locLang.new = 					"New"
-	locLang.rename = 				"Rename"
-	locLang.duplicate = 			"Duplicate"
-	locLang.delete = 				"Delete"
-	locLang.enableAll = 			"Enable all"
-	locLang.disableAll = 			"Disable all"
-	locLang.modsRefreshed = 		"Mods Refreshed"
-	locLang.renameCol = 			"[rename]"
-	locLang.searchMod = 			"[search mod]"
-	locLang.newCol = 				"[new collection]"
-	locLang.collection = 			"Collection"
-	locLang.delColConfirm = 		"Are you sure you want to delete this collection?"
-	locLang.disableModsColAsk = 	"Do you want to disable all unlisted mods at the same time?"
-	locLang.applyCol = 				"Apply collection"
-	locLang.disuseCol = 			"Disuse collection"
-	locLang.errorColShort = 		"Name too short, min 3 charactors"
-	locLang.errorColLong = 			"Name too long, max 20 charactors"
-	locLang.settings = 				"Settings"
-	locLang.setting1 = 				"Built-in mod path"
-	locLang.setting2 = 				"Workshop mod path"
-	locLang.setting3 = 				"Initial category"
-	locLang.setting4 = 				"Remember last selected mod"
-	locLang.setting4ex = 			"overwrite previous"
-	locLang.cateLocalShort =		"Local"
-	locLang.cateWorkshopShort =		"Workshop"
-	locLang.cateBuiltInShort =		"Built-in"
-	locLang.filterModeAlphabet =	"Alphabetical"
-	locLang.filterModeUpdate =		"Updated"
-	locLang.filterModeSubscribe =	"Subscribed"
+	locLang.INDEX =						0
+	locLang.new = 						"New"
+	locLang.rename = 					"Rename"
+	locLang.duplicate = 				"Duplicate"
+	locLang.delete = 					"Delete"
+	locLang.enableAll = 				"Enable all"
+	locLang.disableAll = 				"Disable all"
+	locLang.modsRefreshed = 			"Mods Refreshed"
+	locLang.renameCol = 				"[rename]"
+	locLang.searchMod = 				"[search mod]"
+	locLang.newCol = 					"[new collection]"
+	locLang.collection = 				"Collection"
+	locLang.delColConfirm = 			"Are you sure you want to delete this collection?"
+	locLang.disableModsColAsk = 		"Do you want to disable all unlisted mods at the same time?"
+	locLang.applyCol = 					"Apply collection"
+	locLang.disuseCol = 				"Disuse collection"
+	locLang.errorColShort = 			"Name too short, min 3 charactors"
+	locLang.errorColLong = 				"Name too long, max 20 charactors"
+	locLang.settings = 					"Settings"
+	locLang.setting1 = 					"Built-in mod path"
+	locLang.setting2 = 					"Workshop mod path"
+	locLang.setting3 = 					"Initial category"
+	locLang.setting4 = 					"Remember last selected mod"
+	locLang.setting4ex = 				"overwrite previous"
+	locLang.cateLocalShort =			"Local"
+	locLang.cateWorkshopShort =			"Workshop"
+	locLang.cateBuiltInShort =			"Built-in"
+	locLang.filterModeAlphabet =		"Alphabetical"
+	locLang.filterModeUpdate =			"Updated"
+	locLang.filterModeSubscribe =		"Subscribed"
+	locLang.modSavegameSpace =			"Savegame Space: "
+	locLang.clearModData =				"This mod occupied %d B in savegame file. Do you want to clear it?"
+	locLang.clearUnknownData =			"Unknown mods (e.g.: deleted) occupied %d B in savegame file in total. Do you want to clear them?"
+	locLang.tooltipClearUnknownData =	"Clean-up unknown savegame data"
+	locLang.tooltipChooseRandomMod =	"Select a random mod from \"%s\" list"
 end
 
 function updateLocLangStr()
@@ -72,7 +77,6 @@ function updateLocLangStr()
 			}
 		}
 		optionSettings = {
-			{locLang.setting1,	"showpath.1",	"bool"},
 			{locLang.setting2,	"showpath.2", 	"bool"},
 			{locLang.setting3,	"startcategory","int", 	3},
 			{locLang.setting4,	"rememberlast",	"bool", 0, locLang.setting4ex}
@@ -400,16 +404,14 @@ collectionPop = false
 newList = {}
 prevSelectMod = ""
 initSelect = true
-menuVer = "v1.4.2"
+menuVer = "v1.4.3"
 
 webLinks = {
-	gameModding = "https://www.teardowngame.com/modding",
 	projectGithub = "https://github.com/YuLun-bili/Mod-Menu-Revamped",
 	projectCrowdin = "https://crowdin.com/project/yulun-td-mmre"
 }
 
 initSettings = {
-	["showpath.1"] = {"bool", false},
 	["showpath.2"] = {"bool", false},
 	["startcategory"] = {"int", 0},
 	["rememberlast"] = {"bool", false}
@@ -424,7 +426,20 @@ category = {
 	}
 }
 
--- Yes-No popup
+tooltip = {
+	x = 0,
+	y = 0,
+	text = "",
+	mode = 1	-- 1: full, 2: partial
+}
+
+tooltipHoverId = ""
+tooltipPrevId = ""
+tooltipTimer = 0
+tooltipCooldown = 0
+tooltipDisable = false
+
+
 yesNoPopPopup = {
 	show	= false,
 	yes		= false,
@@ -448,10 +463,11 @@ end
 function yesNoPop()
 	local clicked = false
 	UiModalBegin()
+	UiBlur(0.5)
 	UiPush()
-		local w = yesNoPopPopup.no_fn and 530 or 500
-		local h = 160
-		UiTranslate(UiCenter()-w/2, UiMiddle()-85)
+		local w = yesNoPopPopup.no_fn and 560 or 510
+		local h = 240
+		UiTranslate(UiCenter()-w/2, UiMiddle()-h/2)
 		UiAlign("top left")
 		UiWindow(w, h)
 		UiColor(0.2, 0.2, 0.2)
@@ -468,54 +484,62 @@ function yesNoPop()
 		UiColor(1, 1, 1, 1)
 		UiTranslate(16, 16)
 		UiPush()
-			UiAlign("top center")
-			UiTranslate(w/2-16, 20)
-			UiFont("regular.ttf", 22)
+			UiAlign("middle center")
+			UiTranslate(w/2-16, 75)
+			UiFont("regular.ttf", 28)
 			UiColor(1, 1, 1)
+			UiWordWrap(w-80)
 			UiText(yesNoPopPopup.text)
 		UiPop()
 		
 		UiButtonImageBox("common/box-outline-6.png", 6, 6, 1, 1, 1)
-		UiTranslate(77, 70)
+		UiTranslate(0, h-100)
 		if yesNoPopPopup.no_fn then
-			UiTranslate(15, 0)
+			local buttonW = 130
+			local buttonGap = 35
+			UiTranslate((w-16*2-buttonW*3-buttonGap*2)/2, 0)
 			UiPush()
 				UiColor(0.6, 0.3, 0.2)
-				UiImageBox("common/box-solid-6.png", 80, 40, 6, 6)
-				UiTranslate(80+35, 0)
+				UiImageBox("common/box-solid-6.png", buttonW, 40, 6, 6)
+				UiTranslate(buttonW+buttonGap, 0)
 				UiColor(0.35, 0.5, 0.2)
-				UiImageBox("common/box-solid-6.png", 80, 40, 6, 6)
+				UiImageBox("common/box-solid-6.png", buttonW, 40, 6, 6)
 			UiPop()
-		else
-			UiColor(0.6, 0.2, 0.2)
-			UiImageBox("common/box-solid-6.png", 140, 40, 6, 6)
-		end
-		UiFont("regular.ttf", 26)
-		UiColor(1, 1, 1, 1)
-		if yesNoPopPopup.no_fn then
-			if UiTextButton("loc@UI_BUTTON_YES", 80, 40) then
+
+			UiFont("regular.ttf", 26)
+			UiColor(1, 1, 1, 1)
+
+			if UiTextButton("loc@UI_BUTTON_YES", buttonW, 40) then
 				yesNoPopPopup.yes = true
 				clicked = true
 			end
 
-			UiTranslate(80+35, 0)
-			if UiTextButton("loc@UI_BUTTON_NO", 80, 40) then
+			UiTranslate(buttonW+buttonGap, 0)
+			if UiTextButton("loc@UI_BUTTON_NO", buttonW, 40) then
 				yesNoPopPopup.no = true
 				clicked = true
 			end
 
-			UiTranslate(80+35, 0)
-			if UiTextButton("loc@UI_BUTTON_CANCEL", 80, 40) then
+			UiTranslate(buttonW+buttonGap, 0)
+			if UiTextButton("loc@UI_BUTTON_CANCEL", buttonW, 40) then
 				clicked = true
 			end
 		else
-			if UiTextButton("loc@UI_BUTTON_YES", 140, 40) then
+			local buttonW = 140
+			local buttonGap = 40
+			UiTranslate((w-16*2-buttonW*2-buttonGap)/2, 0)
+			UiColor(0.6, 0.2, 0.2)
+			UiImageBox("common/box-solid-6.png", buttonW, 40, 6, 6)
+			UiFont("regular.ttf", 26)
+			UiColor(1, 1, 1, 1)
+
+			if UiTextButton("loc@UI_BUTTON_YES", buttonW, 40) then
 				yesNoPopPopup.yes = true
 				clicked = true
 			end
 
-			UiTranslate(170, 0)
-			if UiTextButton("loc@UI_BUTTON_NO", 140, 40) then
+			UiTranslate(buttonW+buttonGap, 0)
+			if UiTextButton("loc@UI_BUTTON_NO", buttonW, 40) then
 				yesNoPopPopup.no = true
 				clicked = true
 			end
@@ -523,6 +547,12 @@ function yesNoPop()
 	UiPop()
 	UiModalEnd()
 	return clicked
+end
+
+function clearModsSavegameData()
+	for _, modKey in ipairs(yesNoPopPopup.item) do
+		ClearKey("savegame.mod."..modKey)
+	end
 end
 
 function strSplit(str, splitAt)
@@ -536,7 +566,7 @@ function selectMod(mod)
 	if mod ~= "" then
 		Command("mods.updateselecttime", gModSelected)
 		Command("game.selectmod", gModSelected)
-		SetString("dev.modmanager.selectedmodmod", gModSelected)
+		SetString("mods.modmanager.selectedmod", gModSelected)
 	end
 end
 
@@ -550,6 +580,7 @@ function initModMenuSettings()
 			if setVal[1] == "int" then SetInt(settingNode, setVal[2]) end
 		until true
 	end
+	ClearKey(nodes.Settings..".showpath.1") -- built-in, removed
 	SetString(nodes.Settings, menuVer)
 end
 
@@ -573,6 +604,7 @@ function initLoc()
 	RegisterListenerTo("LanguageChanged", "updateMods")
 	RegisterListenerTo("LanguageChanged", "updateCollections")
 	RegisterListenerTo("LanguageChanged", "collectionReset")
+	math.randomseed(GetInt("savegame.stats.totalplaytime")+GetInt("savegame.stats.brokenvoxels"))
 
 	gMods = gMods or {}
 	for i=1, 3 do
@@ -633,6 +665,9 @@ function initLoc()
 	
 	gRefreshFade = 0
 	gShowSetting = false
+
+	recentRndList = {}
+	recentRndListLookup = {}
 end
 
 function updateMods()
@@ -908,20 +943,16 @@ end
 
 function browseOperation(value, pageSize, listMax)
 	local wheelValue = InputValue("mousewheel")
+	tooltipDisable = false
 	if wheelValue ~= 0 then
+		tooltipDisable = true
 		value = value + wheelValue*(InputDown("shift") and 10 or 1)
 	else
-		local press = 0
-		if InputPressed("pgup") then press = press + 1 end
-		if InputPressed("pgdown") then press = press - 1 end
-		value = value + press*pageSize
-		press = 0
-		if InputPressed("home") then press = press + 1 end
-		if InputPressed("end") then press = press - 1 end
+		value = value + ((InputPressed("pgup") and 1 or 0) - (InputPressed("pgdown") and 1 or 0))*pageSize
+		local press = InputValue("home") - InputValue("end")
 		value = ((press == 1) and 0) or ((press == -1) and -listMax) or value
 	end
-	if value > 0 then value = 0 end
-	return value
+	return math.min(value, 0)
 end
 
 function listMods(list, w, h, issubscribedlist, noRmb)
@@ -992,12 +1023,14 @@ function listMods(list, w, h, issubscribedlist, noRmb)
 		UiColor(0.95, 0.95, 0.95, 1)
 		local listStart = math.floor(1-list.pos or 1)
 		for i=listStart, math.min(totalVal, listStart+listingVal) do
+			local mouseOverThisMod = false
+			local id = list.items[i].id
 			UiPush()
 				UiTranslate(10, -18)
 				UiColor(0, 0, 0, 0)
-				local id = list.items[i].id
 				if gModSelected == id then UiColor(1, 1, 1, 0.1) end
-				if mouseOver and UiIsMouseInRect(228, 22) then
+				if mouseOver and UiIsMouseInRect(w-20, 22) then
+					mouseOverThisMod = true
 					UiColor(0, 0, 0, 0.1)
 					if InputPressed("lmb") and gModSelected ~= id then
 						UiSound("terminal/message-select.ogg")
@@ -1033,7 +1066,13 @@ function listMods(list, w, h, issubscribedlist, noRmb)
 			UiPush()
 				UiTranslate(10, 0)
 				if issubscribedlist and list.items[i].showbold then UiFont("bold.ttf", 20) end
-				UiText(list.items[i].name)
+				local modName = list.items[i].name
+				local nameLength = UiText(modName)
+				if mouseOverThisMod and nameLength > w-20 then
+					tooltipHoverId = id
+					local curX, curY = UiGetCursorPos()
+					tooltip = {x = curX, y = curY, text = modName, mode = 2}
+				end
 			UiPop()
 			UiTranslate(0, 22)
 		end
@@ -1116,7 +1155,7 @@ function listCollections(list, w, h)
 				UiTranslate(20, -18)
 				UiColor(0, 0, 0, 0)
 				if gCollectionSelected == i then UiColor(1, 1, 1, 0.1) end
-				if mouseOver and UiIsMouseInRect(228, 22) then
+				if mouseOver and UiIsMouseInRect(w-30, 22) then
 					UiColor(0, 0, 0, 0.1)
 					if InputPressed("lmb") and gCollectionSelected ~= i then
 						UiSound("terminal/message-select.ogg")
@@ -1242,12 +1281,14 @@ function listCollectionMods(mainList, w, h, selected)
 		UiColor(0.95, 0.95, 0.95, 1)
 		local listStart = math.floor(1-gCollectionList.pos or 1)
 		for i=listStart, math.min(totalVal, listStart+listingVal) do
+			local mouseOverThisMod = false
+			local id = list.items[i].id
 			UiPush()
 				UiTranslate(10, -18)
 				UiColor(0, 0, 0, 0)
-				local id = list.items[i].id
 				if gModSelected == id then UiColor(1, 1, 1, 0.1) end
-				if mouseOver and UiIsMouseInRect(228, 22) then
+				if mouseOver and UiIsMouseInRect(w-20, 22) then
+					mouseOverThisMod = true
 					UiColor(0, 0, 0, 0.1)
 					if InputPressed("lmb") and gModSelected ~= id then
 						UiSound("terminal/message-select.ogg")
@@ -1283,7 +1324,13 @@ function listCollectionMods(mainList, w, h, selected)
 			end
 			UiPush()
 				UiTranslate(10, 0)
-				UiText(list.items[i].name)
+				local modName = list.items[i].name
+				local nameLength = UiText(modName)
+				if mouseOverThisMod and nameLength > w-20 then
+					tooltipHoverId = tostring(selected).."-"..id
+					local curX, curY = UiGetCursorPos()
+					tooltip = {x = curX, y = curY, text = modName, mode = 2}
+				end
 			UiPop()
 			UiTranslate(0, 22)
 		end
@@ -1292,6 +1339,31 @@ function listCollectionMods(mainList, w, h, selected)
 
 	if needUpdate then updateCollections(true) updateMods() updateSearch() end
 	return ret, rmb_pushed
+end
+
+function getNodeBytes(keyNode, indentLevel)
+	local totalBytes = 0
+	for _, nextNode in ipairs(ListKeys(keyNode)) do
+		repeat
+			local nextKeyNode = keyNode.."."..nextNode
+			local nextIndent = indentLevel + 1
+			local nodeNameBytes = #nextNode
+			local nodeValueBytes = #GetString(nextKeyNode)
+			if #ListKeys(nextKeyNode) > 0 then
+				totalBytes = totalBytes + getNodeBytes(nextKeyNode, nextIndent)
+				totalBytes = totalBytes + nextIndent*2 + nodeNameBytes*2 + 7 + (nodeValueBytes > 0 and (9+nodeValueBytes) or 0)
+				break
+			end
+			totalBytes = totalBytes + nextIndent + nodeNameBytes + 4 + (nodeValueBytes > 0 and (9+nodeValueBytes) or 0)
+		until true
+	end
+	return totalBytes
+end
+
+function getSavegameNodeBytes(modNode)
+	local fullKeyNode = "savegame.mod."..modNode
+	local modNodeValueBytes = #GetString(fullKeyNode)
+	return getNodeBytes(fullKeyNode, 3) + 3*2 + #modNode*2 + 7 + (modNodeValueBytes > 0 and (9+modNodeValueBytes) or 0)
 end
 
 function drawFilter(filter, sort, order, isWorkshop)
@@ -1407,10 +1479,75 @@ function drawCreate()
 					end
 				UiPop()
 				UiPush()
-					UiTranslate(30, 136)
-					UiFont("bold.ttf", 25)
-					if gShowSetting then UiColor(0.95, 0.8, 0.5) end
-					if UiTextButton(locLang.settings) then gShowSetting = not gShowSetting end
+					UiTranslate(0, 136)
+					UiPush()
+						UiTranslate(30, 0)
+						UiFont("bold.ttf", 25)
+						if gShowSetting then UiColor(0.95, 0.8, 0.5) end
+						if UiTextButton(locLang.settings) then gShowSetting = not gShowSetting end
+					UiPop()
+					UiPush()
+						UiTranslate(listW, 1)
+						UiAlign("top right")
+						UiButtonPressDist(0.25)
+						UiPush()
+							UiButtonHoverColor(1, 0.15, 0.15)
+							UiButtonPressColor(0.85, 0.12, 0.12)
+							UiScale(0.32)
+							if UiIsMouseInRect(64, 64) then
+								tooltipHoverId = "clearUnknownData"
+								local mouX, mouY = UiGetMousePos()
+								tooltip = {x = mouX, y = mouY, text = locLang.tooltipClearUnknownData, mode = 1}
+							end
+							if UiImageButton("ui/components/mod_manager_img/trash-solid.png") then
+								local unknownList = {}
+								local unknownIndex = 1
+								local unknownData = 0
+								local allSavedModData = ListKeys("savegame.mod")
+								local totalVal = #allSavedModData
+								for i=1, totalVal do
+									local currCheckMod = allSavedModData[i]
+									if not HasKey("mods.available."..currCheckMod) then
+										unknownList[unknownIndex] = currCheckMod
+										unknownIndex = unknownIndex + 1
+										unknownData = unknownData + getSavegameNodeBytes(currCheckMod)
+									end
+								end
+								yesNoPopInit(string.format(locLang.clearUnknownData, unknownData), unknownList, clearModsSavegameData)
+							end
+						UiPop()
+						UiTranslate(-30, 0)
+						UiPush()
+							UiButtonHoverColor(0.75, 1, 0.75)
+							UiButtonPressColor(0.45, 0.95, 0.45)
+							UiScale(0.32)
+							if UiIsMouseInRect(64, 64) then
+								tooltipHoverId = "chooseRandomMod"
+								local mouX, mouY = UiGetMousePos()
+								local tooltipStr = string.format(locLang.tooltipChooseRandomMod, locLang.cateWorkshopShort)
+								tooltip = {x = mouX, y = mouY, text = tooltipStr, mode = 1}
+							end
+							if UiImageButton("ui/components/mod_manager_img/dice.png") then
+								local totalModCount = #gMods[2].items
+								local rndModIndex, rndModId = 0, ""
+								local protectCounter = 0
+								repeat
+									rndModIndex = math.random(1, totalModCount)
+									rndModId = gMods[2].items[rndModIndex].id
+									protectCounter = protectCounter + 1
+								until not recentRndListLookup[rndModId] or protectCounter > 100
+								if protectCounter > 100 then DebugWatch("name", math.random()) end
+								selectMod(rndModId)
+								gMods[2].pos = 5-rndModIndex
+								table.insert(recentRndList, 1, rndModId)
+								recentRndListLookup[rndModId] = true
+								local maxIndex = math.floor(totalModCount*2/3+1)
+								local removedId = recentRndList[maxIndex]
+								table.remove(recentRndList, maxIndex)
+								if removedId then recentRndListLookup[removedId] = nil end
+							end
+						UiPop()
+					UiPop()
 				UiPop()
 				UiTranslate(listW+30, 40)
 				UiColor(0.8, 0.8, 0.8, 0.75)
@@ -1426,9 +1563,6 @@ function drawCreate()
 					UiColor(0.8, 0.8, 0.8)
 					UiWordWrap(780)
 					UiText("loc@UI_TEXT_CREATE_YOUR", true)
-					UiFont("bold.ttf", 22)
-					UiColor(0.95, 0.8, 0.5)
-					if UiTextButton("www.teardowngame.com/modding") then Command("game.openurl", webLinks.gameModding) end
 				UiPop()
 			else
 				local boxSize = 36
@@ -1630,7 +1764,6 @@ function drawCreate()
 					local description = GetString(modKey..".description")
 					local timestamp = GetString(modKey..".timestamp")
 					local modPath = GetString(modKey..".path")
-					if modCategory == 1 then modPath = GetString("game.path").."/"..modPath end
 					local previewPath = "RAW:"..modPath.."/preview.jpg"
 					if not HasFile(previewPath) then previewPath = "RAW:"..modPath.."/preview.png" end
 					local hasPreview = HasFile(previewPath)
@@ -1693,67 +1826,83 @@ function drawCreate()
 							UiTranslate(poW+30, 0)
 							UiWindow(textWmax, poH, true)
 
-							if author ~= "" then
-								UiText(locLangStrAuthor)
-								UiAlign("top left")
-								UiTranslate(68, 0)
-								local countDist = 0
-								for i, auth in ipairs(authorList) do
-									UiWordWrap(textWmax-68)
-									local authW, authH = UiGetTextSize(auth)
-									local transX, transY = authW+authGap, 0
-									if authH > 26 then
-										if countDist > 0 then UiTranslate(-countDist, 24) end
-										countDist = 0
-										transX, transY = 0, authH
-									elseif countDist + authW+authGap > textWmax-68 then
-										UiTranslate(-countDist, 24)
-										countDist = 0
-										transX = authW+authGap
+							UiPush()
+								if author ~= "" then
+									UiText(locLangStrAuthor)
+									UiAlign("top left")
+									UiTranslate(68, 0)
+									local countDist = 0
+									for i, auth in ipairs(authorList) do
+										UiWordWrap(textWmax-68)
+										local authW, authH = UiGetTextSize(auth)
+										local transX, transY = authW+authGap, 0
+										if authH > 26 then
+											if countDist > 0 then UiTranslate(-countDist, 24) end
+											countDist = 0
+											transX, transY = 0, authH
+										elseif countDist + authW+authGap > textWmax-68 then
+											UiTranslate(-countDist, 24)
+											countDist = 0
+											transX = authW+authGap
+										end
+										UiTextButton(auth)
+										UiTranslate(transX, transY)
+										countDist = countDist + transX
 									end
-									UiTextButton(auth)
-									UiTranslate(transX, transY)
-									countDist = countDist + transX
+									UiTranslate(-68-countDist, 24)
 								end
-								UiTranslate(-68-countDist, 24)
-							end
-							if tags ~= "" then
-								UiText("loc@UI_TEXT_TAGS", true)
-								UiTranslate(0, 4)
-								UiButtonImageBox("ui/common/box-outline-4.png", 8, 8, 1, 1, 1, 0.7)
-								UiButtonHoverColor(1, 1, 1)
-								UiButtonPressColor(1, 1, 1)
-								UiButtonPressDist(0)
-								local countDist = 0
-								for i, tag in ipairs(tagList) do
-									local tagW, tagH = UiGetTextSize(tag)
-									if countDist + tagW+24 > textWmax then
-										UiTranslate(-countDist, 26)
-										countDist = 0
+								if tags ~= "" then
+									UiText("loc@UI_TEXT_TAGS", true)
+									UiTranslate(0, 4)
+									UiButtonImageBox("ui/common/box-outline-4.png", 8, 8, 1, 1, 1, 0.7)
+									UiButtonHoverColor(1, 1, 1)
+									UiButtonPressColor(1, 1, 1)
+									UiButtonPressDist(0)
+									local countDist = 0
+									for i, tag in ipairs(tagList) do
+										local tagW, tagH = UiGetTextSize(tag)
+										if countDist + tagW+24 > textWmax then
+											UiTranslate(-countDist, 26)
+											countDist = 0
+										end
+										UiTextButton(tag, tagW+6, 24)
+										UiTranslate(tagW+24)
+										countDist = countDist + tagW+24
 									end
-									UiTextButton(tag, tagW+6, 24)
-									UiTranslate(tagW+24)
-									countDist = countDist + tagW+24
 								end
-							end
+							UiPop()
+
+							UiPush()
+								UiTranslate(0, poH-8)
+								UiFont("regular.ttf", 16)
+								UiColor(0.9, 0.9, 0.9)
+								if HasKey("savegame.mod."..gModSelected) then
+									UiTranslate(0, -22)
+									local modSavegameBytes = getSavegameNodeBytes(gModSelected)
+									UiButtonHoverColor(0.75, 0.75, 0.3)
+									UiButtonPressColor(0.75, 0.75, 0.75)
+									UiButtonPressDist(0.1)
+									UiPush()
+										UiTranslate(-10, 0)
+										if UiTextButton(string.format("%s%d B", locLang.modSavegameSpace, modSavegameBytes)) then
+											local function clearModSavegameData() ClearKey("savegame.mod."..gModSelected) end
+											yesNoPopInit(string.format(locLang.clearModData, modSavegameBytes), "", clearModSavegameData)
+										end
+									UiPop()
+								end
+								if timestamp ~= "" then
+									UiTranslate(0, -22)
+									UiText(locLangStrUpdateAt..timestamp)
+								end
+							UiPop()
 						UiPop()
 						UiTranslate(0, poH+16)
 
-						UiWindow(mainW-30*3-buttonW, 240, true)
+						UiWindow(mainW-30*3-buttonW, mainH-poH-16*2-40-20, true)
 						UiWordWrap(mainW-30*3-buttonW-5)
 						UiFont("regular.ttf", 20)
 						UiColor(.9, .9, .9)
 						UiText(description)
-					UiPop()
-
-					UiPush()
-						UiColor(1, 1, 1, 1)
-						UiFont("regular.ttf", 16)
-						UiTranslate(30, mainH - 24)
-						if timestamp ~= "" then
-							UiColor(0.5, 0.5, 0.5)
-							UiText(locLangStrUpdateAt..timestamp, true)
-						end
 					UiPop()
 
 					UiColor(1, 1, 1)
@@ -1764,7 +1913,6 @@ function drawCreate()
 					local modButtonH = 40
 					local modButtonT = 50
 					-- redesign (webpages)
-					-- damn you saber for spending so long only to failed in implmenting UiButtonTextHandling() mode 1
 
 					-- edit/copy, details, publish
 					UiPush()
@@ -2414,13 +2562,81 @@ ModManager.Window = Ui.Window
 	onDraw = 		function(self)
 		local menuOpen = false
 		UiPush()
-			-- if tonumber(InputLastPressedKey()) then LoadLanguageTable(InputLastPressedKey()) end
+			if tonumber(InputLastPressedKey()) then LoadLanguageTable(InputLastPressedKey()) end
+			-- UiPush()
+			-- 	UiColor(1, 1, 1)
+			-- 	UiAlign("top left")
+			-- 	UiFont("bold.ttf", 24)
+			-- 	UiButtonTextHandling(math.floor((GetTime()/10)%5))
+			-- 	UiButtonImageBox("ui/common/box-outline-6.png", 6, 6)
+			-- 	UiTextButton("euvngpQOE7RNTV[], 4Y N8WENF PUGNVFPasiudfgvblafgb poadnh UA asduk  fbmasovn, opt_h", 60, 30)
+			-- 	UiTranslate(0, 40)
+			-- 	UiText(math.floor((GetTime()/10)%5))
+			-- UiPop()
+			-- damn you saber for spending so long only to failed in implmenting UiButtonTextHandling() mode 1 & 3
 			menuOpen = drawCreate()
 			drawPopElements()
 			drawLargePreview(gLargePreview > 0)
 			menuOpen = drawPublish(gPublishScale > 0) or menuOpen
 			if not menuOpen then self:hide() end
 		UiPop()
+	end,
+
+	onPostDraw =	function(self)
+		if tonumber(InputLastPressedKey()) then LoadLanguageTable(InputLastPressedKey()) end
+		UiPush()
+			if tooltipHoverId == "" then
+				if tooltipPrevId ~= "" then
+					tooltipCooldown = 1
+					SetValue("tooltipCooldown", 0, "linear", 1)
+				end
+				tooltipPrevId = tooltipHoverId
+				tooltipTimer = 0
+				tooltip = {x = 0, y = 0, text = "", mode = 1}
+				return
+			end
+			local maxTimer = tooltipCooldown > 0.001 and 0.25 or 1
+			if tooltipPrevId ~= tooltipHoverId then
+				tooltipTimer = 0
+				tooltipCooldown = 1
+				SetValue("tooltipCooldown", 0, "linear", 1)
+			end
+			tooltipTimer = tooltipTimer + GetTimeStep()
+			tooltipPrevId = tooltipHoverId
+			if tooltipDisable then
+				tooltipTimer = 0
+				tooltip = {x = 0, y = 0, text = "", mode = 1}
+				return
+			end
+			if tooltipTimer < maxTimer then return end
+			if tooltip.mode == 1 then
+				local mouX, mouY = UiGetMousePos()
+				UiAlign("top left")
+				UiTranslate(mouX, mouY+16)
+				UiFont("regular.ttf", 20)
+				local txw, txh = UiMeasureText(0, tooltip.text)
+				UiColor(0.125, 0.125, 0.125)
+				UiImageBox("ui/common/box-solid-4.png", txw+8, txh+8, 4, 4)
+				UiColor(0.95, 0.95, 0.95)
+				UiTranslate(4, 4)
+				UiText(tooltip.text)
+			elseif tooltip.mode == 2 then
+				UiAlign("left")
+				UiTranslate(tooltip.x, tooltip.y)
+				UiFont("regular.ttf", 22)
+				local txw = UiMeasureText(0, tooltip.text)
+				UiPush()
+					UiTranslate(txw-175, -18)
+					UiColor(0.375, 0.375, 0.375)
+					UiImageBox("ui/common/hgradient-right-64.png", 100, 22, 0, 0)
+					UiTranslate(100, 0)
+					UiRect(80, 22)
+				UiPop()
+				UiColor(0.95, 0.95, 0.95)
+				UiText(tooltip.text)
+			end
+		UiPop()
+		tooltipHoverId = ""
 	end,
 
 	onCreate = 		function(self) initLoc() end,
@@ -2432,7 +2648,7 @@ ModManager.Window = Ui.Window
 		ModManager.WindowAnimation:init(self)
 	end,
 
-	canRestore = 	function(self) return GetString("dev.modmanager.selectedmod") ~= "" end,
+	canRestore = 	function(self) return GetString("mods.modmanager.selectedmod") ~= "" end,
 
 	onRestore = 	function(self)
 		self:refresh()
@@ -2444,7 +2660,7 @@ ModManager.Window = Ui.Window
 	onClose = 		function(self)
 		ModManager.WindowAnimation.duration = 0.2
 		ModManager.WindowAnimation:init(self)
-		SetString("dev.modmanager.selectedmod", "")
+		SetString("mods.modmanager.selectedmod", "")
 	end,
 
 	refresh = 		function(self)
