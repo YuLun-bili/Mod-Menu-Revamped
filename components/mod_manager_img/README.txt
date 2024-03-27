@@ -9,4 +9,7 @@ Following .png icons in same directory are edited from .svg free download icons 
 * pen-to-square-solid.png
 * trash-solid.png
 
-7 March 2024
+Following .png icons in same directory are edited from .png free download icons by various creators labeled in brackets after each icon on Flaticon (https://www.flaticon.com/), licenced under Flaticon License (Terms of use, Chapter Flaticon, Section 8.1. Flaticon License; https://www.freepikcompany.com/legal)
+* dice.png (Icon home)
+
+27 March 2024

@@ -107,7 +107,7 @@ locLangLookup = {
 	},
 	searchMod = 	{
 		"[search mod]",
-		"[search mod]",
+		"[recherche un mod]",
 		"[buscar mod]",
 		"[cerca mod]",
 		"[suche mod]",
@@ -140,7 +140,7 @@ locLangLookup = {
 	},
 	delColConfirm = 	{
 		"Are you sure you want to delete this collection?",
-		"Êtes-vous sûr de vouloir supprimer cette collection?",
+		"Êtes-vous sûr de vouloir supprimer cette collection ?",
 		"¿Estás seguro de querer borrar está colección?",
 		"Sei sicuro di voler eliminare questa collezione?",
 		"Möchten Sie diese Sammlung wirklich löschen?",
@@ -151,7 +151,7 @@ locLangLookup = {
 	},
 	disableModsColAsk = {
 		"Do you want to disable all unlisted mods at the same time?",
-		"Souhaitez-vous désactiver tout les mods non listés en même temps?",
+		"Souhaitez-vous désactiver tout les mods non listés en même temps ?",
 		"¿Quieres desactivar todos los mods no listados al mismo tiempo?",
 		"Vuoi disattivare tutte le mod non elencate allo stesso tempo?",
 		"Möchtest du alle nicht aufgelisteten Mods gleichzeitig deaktivieren?",
@@ -162,7 +162,7 @@ locLangLookup = {
 	},
 	applyCol = 			{
 		"Apply collection",
-		"Apply collection",
+		"Appliquer la collection",
 		"Activar colección",
 		"Applica collezione",
 		"Sammlung anwenden",
@@ -173,7 +173,7 @@ locLangLookup = {
 	},
 	disuseCol = 		{
 		"Disuse collection",
-		"Disuse collection",
+		"Ne plus utiliser la collection",
 		"Desactivar colección",
 		"Disattiva raccolta",
 		"Sammlung deaktivieren",
@@ -184,7 +184,7 @@ locLangLookup = {
 	},
 	errorColShort = 	{
 		"Name too short, min 3 charactors",
-		"Name too short, min 3 charactors",
+		"Nom trop court, 3 caractères minimum",
 		"Nombre demasiado corto, mínimo 3 caracteres",
 		"Nome troppo breve, minimo 3 caratteri",
 		"Name zu kurz, min. 3 Zeichen",
@@ -195,7 +195,7 @@ locLangLookup = {
 	},
 	errorColLong = 		{
 		"Name too long, max 20 charactors",
-		"Name too long, max 20 charactors",
+		"Nom trop long, 20 caractères maximum",
 		"Nombre demasiado largo, máximo 20 caracteres",
 		"Nome troppo lungo, massimo 20 caratteri",
 		"Name zu lang, max. 20 Zeichen",
@@ -217,7 +217,7 @@ locLangLookup = {
 	},
 	setting1 = 			{
 		"Built-in mod path",
-		"Built-in path",
+		"Chemin du mod intégré",
 		"Ruta de mod integrados",
 		"Percorso delle mod integrato",
 		"Integrierter Mod-Pfad",
@@ -228,7 +228,7 @@ locLangLookup = {
 	},
 	setting2 = 			{
 		"Workshop mod path",
-		"Workshop path",
+		"Chemin du mod du workshop",
 		"Ruta de mods del Workshop",
 		"Percorso mod workshop",
 		"Workshop-Mod-Pfad",
@@ -239,7 +239,7 @@ locLangLookup = {
 	},
 	setting3 = 			{
 		"Initial category",
-		"Initial category",
+		"Catégorie initiale",
 		"Categoría inicial",
 		"Categoria iniziale",
 		"Anfangskategorie",
@@ -250,7 +250,7 @@ locLangLookup = {
 	},
 	setting4 = 			{
 		"Remember last selected mod",
-		"Remember last",
+		"Mémoriser le dernier mod sélectionné",
 		"Recordar último mod seleccionado",
 		"Ricorda l'ultima mod selezionata",
 		"Letzten Mod erinnern",
@@ -272,7 +272,7 @@ locLangLookup = {
 	},
 	cateLocalShort =	{
 		"Local",
-		"Local",
+		"Locale",
 		"Local",
 		"Locali",
 		"Lokal",
@@ -294,7 +294,7 @@ locLangLookup = {
 	},
 	cateBuiltInShort =	{
 		"Built-in",
-		"Built-in",
+		"Intégré",
 		"Integrados",
 		"Integrato",
 		"Integriert",
@@ -338,18 +338,18 @@ locLangLookup = {
 	},
 	modSavegameSpace =	{
 		"Savegame Space: ",
-		"Savegame Space: ",
+		"Espace de sauvegarde : ",
 		"Savegame Space: ",
 		"Savegame Space: ",
 		"Savegame Space: ",
 		"存档空间：",
 		"Savegame Space: ",
-		"Savegame Space: ",
+		"Размер Сохранённой Игры: ",
 		"Savegame Space: ",
 	},
 	clearModData =		{
 		"This mod occupied %d B in savegame file. Do you want to clear it?",
-		"This mod occupied %d B in savegame file. Do you want to clear it?",
+		"Ce mod a occupé %d B du fichier de sauvegarde. Voulez-vous le supprimer ?",
 		"This mod occupied %d B in savegame file. Do you want to clear it?",
 		"This mod occupied %d B in savegame file. Do you want to clear it?",
 		"This mod occupied %d B in savegame file. Do you want to clear it?",
@@ -360,7 +360,7 @@ locLangLookup = {
 	},
 	clearUnknownData =		{
 		"Unknown mods (e.g.: deleted) occupied %d B in savegame file in total. Do you want to clear them?",
-		"Unknown mods (e.g.: deleted) occupied %d B in savegame file in total. Do you want to clear them?",
+		"Des mods inconnus (par exemple : supprimés) ont occupé %d B dans le fichier de sauvegarde au total. Voulez-vous les effacer ?",
 		"Unknown mods (e.g.: deleted) occupied %d B in savegame file in total. Do you want to clear them?",
 		"Unknown mods (e.g.: deleted) occupied %d B in savegame file in total. Do you want to clear them?",
 		"Unknown mods (e.g.: deleted) occupied %d B in savegame file in total. Do you want to clear them?",
@@ -379,5 +379,16 @@ locLangLookup = {
 		"Clean-up unknown savegame data",
 		"Clean-up unknown savegame data",
 		"Clean-up unknown savegame data",
+	},
+	tooltipChooseRandomMod ={
+		"Select a random mod from \"%s\" list",
+		"Select a random mod from \"%s\" list",
+		"Select a random mod from \"%s\" list",
+		"Select a random mod from \"%s\" list",
+		"Select a random mod from \"%s\" list",
+		"从“%s”列表中随机选择模组",
+		"Select a random mod from \"%s\" list",
+		"Select a random mod from \"%s\" list",
+		"Select a random mod from \"%s\" list",
 	}
 }

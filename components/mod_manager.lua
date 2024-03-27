@@ -41,6 +41,7 @@ function locLangReset()
 	locLang.clearModData =				"This mod occupied %d B in savegame file. Do you want to clear it?"
 	locLang.clearUnknownData =			"Unknown mods (e.g.: deleted) occupied %d B in savegame file in total. Do you want to clear them?"
 	locLang.tooltipClearUnknownData =	"Clean-up unknown savegame data"
+	locLang.tooltipChooseRandomMod =	"Select a random mod from \"%s\" list"
 end
 
 function updateLocLangStr()
@@ -603,6 +604,7 @@ function initLoc()
 	RegisterListenerTo("LanguageChanged", "updateMods")
 	RegisterListenerTo("LanguageChanged", "updateCollections")
 	RegisterListenerTo("LanguageChanged", "collectionReset")
+	math.randomseed(GetInt("savegame.stats.totalplaytime")+GetInt("savegame.stats.brokenvoxels"))
 
 	gMods = gMods or {}
 	for i=1, 3 do
@@ -663,6 +665,9 @@ function initLoc()
 	
 	gRefreshFade = 0
 	gShowSetting = false
+
+	recentRndList = {}
+	recentRndListLookup = {}
 end
 
 function updateMods()
@@ -1484,10 +1489,10 @@ function drawCreate()
 					UiPush()
 						UiTranslate(listW, 1)
 						UiAlign("top right")
-						UiButtonHoverColor(1, 0.15, 0.15)
-						UiButtonPressColor(0.85, 0.12, 0.12)
 						UiButtonPressDist(0.25)
 						UiPush()
+							UiButtonHoverColor(1, 0.15, 0.15)
+							UiButtonPressColor(0.85, 0.12, 0.12)
 							UiScale(0.32)
 							if UiIsMouseInRect(64, 64) then
 								tooltipHoverId = "clearUnknownData"
@@ -1509,6 +1514,37 @@ function drawCreate()
 									end
 								end
 								yesNoPopInit(string.format(locLang.clearUnknownData, unknownData), unknownList, clearModsSavegameData)
+							end
+						UiPop()
+						UiTranslate(-30, 0)
+						UiPush()
+							UiButtonHoverColor(0.75, 1, 0.75)
+							UiButtonPressColor(0.45, 0.95, 0.45)
+							UiScale(0.32)
+							if UiIsMouseInRect(64, 64) then
+								tooltipHoverId = "chooseRandomMod"
+								local mouX, mouY = UiGetMousePos()
+								local tooltipStr = string.format(locLang.tooltipChooseRandomMod, locLang.cateWorkshopShort)
+								tooltip = {x = mouX, y = mouY, text = tooltipStr, mode = 1}
+							end
+							if UiImageButton("ui/components/mod_manager_img/dice.png") then
+								local totalModCount = #gMods[2].items
+								local rndModIndex, rndModId = 0, ""
+								local protectCounter = 0
+								repeat
+									rndModIndex = math.random(1, totalModCount)
+									rndModId = gMods[2].items[rndModIndex].id
+									protectCounter = protectCounter + 1
+								until not recentRndListLookup[rndModId] or protectCounter > 100
+								if protectCounter > 100 then DebugWatch("name", math.random()) end
+								selectMod(rndModId)
+								gMods[2].pos = 5-rndModIndex
+								table.insert(recentRndList, 1, rndModId)
+								recentRndListLookup[rndModId] = true
+								local maxIndex = math.floor(totalModCount*2/3+1)
+								local removedId = recentRndList[maxIndex]
+								table.remove(recentRndList, maxIndex)
+								if removedId then recentRndListLookup[removedId] = nil end
 							end
 						UiPop()
 					UiPop()
