@@ -2552,11 +2552,11 @@ ModManager.Window = Ui.Window
 	w = 1920,
 	h = 1080,
 	animator = { playTime = 0.2 },
+    ignoreNavigation = true,
 
 	onPreDraw = 	function(self)
-		if not self.animator.isFinished then UiIgnoreNavigation() end
+		if self.animator.isFinished then UiSetCursorState(UI_CURSOR_SHOW) end
 		SetFloat("game.music.volume", (1.0 - 0.8 * self.animator.factor))
-		UiSetCursorState(UI_CURSOR_SHOW)
 	end,
 
 	onDraw = 		function(self)
