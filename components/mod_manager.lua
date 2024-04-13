@@ -42,6 +42,8 @@ function locLangReset()
 	locLang.clearUnknownData =			"Unknown mods (e.g.: deleted) occupied %d B in savegame file in total. Do you want to clear them?"
 	locLang.tooltipClearUnknownData =	"Clean-up unknown savegame data"
 	locLang.tooltipChooseRandomMod =	"Select a random mod from \"%s\" list"
+	locLang.collectEnabledToColAsk =	"Do you want to remove all disabled/other mods from collection at the same time?"
+	locLang.collectEnabled =			"Collect all enabled"
 end
 
 function updateLocLangStr()
@@ -107,9 +109,9 @@ function updateLocLangStr()
 		UiFont("regular.ttf", 22)
 		contextMenu.MenuWidth = {
 			-- collection listing
-			collectionW = UiMeasureText(0, locLang.rename, locLang.duplicate, locLang.delete, locLang.applyCol, locLang.disuseCol) + 24,
+			collectionW = UiMeasureText(0, locLang.rename, locLang.duplicate, locLang.delete, locLang.applyCol, locLang.disuseCol, locLang.collectEnabled) + 24,
 			-- collected mods
-			colModsW = UiMeasureText(0, locLang.enableAll, locLang.disableAll) + 24,
+			colModsW = UiMeasureText(0, locLang.enableAll, locLang.disableAll, locLang.collectEnabled) + 24,
 			-- common listing
 			listCommonW = UiMeasureText(0, "loc@UI_TEXT_DISABLE_ALL") + 24,
 			-- workshop listing
@@ -143,7 +145,7 @@ contextMenu.Collection = function(sel_collect)
 	UiModalBegin()
 	UiPush()
 		local w = contextMenu.IsCollection and contextMenu.MenuWidth.collectionW or contextMenu.MenuWidth.colModsW
-		local h = contextMenu.IsCollection and 22*5+16 or 22*2+16
+		local h = contextMenu.IsCollection and 22*6+16 or 22*3+16
 		local x = contextMenu.PosX
 		local y = contextMenu.PosY
 
@@ -241,6 +243,19 @@ contextMenu.Collection = function(sel_collect)
 			UiColor(0.8, 0.8, 0.8, 1)
 		end
 		UiText(contextMenu.IsCollection and locLang.disuseCol or locLang.disableAll)
+		UiTranslate(0, 22)
+
+		-- Collect all enabled to collection
+		if UiIsMouseInRect(w, 22) then
+			UiColor(1, 1, 1, 0.2)
+			UiRect(w, 22)
+			if InputPressed("lmb") then
+				yesNoPopInit(locLang.collectEnabledToColAsk, sel_collect, onlyCollectAllEnabled, collectAllEnabled)
+				open = false
+			end
+		end
+		UiColor(1, 1, 1, 1)
+		UiText(locLang.collectEnabled)
 		UiTranslate(0, 22)
 	UiPop()
 	UiModalEnd()
@@ -430,7 +445,8 @@ tooltip = {
 	x = 0,
 	y = 0,
 	text = "",
-	mode = 1	-- 1: full, 2: partial
+	mode = 1,	-- 1: full, 2: partial
+	bold = false
 }
 
 tooltipHoverId = ""
@@ -832,7 +848,7 @@ function getActiveModCountCollection()
 	local count = 0
 	local collection = gCollections[gCollectionSelected].lookup
 	for i, mod in ipairs(ListKeys(nodes.Collection.."."..collection)) do
-		if GetBool("mods.available."..mod..".active") or GetBool(mod..".active") then count = count+1 end
+		if GetBool("mods.available."..mod..".active") then count = count+1 end
 	end
 	return count
 end
@@ -846,7 +862,7 @@ end
 function activeCollection()
 	local collection = gCollections[gCollectionSelected].lookup
 	for i, mod in ipairs(ListKeys(nodes.Collection.."."..collection)) do
-		if not GetBool("mods.available."..mod..".active") or not GetBool(mod..".active") then Command("mods.activate", mod) end
+		if not GetBool("mods.available."..mod..".active") then Command("mods.activate", mod) end
 	end
 	updateMods()
 	updateCollections(true)
@@ -857,11 +873,10 @@ function onlyActiveCollection()
 	local mods = ListKeys("mods.available")
 	for i=1,#mods do
 		local mod = mods[i]
-		local active = GetBool("mods.available."..mod..".active") or GetBool(mod..".active")
-		if active then Command("mods.deactivate", mod) end
+		if GetBool("mods.available."..mod..".active") then Command("mods.deactivate", mod) end
 	end
 	for i, mod in ipairs(ListKeys(nodes.Collection.."."..collection)) do
-		if not GetBool("mods.available."..mod..".active") or not GetBool(mod..".active") then Command("mods.activate", mod) end
+		if not GetBool("mods.available."..mod..".active") then Command("mods.activate", mod) end
 	end
 	updateMods()
 	updateCollections(true)
@@ -870,10 +885,33 @@ end
 function deactiveCollection()
 	local collection = gCollections[gCollectionSelected].lookup
 	for i, mod in ipairs(ListKeys(nodes.Collection.."."..collection)) do
-		if GetBool("mods.available."..mod..".active") or GetBool(mod..".active") then Command("mods.deactivate", mod) end
+		if GetBool("mods.available."..mod..".active") then Command("mods.deactivate", mod) end
 	end
 	updateMods()
 	updateCollections(true)
+end
+
+function collectAllEnabled()
+	local id = gCollectionSelected
+	local collKey = nodes.Collection.."."..gCollections[id].lookup
+	local mods = ListKeys("mods.available")
+	for i=1, #mods do
+		local mod = mods[i]
+		if GetBool("mods.available."..mod..".active") then SetString(collKey.."."..mod) end
+	end
+	updateCollectMods(id)
+end
+
+function onlyCollectAllEnabled()
+	local id = gCollectionSelected
+	local collKey = nodes.Collection.."."..gCollections[id].lookup
+	local mods = ListKeys("mods.available")
+	for i, _ in ipairs(ListKeys(collKey)) do ClearKey(collKey.."."..i) end
+	for i=1, #mods do
+		local mod = mods[i]
+		if GetBool("mods.available."..mod..".active") then SetString(collKey.."."..mod) end
+	end
+	updateCollectMods(id)
 end
 
 function getActiveModCount(fnCategory)
@@ -881,8 +919,7 @@ function getActiveModCount(fnCategory)
 	local mods = ListKeys("mods.available")
 	for i=1,#mods do
 		local mod = mods[i]
-		local active = GetBool("mods.available."..mod..".active") or GetBool(mod..".active")
-		if active then
+		if GetBool("mods.available."..mod..".active") then
 			local modPrefix = mod:match("^(%w+)-")
 			if category.Lookup[modPrefix] == fnCategory then count = count+1 end
 		end
@@ -894,8 +931,7 @@ function deactivateMods(fnCategory)
 	local mods = ListKeys("mods.available")
 	for i=1,#mods do
 		local mod = mods[i]
-		local active = GetBool("mods.available."..mod..".active") or GetBool(mod..".active")
-		if active then
+		if GetBool("mods.available."..mod..".active") then
 			local modPrefix = mod:match("^(%w+)-")
 			if category.Lookup[modPrefix] == fnCategory then Command("mods.deactivate", mod) end
 		end
@@ -1065,13 +1101,14 @@ function listMods(list, w, h, issubscribedlist, noRmb)
 			end
 			UiPush()
 				UiTranslate(10, 0)
-				if issubscribedlist and list.items[i].showbold then UiFont("bold.ttf", 20) end
+				local boldName = list.items[i].showbold
+				if issubscribedlist and boldName then UiFont("bold.ttf", 20) end
 				local modName = list.items[i].name
 				local nameLength = UiText(modName)
 				if mouseOverThisMod and nameLength > w-20 then
 					tooltipHoverId = id
 					local curX, curY = UiGetCursorPos()
-					tooltip = {x = curX, y = curY, text = modName, mode = 2}
+					tooltip = {x = curX, y = curY, text = modName, mode = 2, bold = boldName}
 				end
 			UiPop()
 			UiTranslate(0, 22)
@@ -1329,7 +1366,7 @@ function listCollectionMods(mainList, w, h, selected)
 				if mouseOverThisMod and nameLength > w-20 then
 					tooltipHoverId = tostring(selected).."-"..id
 					local curX, curY = UiGetCursorPos()
-					tooltip = {x = curX, y = curY, text = modName, mode = 2}
+					tooltip = {x = curX, y = curY, text = modName, mode = 2, bold = false}
 				end
 			UiPop()
 			UiTranslate(0, 22)
@@ -1497,7 +1534,7 @@ function drawCreate()
 							if UiIsMouseInRect(64, 64) then
 								tooltipHoverId = "clearUnknownData"
 								local mouX, mouY = UiGetMousePos()
-								tooltip = {x = mouX, y = mouY, text = locLang.tooltipClearUnknownData, mode = 1}
+								tooltip = {x = mouX, y = mouY, text = locLang.tooltipClearUnknownData, mode = 1, bold = false}
 							end
 							if UiImageButton("ui/components/mod_manager_img/trash-solid.png") then
 								local unknownList = {}
@@ -1525,7 +1562,7 @@ function drawCreate()
 								tooltipHoverId = "chooseRandomMod"
 								local mouX, mouY = UiGetMousePos()
 								local tooltipStr = string.format(locLang.tooltipChooseRandomMod, locLang.cateWorkshopShort)
-								tooltip = {x = mouX, y = mouY, text = tooltipStr, mode = 1}
+								tooltip = {x = mouX, y = mouY, text = tooltipStr, mode = 1, bold = false}
 							end
 							if UiImageButton("ui/components/mod_manager_img/dice.png") then
 								local totalModCount = #gMods[2].items
@@ -2592,7 +2629,7 @@ ModManager.Window = Ui.Window
 				end
 				tooltipPrevId = tooltipHoverId
 				tooltipTimer = 0
-				tooltip = {x = 0, y = 0, text = "", mode = 1}
+				tooltip = {x = 0, y = 0, text = "", mode = 1, bold = false}
 				return
 			end
 			local maxTimer = tooltipCooldown > 0.001 and 0.25 or 1
@@ -2605,7 +2642,7 @@ ModManager.Window = Ui.Window
 			tooltipPrevId = tooltipHoverId
 			if tooltipDisable then
 				tooltipTimer = 0
-				tooltip = {x = 0, y = 0, text = "", mode = 1}
+				tooltip = {x = 0, y = 0, text = "", mode = 1, bold = false}
 				return
 			end
 			if tooltipTimer < maxTimer then return end
@@ -2623,7 +2660,7 @@ ModManager.Window = Ui.Window
 			elseif tooltip.mode == 2 then
 				UiAlign("left")
 				UiTranslate(tooltip.x, tooltip.y)
-				UiFont("regular.ttf", 22)
+				if tooltip.bold then UiFont("bold.ttf", 20) else UiFont("regular.ttf", 22) end
 				local txw = UiMeasureText(0, tooltip.text)
 				UiPush()
 					UiTranslate(txw-175, -18)

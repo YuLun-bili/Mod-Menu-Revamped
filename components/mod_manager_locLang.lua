@@ -228,9 +228,9 @@ locLangLookup = {
 	},
 	setting2 = 			{
 		"Workshop mod path",
-		"Chemin du mod du workshop",
+		"Chemin du mod du Workshop",
 		"Ruta de mods del Workshop",
-		"Percorso mod workshop",
+		"Percorso mod Workshop",
 		"Workshop-Mod-Pfad",
 		"工坊模组路径",
 		"Workshop path",
@@ -305,7 +305,7 @@ locLangLookup = {
 	},
 	filterModeAlphabet ={
 		"Alphabetical",
-		"Alphabetical",
+		"Alphabétique",
 		"Alfabético",
 		"Alphabetical",
 		"Alphabetisch",
@@ -316,7 +316,7 @@ locLangLookup = {
 	},
 	filterModeUpdate =	{
 		"Updated",
-		"Updated",
+		"Mis à jour",
 		"Actualizados",
 		"Updated",
 		"Aktualisiert",
@@ -327,7 +327,7 @@ locLangLookup = {
 	},
 	filterModeSubscribe ={
 		"Subscribed",
-		"Subscribed",
+		"Abonné",
 		"Suscritos",
 		"Subscribed",
 		"Abonniert",
@@ -390,5 +390,27 @@ locLangLookup = {
 		"Select a random mod from \"%s\" list",
 		"Select a random mod from \"%s\" list",
 		"Select a random mod from \"%s\" list",
+	},
+	collectEnabledToColAsk ={
+		"Do you want to remove all disabled/other mods from collection at the same time?",
+		"Do you want to remove all disabled/other mods from collection at the same time?",
+		"Do you want to remove all disabled/other mods from collection at the same time?",
+		"Do you want to remove all disabled/other mods from collection at the same time?",
+		"Do you want to remove all disabled/other mods from collection at the same time?",
+		"你想要同时将已禁用/其它模组从合集中移除吗？",
+		"Do you want to remove all disabled/other mods from collection at the same time?",
+		"Do you want to remove all disabled/other mods from collection at the same time?",
+		"Do you want to remove all disabled/other mods from collection at the same time?",
+	},
+	collectEnabled =	{
+		"Collect all enabled",
+		"Collect all enabled",
+		"Collect all enabled",
+		"Collect all enabled",
+		"Collect all enabled",
+		"收藏全部启用模组",
+		"Collect all enabled",
+		"Collect all enabled",
+		"Collect all enabled",
 	}
 }
