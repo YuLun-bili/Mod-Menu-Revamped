@@ -119,7 +119,10 @@ function updateLocLangStr()
 			-- local listing
 			listLocalW = UiMeasureText(0, "loc@UI_TEXT_NEW_GLOBAL", "loc@UI_TEXT_NEW_CONTENT", "loc@UI_TEXT_DISABLE_ALL") + 24,
 			-- local selected listing
-			listLocalSelW = UiMeasureText(0, "loc@UI_TEXT_NEW_GLOBAL", "loc@UI_TEXT_NEW_CONTENT", "loc@UI_TEXT_DUPLICATE_MOD", "loc@UI_TEXT_DELETE_MOD", "loc@UI_TEXT_DISABLE_ALL") + 24
+			listLocalSelW = UiMeasureText(0, "loc@UI_TEXT_NEW_GLOBAL", "loc@UI_TEXT_NEW_CONTENT", "loc@UI_TEXT_DUPLICATE_MOD", "loc@UI_TEXT_DELETE_MOD", "loc@UI_TEXT_DISABLE_ALL") + 24,
+			-- search listing
+			listSearchW1 = UiMeasureText(0, "loc@UI_TEXT_UNSUBSCRIBE", "loc@UI_TEXT_NEW_GLOBAL", "loc@UI_TEXT_NEW_CONTENT", "loc@UI_BUTTON_MAKE_LOCAL", "loc@UI_TEXT_DELETE_MOD") + 24,
+			listSearchW2 = UiMeasureText(0, "loc@UI_TEXT_UNSUBSCRIBE", "loc@UI_TEXT_NEW_GLOBAL", "loc@UI_TEXT_NEW_CONTENT", "loc@UI_TEXT_DUPLICATE_MOD", "loc@UI_TEXT_DELETE_MOD") + 24
 		}
 
 		gPublishLangIndex = locLang.INDEX
@@ -256,6 +259,121 @@ contextMenu.Collection = function(sel_collect)
 		end
 		UiColor(1, 1, 1, 1)
 		UiText(locLang.collectEnabled)
+		UiTranslate(0, 22)
+	UiPop()
+	UiModalEnd()
+
+	return open
+end
+
+contextMenu.Search = function(sel_mod, fnCategory)
+	local open = true
+	UiModalBegin()
+	UiPush()
+		local w = (fnCategory == 3) and contextMenu.MenuWidth.listSearchW2 or contextMenu.MenuWidth.listSearchW1
+		local h = 128
+		local x = contextMenu.PosX
+		local y = contextMenu.PosY
+
+		UiTranslate(x, y)
+		UiAlign("left top")
+		UiScale(1, contextMenu.Scale)
+		UiWindow(w, h, true)
+		UiColor(0.2, 0.2, 0.2, 1)
+		UiImageBox("ui/common/box-solid-6.png", w, h, 6, 6)
+		UiColor(1, 1, 1)
+		UiImageBox("ui/common/box-outline-6.png", w, h, 6, 6, 1)
+
+		if InputPressed("esc") or (not UiIsMouseInRect(w, h) and InputPressed("lmb")) then open = false end
+		if InputPressed("esc") or (not UiIsMouseInRect(w, h) and InputPressed("rmb")) then return false end
+
+		--Indent 12, 8
+		w = w - 24
+		h = h - 16
+		UiTranslate(12, 8)
+		UiFont("regular.ttf", 22)
+		UiColor(1, 1, 1, 0.5)
+
+		--Unsubscribe
+		if fnCategory == 2 and sel_mod ~= "" then
+			if UiIsMouseInRect(w, 22) then
+				UiColor(1, 1, 1, 0.2)
+				UiRect(w, 22)
+				if InputPressed("lmb") then
+					Command("mods.unsubscribe", sel_mod)
+					updateCollections(true)
+					updateMods()
+					open = false
+				end
+			end
+			UiColor(1, 1, 1, 1)
+		else
+			UiColor(0.8, 0.8, 0.8, 1)
+		end
+		UiText("loc@UI_TEXT_UNSUBSCRIBE")
+		UiTranslate(0, 22)
+
+		--New global mod
+		if UiIsMouseInRect(w, 22) then
+			UiColor(1, 1, 1, 0.2)
+			UiRect(w, 22)
+			if InputPressed("lmb") then
+				Command("mods.new", "global")
+				updateMods()
+				open = false
+			end
+		end
+		UiColor(1, 1, 1, 1)
+		UiText("loc@UI_TEXT_NEW_GLOBAL")
+		UiTranslate(0, 22)
+
+		--New content mod
+		if UiIsMouseInRect(w, 22) then
+			UiColor(1, 1, 1, 0.2)
+			UiRect(w, 22)
+			if InputPressed("lmb") then
+				Command("mods.new", "content")
+				updateMods()
+				open = false
+			end
+		end
+		UiColor(1, 1, 1, 1)
+		UiText("loc@UI_TEXT_NEW_CONTENT")
+		UiTranslate(0, 22)
+
+		--Duplicate mod/Make local copy
+		if sel_mod ~= "" then
+			if UiIsMouseInRect(w, 22) then
+				UiColor(1, 1, 1, 0.2)
+				UiRect(w, 22)
+				if InputPressed("lmb") then
+					Command("mods.makelocalcopy", sel_mod)
+					updateMods()
+					open = false
+				end
+			end
+			UiColor(1, 1, 1, 1)
+		else
+			UiColor(0.8, 0.8, 0.8, 1)
+		end
+		UiText((fnCategory == 3) and "loc@UI_TEXT_DUPLICATE_MOD" or "loc@UI_BUTTON_MAKE_LOCAL")
+		UiTranslate(0, 22)
+
+		--Delete mod
+		if fnCategory == 3 and sel_mod ~= "" then
+			if UiIsMouseInRect(w, 22) then
+				UiColor(1, 1, 1, 0.2)
+				UiRect(w, 22)
+				if InputPressed("lmb") then
+					yesNoPopInit("loc@ARE_YOU", sel_mod, callback.DeleteMod)
+					open = false
+				end
+			end
+			UiColor(1, 1, 1, 1)
+		else
+			UiColor(0.8, 0.8, 0.8, 1)
+		end
+		UiText("loc@UI_TEXT_DELETE_MOD")
 		UiTranslate(0, 22)
 	UiPop()
 	UiModalEnd()
@@ -1122,6 +1240,7 @@ function listMods(list, w, h, issubscribedlist)
 end
 
 function listSearchMods(list, w, h)
+	local category = 0
 	local needUpdate = false
 	local ret = ""
 	local rmb_pushed = false
@@ -1246,6 +1365,7 @@ function listSearchMods(list, w, h)
 						elseif InputPressed("rmb") then
 							ret = id
 							rmb_pushed = true
+							category = j
 						end
 					end
 					UiRect(w, 22)
@@ -1286,11 +1406,10 @@ function listSearchMods(list, w, h)
 				UiTranslate(0, 22)
 			end
 		end
-		if not rmb_pushed and mouseOver and InputPressed("rmb") then rmb_pushed = true end
 	UiPop()
 
 	if needUpdate then updateCollections(true) updateMods() end
-	return ret, rmb_pushed
+	return ret, rmb_pushed, category
 end
 
 function listCollections(list, w, h)
@@ -1907,10 +2026,10 @@ function drawCreate()
 					end
 				UiPop()
 				local h = category.Index == 2 and listH-44 or listH
-				local selected, rmb_pushed
+				local selected, rmb_pushed, searchCategory
 
 				if gSearchText ~= "" then
-					selected = listSearchMods(gSearch, listW, h)
+					selected, rmb_pushed, searchCategory = listSearchMods(gSearch, listW, h)
 					if selected ~= "" then selectMod(selected) end
 				else
 					selected, rmb_pushed = listMods(gMods[category.Index], listW, h, category.Index==2)
@@ -1920,9 +2039,9 @@ function drawCreate()
 					end
 				end
 
-				if gSearchText == "" and rmb_pushed then
+				if rmb_pushed then
 					contextMenu.Show = true
-					contextMenu.Type = category.Index
+					contextMenu.Type = gSearchText == "" and category.Index or searchCategory
 					SetValueInTable(contextMenu, "Scale", 1, "bounce", 0.35)
 					contextMenu.Item = selected
 					contextMenu.GetMousePos = true
@@ -2731,7 +2850,11 @@ function drawPopElements()
 			contextMenu.PosX, contextMenu.PosY = UiGetMousePos()
 			contextMenu.GetMousePos = false
 		end
-		contextMenu.Show = contextMenu.Common(contextMenu.Item, contextMenu.Type)
+		if gSearchText == "" then
+			contextMenu.Show = contextMenu.Common(contextMenu.Item, contextMenu.Type)
+		else
+			contextMenu.Show = contextMenu.Search(contextMenu.Item, contextMenu.Type)
+		end
 		if not contextMenu.Show then contextMenu.Scale = 0 end
 	end
 

@@ -339,7 +339,7 @@ locLangLookup = {
 	modSavegameSpace =	{
 		"Savegame Space: ",
 		"Espace de sauvegarde : ",
-		"Savegame Space: ",
+		"Espacio en Savegame: ",
 		"Savegame Space: ",
 		"Savegame Space: ",
 		"存档空间：",
@@ -350,7 +350,7 @@ locLangLookup = {
 	clearModData =		{
 		"This mod occupied %d B in savegame file. Do you want to clear it?",
 		"Ce mod a occupé %d B du fichier de sauvegarde. Voulez-vous le supprimer ?",
-		"This mod occupied %d B in savegame file. Do you want to clear it?",
+		"Este mod ha ocupado %d B en el archivo de guardado. ¿Quieres liberarlo?",
 		"This mod occupied %d B in savegame file. Do you want to clear it?",
 		"This mod occupied %d B in savegame file. Do you want to clear it?",
 		"此模组占用了存档文件中 %d B 的空间。你想要清空它吗？",
@@ -361,7 +361,7 @@ locLangLookup = {
 	clearUnknownData =		{
 		"Unknown mods (e.g.: deleted) occupied %d B in savegame file in total. Do you want to clear them?",
 		"Des mods inconnus (par exemple : supprimés) ont occupé %d B dans le fichier de sauvegarde au total. Voulez-vous les effacer ?",
-		"Unknown mods (e.g.: deleted) occupied %d B in savegame file in total. Do you want to clear them?",
+		"Mods desconocidos (por ejemplo: borrados) ocupados %d B en el archivo de guardado en total. ¿Quieres eliminarlos?",
 		"Unknown mods (e.g.: deleted) occupied %d B in savegame file in total. Do you want to clear them?",
 		"Unknown mods (e.g.: deleted) occupied %d B in savegame file in total. Do you want to clear them?",
 		"未知模组（如：已删除）总计占用了存档文件中 %d B 的空间。你想要清空它们吗？",
@@ -372,7 +372,7 @@ locLangLookup = {
 	tooltipClearUnknownData ={
 		"Clean-up unknown savegame data",
 		"Clean-up unknown savegame data",
-		"Clean-up unknown savegame data",
+		"Limpiar datos de guardado desconocidos",
 		"Clean-up unknown savegame data",
 		"Clean-up unknown savegame data",
 		"清扫未知存档数据",
@@ -383,7 +383,7 @@ locLangLookup = {
 	tooltipChooseRandomMod ={
 		"Select a random mod from \"%s\" list",
 		"Select a random mod from \"%s\" list",
-		"Select a random mod from \"%s\" list",
+		"Selecciona un mod aleatorio de la lista \"%s\"",
 		"Select a random mod from \"%s\" list",
 		"Select a random mod from \"%s\" list",
 		"从“%s”列表中随机选择模组",
@@ -394,7 +394,7 @@ locLangLookup = {
 	collectEnabledToColAsk ={
 		"Do you want to remove all disabled/other mods from collection at the same time?",
 		"Do you want to remove all disabled/other mods from collection at the same time?",
-		"Do you want to remove all disabled/other mods from collection at the same time?",
+		"¿Quieres eliminar todos los mods deshabilitados/de la colección al mismo tiempo?",
 		"Do you want to remove all disabled/other mods from collection at the same time?",
 		"Do you want to remove all disabled/other mods from collection at the same time?",
 		"你想要同时将已禁用/其它模组从合集中移除吗？",
