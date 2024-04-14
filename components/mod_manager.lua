@@ -44,6 +44,7 @@ function locLangReset()
 	locLang.tooltipChooseRandomMod =	"Select a random mod from \"%s\" list"
 	locLang.collectEnabledToColAsk =	"Do you want to remove all disabled/other mods from collection at the same time?"
 	locLang.collectEnabled =			"Collect all enabled"
+	locLang.tooltipRefresh =			"Refresh"
 end
 
 function updateLocLangStr()
@@ -1800,25 +1801,27 @@ function drawCreate()
 				UiPush()
 					UiFont("bold.ttf", 80)
 					UiTranslate(26, 26)
-					if UiTextButton("loc@UI_TEXT_MODS", 134, 44) then
-						gRefreshFade = 1
-						SetValue("gRefreshFade", 0, "easein", 1.5)
-						updateMods()
-						updateCollections()
-					end
+					UiText("loc@UI_TEXT_MODS")
 				UiPop()
 				UiPush()
 					UiTranslate(0, 136)
 					UiPush()
-						UiTranslate(30, 0)
-						UiFont("bold.ttf", 25)
-						if gShowSetting then UiColor(0.95, 0.8, 0.5) end
-						if UiTextButton(locLang.settings) then gShowSetting = not gShowSetting end
-					UiPop()
-					UiPush()
 						UiTranslate(listW, 1)
 						UiAlign("top right")
 						UiButtonPressDist(0.25)
+						UiPush()
+							if gShowSetting then UiColorFilter(0.95, 0.8, 0.5) end
+							UiButtonHoverColor(1, 1, 0.45)
+							UiButtonPressColor(0.95, 0.95, 0.15)
+							UiScale(0.32)
+							if UiIsMouseInRect(64, 64) then
+								tooltipHoverId = "menuSetting"
+								local mouX, mouY = UiGetMousePos()
+								tooltip = {x = mouX, y = mouY, text = locLang.settings, mode = 1, bold = false}
+							end
+							if UiImageButton("ui/components/mod_manager_img/gear-solid.png") then gShowSetting = not gShowSetting end
+						UiPop()
+						UiTranslate(-30, 0)
 						UiPush()
 							UiButtonHoverColor(1, 0.15, 0.15)
 							UiButtonPressColor(0.85, 0.12, 0.12)
@@ -1874,6 +1877,23 @@ function drawCreate()
 								local removedId = recentRndList[maxIndex]
 								table.remove(recentRndList, maxIndex)
 								if removedId then recentRndListLookup[removedId] = nil end
+							end
+						UiPop()
+						UiTranslate(-30, 0)
+						UiPush()
+							UiButtonHoverColor(0.75, 1, 0.75)
+							UiButtonPressColor(0.45, 0.95, 0.45)
+							UiScale(0.32)
+							if UiIsMouseInRect(64, 64) then
+								tooltipHoverId = "refreshMods"
+								local mouX, mouY = UiGetMousePos()
+								tooltip = {x = mouX, y = mouY, text = locLang.tooltipRefresh, mode = 1, bold = false}
+							end
+							if UiImageButton("ui/components/mod_manager_img/rotate-solid.png") then
+								gRefreshFade = 1
+								SetValue("gRefreshFade", 0, "easein", 1.5)
+								updateMods()
+								updateCollections()
 							end
 						UiPop()
 					UiPop()

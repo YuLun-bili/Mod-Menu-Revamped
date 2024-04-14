@@ -412,5 +412,16 @@ locLangLookup = {
 		"Collect all enabled",
 		"Collect all enabled",
 		"Collect all enabled",
+	},
+	tooltipRefresh =	{
+		"Refresh",
+		"Refresh",
+		"Refresh",
+		"Refresh",
+		"Refresh",
+		"刷新",
+		"Refresh",
+		"Refresh",
+		"Refresh",
 	}
 }
