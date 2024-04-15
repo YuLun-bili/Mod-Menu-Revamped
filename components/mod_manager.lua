@@ -5,6 +5,8 @@
 
 #include "mod_manager_locLang.lua"
 
+testFrameBox = 1
+
 function locLangReset()
 	locLang = locLang or {}
 	locLang.INDEX =						0
@@ -1759,7 +1761,7 @@ function drawCreate()
 	local listH = 22*28+10
 	local mainW = 810
 	local mainH = listH+28
-	local buttonW = 270
+	local buttonW = 260
 	UiPush()
 		UiTranslate(UiCenter(), UiMiddle())
 		UiColor(0, 0, 0, 0.5)
@@ -2094,7 +2096,6 @@ function drawCreate()
 			-- mod info
 			UiPush()
 				local modKey = "mods.available."..gModSelected
-				local modKeyShort = gModSelected
 				UiAlign("left")
 				UiColor(1, 1, 1, 0.07)
 				UiImageBox("ui/common/box-solid-6.png", mainW, mainH, 6, 6)
@@ -2256,12 +2257,30 @@ function drawCreate()
 
 					UiColor(1, 1, 1)
 					UiFont("regular.ttf", 24)
-					UiButtonImageBox("ui/common/box-outline-6.png", 6, 6, 1, 1, 1, 0.7)
+					-- UiButtonImageBox("ui/common/box-outline-6.png", 6, 6, 1, 1, 1, 0.7)
+					-- UiButtonImageBox("ui/menu/white_32.png", 6, 6, 1, 1, 1, 0.1)
+					if testFrameBox == 1 then
+						UiButtonImageBox("ui/common/box-outline-4.png", 4, 4, 1, 1, 1, 0.25)
+					elseif testFrameBox == 2 then
+						UiButtonImageBox("ui/common/box-outline-6.png", 6, 6, 1, 1, 1, 0.25)
+					elseif testFrameBox == 3 then
+						UiButtonImageBox("ui/common/box-outline-7.png", 7, 7, 1, 1, 1, 0.25)
+					elseif testFrameBox == 4 then
+						UiButtonImageBox("ui/common/photomode_aim_icon.png", 7, 7, 1, 1, 1, 0.25)
+					elseif testFrameBox == 5 then
+						UiButtonImageBox("ui/common/score-frame-7.png", 7, 7, 1, 1, 1, 0.25) -- 1
+					elseif testFrameBox == 6 then
+						UiButtonImageBox("ui/common/score-frame-8.png", 8, 8, 1, 1, 1, 0.25)
+					elseif testFrameBox == 7 then
+						UiButtonImageBox("ui/common/tool-update.png", 4, 4, 1, 1, 1, 0.25)
+					elseif testFrameBox == 0 then
+						UiButtonImageBox("ui/menu/white_32.png", 1, 1, 1, 1, 1, 0.1)
+					end
 					UiAlign("center middle")
 
 					local modButtonH = 40
 					local modButtonT = 50
-					-- redesign (webpages)
+					-- redesign
 
 					-- edit/copy, details, publish
 					UiPush()
@@ -2270,7 +2289,16 @@ function drawCreate()
 							if GetBool(modKey..".playable") then
 								UiTranslate(0, modButtonT)
 								UiPush()
-									if UiTextButton("loc@UI_BUTTON_EDIT", buttonW, modButtonH) then Command("mods.edit", gModSelected) end
+									if UiIsMouseInRect(buttonW, modButtonH) then UiColorFilter(0.35, 1, 0.35) end
+									if UiBlankButton(buttonW, modButtonH) then Command("mods.edit", gModSelected) end
+									UiTranslate(30-buttonW/2, 0)
+									UiPush()
+										UiScale(0.34375)
+										UiImage("ui/components/mod_manager_img/pen-to-square-solid.png")
+									UiPop()
+									UiTranslate(35, 0)
+									UiAlign("left middle")
+									UiText("loc@UI_BUTTON_EDIT")
 								UiPop()
 							end
 							UiTranslate(0, modButtonT)
@@ -2278,8 +2306,10 @@ function drawCreate()
 								if not GetBool("game.workshop")or not GetBool("game.workshop.publish") then 
 									UiDisableInput()
 									UiColorFilter(1, 1, 1, 0.5)
+								elseif UiIsMouseInRect(buttonW, modButtonH) then
+									UiColorFilter(0.35, 1, 0.35)
 								end
-								if UiTextButton("loc@UI_BUTTON_PUBLISH", buttonW, modButtonH) then
+								if UiBlankButton(buttonW, modButtonH) then
 									gPublishLangTitle = nil
 									gPublishLangDesc = nil
 									gPublishLangIndex = locLang.INDEX
@@ -2289,31 +2319,60 @@ function drawCreate()
 									Command("mods.publishbegin", gModSelected)
 								end
 								if not GetBool("game.workshop.publish") then
-									UiTranslate(0, 30)
-									UiFont("regular.ttf", 18)
-									UiText("loc@UI_TEXT_UNAVAILABLE_IN")
+									UiPush()
+										UiTranslate(0, 30)
+										UiFont("regular.ttf", 18)
+										UiText("loc@UI_TEXT_UNAVAILABLE_IN")
+									UiPop()
 								end
+								UiTranslate(30-buttonW/2, 0)
+								UiPush()
+									UiScale(11/15)
+									UiImage("ui/common/img_557_1150.png")
+								UiPop()
+								UiTranslate(35, 0)
+								UiAlign("left middle")
+								UiText("loc@UI_BUTTON_PUBLISH")
 							UiPop()
 						end
 						if not isLocal and not unknownMod then
 							UiTranslate(0, modButtonT)
 							UiPush()
-								if UiTextButton("loc@UI_BUTTON_MAKE_LOCAL", buttonW, modButtonH) then
+								if UiIsMouseInRect(buttonW, modButtonH) then UiColorFilter(0.35, 1, 0.35) end
+								if UiBlankButton(buttonW, modButtonH) then
 									Command("mods.makelocalcopy", gModSelected)
 									updateMods()
 									updateSearch()
 								end
+								UiTranslate(30-buttonW/2, 0)
+								UiPush()
+									UiScale(0.34375)
+									UiImage("ui/components/mod_manager_img/copy-solid.png")
+								UiPop()
+								UiTranslate(35, 0)
+								UiAlign("left middle")
+								UiText("loc@UI_BUTTON_MAKE_LOCAL")
 							UiPop()
 						end
 						if hasId then
 							UiTranslate(0, modButtonT)
 							UiPush()
-								if isLocal then
-									if prevSelectMod ~= gModSelected then Command("mods.publishbegin", gModSelected) end
-									if UiTextButton("loc@UI_TEXT_DETAILS", buttonW, modButtonH) then Command("game.openurl", "https://steamcommunity.com/sharedfiles/filedetails/?id="..GetString("mods.publish.id")) end
-								else
-									if UiTextButton("loc@UI_TEXT_DETAILS", buttonW, modButtonH) then Command("mods.browsesubscribed", gModSelected) end
+								if UiIsMouseInRect(buttonW, modButtonH) then UiColorFilter(0.35, 1, 0.35) end
+								if UiBlankButton(buttonW, modButtonH) then
+									if isLocal then
+										Command("game.openurl", "https://steamcommunity.com/sharedfiles/filedetails/?id="..GetString("mods.publish.id"))
+									else
+										Command("mods.browsesubscribed", gModSelected)
+									end
 								end
+								UiTranslate(30-buttonW/2, 0)
+								UiPush()
+									UiScale(0.34375)
+									UiImage("ui/components/mod_manager_img/circle-info-solid.png")
+								UiPop()
+								UiTranslate(35, 0)
+								UiAlign("left middle")
+								UiText("loc@UI_TEXT_DETAILS")
 							UiPop()
 						end
 					UiPop()
@@ -2324,43 +2383,56 @@ function drawCreate()
 						if GetBool(modKey..".playable") then
 							UiTranslate(0, -modButtonT)
 							UiPush()
+								if UiIsMouseInRect(buttonW, modButtonH) then UiColorFilter(0.35, 1, 0.35) end
+								if UiBlankButton(buttonW, modButtonH) then Command("mods.play", gModSelected) end
+								UiTranslate(30-buttonW/2, 0)
 								UiPush()
-									UiColor(.7, 1, .8, 0.2)
-									UiImageBox("ui/common/box-solid-6.png", buttonW, modButtonH, 6, 6)
+									UiImage("ui/common/play.png")
 								UiPop()
-								if UiTextButton("loc@UI_BUTTON_PLAY", buttonW, modButtonH) then
-									Command("mods.play", gModSelected)
-								end
+								UiTranslate(35, 0)
+								UiAlign("left middle")
+								UiText("loc@UI_BUTTON_PLAY")
 							UiPop()
 						elseif GetBool(modKey..".override") then
+							local modActive = GetBool(modKey..".active")
 							UiTranslate(0, -modButtonT)
 							UiPush()
-								if GetBool(modKey..".active") or GetBool(modKeyShort..".active") then
-									if UiTextButton("loc@UI_BUTTON_ENABLED", buttonW, modButtonH) then
+								if UiIsMouseInRect(buttonW, modButtonH) then UiColorFilter(0.35, 1, 0.35) end
+								if UiBlankButton(buttonW, modButtonH) then
+									if modActive then
 										Command("mods.deactivate", gModSelected)
 										updateMods()
 										updateCollections(true)
 										updateSearch()
-									end
-									UiColor(1, 1, 0.5)
-									UiTranslate(-60, 0)
-									UiImage("ui/menu/mod-active.png")
-								else
-									if UiTextButton("loc@UI_BUTTON_DISABLED", buttonW, modButtonH) then
+									else
 										Command("mods.activate", gModSelected)
 										updateMods()
 										updateCollections(true)
 										updateSearch()
 									end
-									UiTranslate(-60, 0)
-									UiImage("ui/menu/mod-inactive.png")
 								end
+								UiTranslate(30-buttonW/2, 0)
+								UiPush()
+									UiImage(modActive and "ui/menu/mod-active.png" or "ui/menu/mod-inactive.png")
+								UiPop()
+								UiTranslate(35, 0)
+								UiAlign("left middle")
+								UiText(modActive and "loc@UI_BUTTON_ENABLED" or "loc@UI_BUTTON_DISABLED")
 							UiPop()
 						end
 						if GetBool(modKey..".options") then
 							UiTranslate(0, -modButtonT)
 							UiPush()
-								if UiTextButton("loc@UI_BUTTON_OPTIONS", buttonW, modButtonH) then Command("mods.options", gModSelected) end
+								if UiIsMouseInRect(buttonW, modButtonH) then UiColorFilter(0.35, 1, 0.35) end
+								if UiBlankButton(buttonW, modButtonH) then Command("mods.options", gModSelected) end
+								UiTranslate(30-buttonW/2, 0)
+								UiPush()
+									UiScale(0.34375)
+									UiImage("ui/components/mod_manager_img/gear-solid.png")
+								UiPop()
+								UiTranslate(35, 0)
+								UiAlign("left middle")
+								UiText("loc@UI_BUTTON_OPTIONS")
 							UiPop()
 						end
 					UiPop()
@@ -2915,7 +2987,8 @@ ModManager.Window = Ui.Window
 	onDraw = 		function(self)
 		local menuOpen = false
 		UiPush()
-			if tonumber(InputLastPressedKey()) then LoadLanguageTable(InputLastPressedKey()) end
+			-- if tonumber(InputLastPressedKey()) then LoadLanguageTable(InputLastPressedKey()) end
+			if tonumber(InputLastPressedKey()) then testFrameBox = tonumber(InputLastPressedKey()) end
 			-- UiPush()
 			-- 	UiColor(1, 1, 1)
 			-- 	UiAlign("top left")
