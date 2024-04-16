@@ -405,7 +405,7 @@ locLangLookup = {
 	collectEnabled =	{
 		"Collect all enabled",
 		"Collect all enabled",
-		"Collect all enabled",
+		"Agregar habilitados a colección",
 		"Collect all enabled",
 		"Collect all enabled",
 		"收藏全部启用模组",
@@ -416,7 +416,7 @@ locLangLookup = {
 	tooltipRefresh =	{
 		"Refresh",
 		"Refresh",
-		"Refresh",
+		"Recargar",
 		"Refresh",
 		"Refresh",
 		"刷新",
