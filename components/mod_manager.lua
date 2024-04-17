@@ -3004,7 +3004,7 @@ ModManager.Window = Ui.Window
 	onDraw = 		function(self)
 		local menuOpen = false
 		UiPush()
-			if tonumber(InputLastPressedKey()) then LoadLanguageTable(InputLastPressedKey()) end
+			-- if tonumber(InputLastPressedKey()) then LoadLanguageTable(InputLastPressedKey()) end
 			-- UiPush()
 			-- 	UiColor(1, 1, 1)
 			-- 	UiAlign("top left")
