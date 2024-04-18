@@ -355,7 +355,7 @@ locLangLookup = {
 		"This mod occupied %d B in savegame file. Do you want to clear it?",
 		"此模组占用了存档文件中 %d B 的空间。你想要清空它吗？",
 		"This mod occupied %d B in savegame file. Do you want to clear it?",
-		"This mod occupied %d B in savegame file. Do you want to clear it?",
+		"Этот мод оккупировал %d Байтов в сохранённой игре. Хотите ли вы его очистить?",
 		"This mod occupied %d B in savegame file. Do you want to clear it?",
 	},
 	clearUnknownData =		{
@@ -366,7 +366,7 @@ locLangLookup = {
 		"Unknown mods (e.g.: deleted) occupied %d B in savegame file in total. Do you want to clear them?",
 		"未知模组（如：已删除）总计占用了存档文件中 %d B 的空间。你想要清空它们吗？",
 		"Unknown mods (e.g.: deleted) occupied %d B in savegame file in total. Do you want to clear them?",
-		"Unknown mods (e.g.: deleted) occupied %d B in savegame file in total. Do you want to clear them?",
+		"Неизвестные моды (например, удалённые) оккупируют %d Байтов в вашей сохранённой игре. Хотите ли вы отчистить их?",
 		"Unknown mods (e.g.: deleted) occupied %d B in savegame file in total. Do you want to clear them?",
 	},
 	tooltipClearUnknownData ={
@@ -377,7 +377,7 @@ locLangLookup = {
 		"Clean-up unknown savegame data",
 		"清扫未知存档数据",
 		"Clean-up unknown savegame data",
-		"Clean-up unknown savegame data",
+		"Отчистить неизвестную дату сохранённой игры",
 		"Clean-up unknown savegame data",
 	},
 	tooltipChooseRandomMod ={
@@ -388,8 +388,8 @@ locLangLookup = {
 		"Select a random mod from \"%s\" list",
 		"从“%s”列表中随机选择模组",
 		"Select a random mod from \"%s\" list",
-		"Select a random mod from \"%s\" list",
-		"Select a random mod from \"%s\" list",
+		"Выбрать рандомный мод из \"%s\" листа",
+		"Wybierz losowy mod z \"%s\"",
 	},
 	collectEnabledToColAsk ={
 		"Do you want to remove all disabled/other mods from collection at the same time?",
@@ -399,8 +399,8 @@ locLangLookup = {
 		"Do you want to remove all disabled/other mods from collection at the same time?",
 		"你想要同时将已禁用/其它模组从合集中移除吗？",
 		"Do you want to remove all disabled/other mods from collection at the same time?",
-		"Do you want to remove all disabled/other mods from collection at the same time?",
-		"Do you want to remove all disabled/other mods from collection at the same time?",
+		"Хотите ли вы также убрать все выключенные/другие моды из коллекции?",
+		"Czy chcesz usunąć wszystkie wyłączone/inne mody z tej kolekcji naraz?",
 	},
 	collectEnabled =	{
 		"Collect all enabled",
@@ -410,8 +410,8 @@ locLangLookup = {
 		"Collect all enabled",
 		"收藏全部启用模组",
 		"Collect all enabled",
-		"Collect all enabled",
-		"Collect all enabled",
+		"Собрать все включённые",
+		"Zbierz wszystkie włączone",
 	},
 	tooltipRefresh =	{
 		"Refresh",
@@ -421,7 +421,7 @@ locLangLookup = {
 		"Refresh",
 		"刷新",
 		"Refresh",
-		"Refresh",
-		"Refresh",
+		"Обновить",
+		"Odśwież",
 	}
 }
