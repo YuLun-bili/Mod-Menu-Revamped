@@ -1874,7 +1874,6 @@ function drawCreate()
 									rndModId = gMods[2].items[rndModIndex].id
 									protectCounter = protectCounter + 1
 								until not recentRndListLookup[rndModId] or protectCounter > 100
-								if protectCounter > 100 then DebugWatch("name", math.random()) end
 								selectMod(rndModId)
 								gMods[2].pos = 5-rndModIndex
 								table.insert(recentRndList, 1, rndModId)
@@ -2993,6 +2992,18 @@ function drawPopElements()
 	if prevSelectMod ~= gModSelected and gModSelected ~= "" then SetString(nodes.Settings..".rememberlast.last", gModSelected) prevSelectMod = gModSelected end
 end
 
+function setWindowSize()	--	>:(
+	local screenSize = GetScreenSize()
+	if screenSize.w/16 > screenSize.h/9 then
+		local scaleFact = 1080/screenSize.h
+		ModManager.Window.w = screenSize.w*scaleFact
+	end
+	if screenSize.w/16 < screenSize.h/9 then
+		local scaleFact = 1920/screenSize.w
+		ModManager.Window.h = screenSize.h*scaleFact
+	end
+end
+
 
 ModManager = {}
 ModManager.Window = Ui.Window
@@ -3105,7 +3116,9 @@ ModManager.Window = Ui.Window
 		tooltipHoverId = ""
 	end,
 
-	onCreate = 		function(self) initLoc() end,
+	onCreate = 		function(self)
+		initLoc()
+	end,
 
 	onShow = 		function(self)
 		self:refresh()
@@ -3130,6 +3143,7 @@ ModManager.Window = Ui.Window
 	end,
 
 	refresh = 		function(self)
+		setWindowSize()
 		Command("mods.refresh")
 		updateMods()
 		updateCollections()
