@@ -305,6 +305,7 @@ contextMenu.Search = function(sel_mod, fnCategory)
 					Command("mods.unsubscribe", sel_mod)
 					updateCollections(true)
 					updateMods()
+					updateSearch()
 					open = false
 				end
 			end
@@ -322,6 +323,7 @@ contextMenu.Search = function(sel_mod, fnCategory)
 			if InputPressed("lmb") then
 				Command("mods.new", "global")
 				updateMods()
+				updateSearch()
 				open = false
 			end
 		end
@@ -336,6 +338,7 @@ contextMenu.Search = function(sel_mod, fnCategory)
 			if InputPressed("lmb") then
 				Command("mods.new", "content")
 				updateMods()
+				updateSearch()
 				open = false
 			end
 		end
@@ -351,6 +354,7 @@ contextMenu.Search = function(sel_mod, fnCategory)
 				if InputPressed("lmb") then
 					Command("mods.makelocalcopy", sel_mod)
 					updateMods()
+					updateSearch()
 					open = false
 				end
 			end
@@ -526,6 +530,7 @@ callback.DeleteMod = function()
 		Command("mods.delete", yesNoPopPopup.item)
 		updateCollections(true)
 		updateMods()
+		if gSearchText ~= "" then updateSearch() end
 	end
 end
 
@@ -539,7 +544,7 @@ collectionPop = false
 newList = {}
 prevSelectMod = ""
 initSelect = true
-menuVer = "v1.4.3"
+menuVer = "v1.4.4"
 
 webLinks = {
 	projectGithub = "https://github.com/YuLun-bili/Mod-Menu-Revamped",
@@ -1895,6 +1900,7 @@ function drawCreate()
 								SetValue("gRefreshFade", 0, "easein", 1.5)
 								updateMods()
 								updateCollections()
+								if gSearchText ~= "" then updateSearch() end
 							end
 						UiPop()
 					UiPop()
@@ -3127,6 +3133,7 @@ ModManager.Window = Ui.Window
 		Command("mods.refresh")
 		updateMods()
 		updateCollections()
+		if gSearchText ~= "" then updateSearch() end
 	end
 }
 
