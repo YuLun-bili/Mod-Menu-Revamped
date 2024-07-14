@@ -270,6 +270,17 @@ locLangLookup = {
 		"перезаписать предыдущий",
 		"nadpisz poprzednie",
 	},
+	setting5 = 		{
+		"Reset filter when changing mod category",
+		"Reset filter when changing mod category",
+		"Reset filter when changing mod category",
+		"Reset filter when changing mod category",
+		"Reset filter when changing mod category",
+		"更改模组类别时重置过滤选项",
+		"Reset filter when changing mod category",
+		"Reset filter when changing mod category",
+		"Reset filter when changing mod category",
+	},
 	cateLocalShort =	{
 		"Local",
 		"Locale",
@@ -391,6 +402,17 @@ locLangLookup = {
 		"Выбрать рандомный мод из \"%s\" листа",
 		"Wybierz losowy mod z \"%s\"",
 	},
+	tooltipRefresh =	{
+		"Refresh",
+		"Refresh",
+		"Recargar",
+		"Refresh",
+		"Neuladen",
+		"刷新",
+		"Refresh",
+		"Обновить",
+		"Odśwież",
+	},
 	collectEnabledToColAsk ={
 		"Do you want to remove all disabled/other mods from collection at the same time?",
 		"Do you want to remove all disabled/other mods from collection at the same time?",
@@ -412,16 +434,5 @@ locLangLookup = {
 		"Collect all enabled",
 		"Собрать все включённые",
 		"Zbierz wszystkie włączone",
-	},
-	tooltipRefresh =	{
-		"Refresh",
-		"Refresh",
-		"Recargar",
-		"Refresh",
-		"Neuladen",
-		"刷新",
-		"Refresh",
-		"Обновить",
-		"Odśwież",
 	}
 }

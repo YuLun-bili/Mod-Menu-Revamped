@@ -32,6 +32,7 @@ function locLangReset()
 	locLang.setting3 = 					"Initial category"
 	locLang.setting4 = 					"Remember last selected mod"
 	locLang.setting4ex = 				"overwrite previous"
+	locLang.setting5 =					"Reset filter when changing mod category"
 	locLang.cateLocalShort =			"Local"
 	locLang.cateWorkshopShort =			"Workshop"
 	locLang.cateBuiltInShort =			"Built-in"
@@ -43,9 +44,9 @@ function locLangReset()
 	locLang.clearUnknownData =			"Unknown mods (e.g.: deleted) occupied %d B in savegame file in total. Do you want to clear them?"
 	locLang.tooltipClearUnknownData =	"Clean-up unknown savegame data"
 	locLang.tooltipChooseRandomMod =	"Select a random mod from \"%s\" list"
+	locLang.tooltipRefresh =			"Refresh"
 	locLang.collectEnabledToColAsk =	"Do you want to remove all disabled/other mods from collection at the same time?"
 	locLang.collectEnabled =			"Collect all enabled"
-	locLang.tooltipRefresh =			"Refresh"
 end
 
 function updateLocLangStr()
@@ -83,7 +84,8 @@ function updateLocLangStr()
 		optionSettings = {
 			{locLang.setting2,	"showpath.2", 	"bool"},
 			{locLang.setting3,	"startcategory","int", 	3},
-			{locLang.setting4,	"rememberlast",	"bool", 0, locLang.setting4ex}
+			{locLang.setting4,	"rememberlast",	"bool", 0, locLang.setting4ex},
+			{locLang.setting5,	"resetfilter",	"bool"}
 		}
 		categoryTextLookup = {
 			locLang.cateBuiltInShort,
@@ -554,7 +556,8 @@ webLinks = {
 initSettings = {
 	["showpath.2"] = {"bool", false},
 	["startcategory"] = {"int", 0},
-	["rememberlast"] = {"bool", false}
+	["rememberlast"] = {"bool", false},
+	["resetfilter"] = {"bool", false}
 }
 
 category = {
@@ -810,6 +813,19 @@ function initLoc()
 
 	recentRndList = {}
 	recentRndListLookup = {}
+end
+
+function resetModSortFilter()
+	for i=1, 3 do
+		gMods[i].sort = 0
+		gMods[i].sortInv = false
+		gMods[i].filter = 0
+	end
+end
+
+function resetSearchSortFilter()
+	gSearch.sortInv = false
+	gSearch.filter = 0
 end
 
 function updateMods()
@@ -2026,11 +2042,16 @@ function drawCreate()
 							local modPrefix = gModSelected:match("^(%w+)-")
 							local index = category.Lookup[modPrefix]
 							category.Index = index and index or category.Index
+							if GetBool(nodes.Settings..".resetfilter") then resetSearchSortFilter() end
 						end
 					else
 						if UiTextButton(gMods[category.Index].title, listW, 36) then
 							category.Index = category.Index%3+1
 							gModSelected = ""
+							if GetBool(nodes.Settings..".resetfilter") then
+								resetModSortFilter()
+								updateMods()
+							end
 						end
 					end
 				UiPop()
@@ -2495,6 +2516,7 @@ function drawCreate()
 				UiColor(1, 1, 1)
 				UiFont("regular.ttf", 22)
 				local newSearch = ""
+				local prevSearchFocus = gSearchFocus
 				if gSearchClick then
 					if gCollectionClick then gCollectionClick = false else newSearch, gSearchTyping = UiTextInput(gSearchText, tw, th, gSearchFocus) end
 				end
@@ -2513,6 +2535,7 @@ function drawCreate()
 					if UiImageButton("ui/common/clearinput.png") then
 						newSearch = ""
 						gSearchFocus = true
+						resetSearchSortFilter()
 					end
 				end
 				if newSearch ~= gSearchText then
@@ -2523,7 +2546,9 @@ function drawCreate()
 				if gSearchTyping and InputLastPressedKey() == "esc" then
 					gSearchClick = false
 					gSearchFocus = false
+					gSearchTyping = false
 				end
+				if not gSearchFocus and prevSearchFocus then resetSearchSortFilter() end
 			UiPop()
 
 			UiColor(0, 0, 0, 0.1)
@@ -2597,6 +2622,7 @@ function drawCreate()
 							gCollectionClick = false
 							gCollectionFocus = false
 							gCollectionRename = false
+							gCollectionTyping = false
 							updateCollections()
 						end
 					end
@@ -2604,6 +2630,7 @@ function drawCreate()
 						gCollectionClick = false
 						gCollectionFocus = false
 						gCollectionRename = false
+						gCollectionTyping = false
 					end
 				UiPop()
 				local hcl = 9*22+10
@@ -2992,7 +3019,7 @@ function drawPopElements()
 	if prevSelectMod ~= gModSelected and gModSelected ~= "" then SetString(nodes.Settings..".rememberlast.last", gModSelected) prevSelectMod = gModSelected end
 end
 
-function setWindowSize()	--	>:(
+function setWindowSize()
 	local screenSize = GetScreenSize()
 	if screenSize.w/16 > screenSize.h/9 then
 		local scaleFact = 1080/screenSize.h
@@ -3021,6 +3048,7 @@ ModManager.Window = Ui.Window
 	onDraw = 		function(self)
 		local menuOpen = false
 		UiPush()
+			UiModalBegin()
 			-- if tonumber(InputLastPressedKey()) then LoadLanguageTable(InputLastPressedKey()) end
 			-- UiPush()
 			-- 	UiColor(1, 1, 1)
@@ -3038,6 +3066,7 @@ ModManager.Window = Ui.Window
 			drawLargePreview(gLargePreview > 0)
 			menuOpen = drawPublish(gPublishScale > 0) or menuOpen
 			if not menuOpen then self:hide() end
+			UiModalEnd()
 		UiPop()
 	end,
 
