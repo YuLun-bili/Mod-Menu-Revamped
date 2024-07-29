@@ -278,7 +278,7 @@ locLangLookup = {
 		"Reset filter when changing mod category",
 		"更改模组类别时重置过滤选项",
 		"Reset filter when changing mod category",
-		"Reset filter when changing mod category",
+		"Сбросить фильтр при смене категории модов",
 		"Reset filter when changing mod category",
 	},
 	cateLocalShort =	{
