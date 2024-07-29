@@ -107,7 +107,8 @@ function updateLocLangStr()
 		filterSortText = {
 			locLang.filterModeAlphabet,
 			locLang.filterModeUpdate,
-			locLang.filterModeSubscribe
+			locLang.filterModeSubscribe,
+			"loc@UI_TEXT_AUTHOR"
 		}
 
 		UiFont("regular.ttf", 22)
@@ -754,6 +755,7 @@ function initLoc()
 	for i=1, 3 do
 		gMods[i] = gMods[i] or {}
 		gMods[i].items = {}
+		gMods[i].total = 0
 		gMods[i].pos = 0
 		gMods[i].sort = 0
 		gMods[i].sortInv = false
@@ -789,6 +791,7 @@ function initLoc()
 	gSearchText = ""
 	gSearch = {
 		items = {{}, {}, {}},
+		total = {0, 0, 0},
 		fold = {false, false, false},
 		pos = 0,
 		sortInv = false,
@@ -869,6 +872,7 @@ function updateMods()
 	if gModSelected ~= "" and not foundSelected then gModSelected = "" end
 
 	for i=1, 3 do
+		gMods[i].total = #gMods[i].items
 		if gMods[i].sort == 0 then
 			if gMods[i].sortInv then
 				table.sort(gMods[i].items, function(a, b) return string.lower(a.name) > string.lower(b.name) end)
@@ -881,12 +885,18 @@ function updateMods()
 			else
 				table.sort(gMods[i].items, function(a, b) return a.steamtime > b.steamtime end)
 			end
-		else
+		elseif gMods[i].sort == 2 then
 			if gMods[i].sortInv then
 				table.sort(gMods[i].items, function(a, b) return a.subscribetime < b.subscribetime end)
 			else
 				table.sort(gMods[i].items, function(a, b) return a.subscribetime > b.subscribetime end)
 			end
+		-- else
+		-- 	if gMods[i].sortInv then
+		-- 		table.sort(gMods[i].items, function(a, b) return a.steamtime < b.steamtime end)
+		-- 	else
+		-- 		table.sort(gMods[i].items, function(a, b) return a.steamtime > b.steamtime end)
+		-- 	end
 		end
 	end
 end
@@ -933,10 +943,13 @@ function updateCollections(noReset)
 		gCollections[i].lookup = collection
 		gCollections[i].name = GetString(nodes.Collection.."."..collection)
 		gCollections[i].items = {}
+		gCollections[i].total = 0
 		gCollections[i].itemLookup = {}
 	end
 
-	for i=1, #gCollections do updateCollectMods(i) end
+	local totalVal = #gCollections
+	gCollections.total = totalVal
+	for i=1, totalVal do updateCollectMods(i) end
 	table.sort(gCollections, function(a, b) return string.lower(a.name) < string.lower(b.name) end)
 end
 
@@ -968,6 +981,7 @@ function updateCollectMods(id)
 	else
 		table.sort(gCollections[id].items, function(a, b) return string.lower(a.name) < string.lower(b.name) end)
 	end
+	gCollections[id].total = #gCollections[id].items
 end
 
 function handleModCollect(collection)
@@ -1111,11 +1125,14 @@ function updateSearch()
 			if filter == 0 or (filter == 2 and not iscontentmod) or (filter == 3 and iscontentmod) or (filter == 4 and mod.active) then gSearch.items[index][#gSearch.items[index]+1] = mod end
 		end
 	end
-	
-	if gSearch.sortInv then
-		for i=1, 3 do table.sort(gSearch.items[i], function(a, b) return string.lower(a.name) > string.lower(b.name) end) end
-	else
-		for i=1, 3 do table.sort(gSearch.items[i], function(a, b) return string.lower(a.name) < string.lower(b.name) end) end
+
+	for i=1, 3 do
+		gSearch.total[i] = #gSearch.items[i]
+		if gSearch.sortInv then
+			table.sort(gSearch.items[i], function(a, b) return string.lower(a.name) > string.lower(b.name) end)
+		else
+			table.sort(gSearch.items[i], function(a, b) return string.lower(a.name) < string.lower(b.name) end)
+		end
 	end
 end
 
@@ -1262,7 +1279,7 @@ function listMods(list, w, h, issubscribedlist)
 	return ret, rmb_pushed
 end
 
-function listSearchMods(list, w, h)
+function listModsSectioned(list, w, h, issubscribedlist)
 	local category = 0
 	local needUpdate = false
 	local ret = ""
@@ -1435,11 +1452,182 @@ function listSearchMods(list, w, h)
 	return ret, rmb_pushed, category
 end
 
+function listSearchMods(list, w, h)
+	local category = 0
+	local needUpdate = false
+	local ret = ""
+	local rmb_pushed = false
+	local listingVal = math.ceil((h-10)/22)-1
+	local totalVal = list.total[1] + list.total[2] + list.total[3]
+	if list.isdragging and InputReleased("lmb") then list.isdragging = false end
+	UiPush()
+		UiAlign("top left")
+		UiFont("regular.ttf", 22)
+
+		local mouseOver = UiIsMouseInRect(w+12, h)
+		if mouseOver then list.pos = browseOperation(list.pos, listingVal, totalVal) end
+		if not UiReceivesInput() then mouseOver = false end
+
+		local itemsInView = math.floor(h/UiFontHeight())
+		if totalVal > itemsInView then
+			w = w-14
+			local scrollCount = (totalVal-itemsInView)
+			if scrollCount < 0 then scrollCount = 0 end
+
+			local frac = itemsInView / totalVal
+			if list.isdragging then
+				local posx, posy = UiGetMousePos()
+				local dy = 0.0445 * (posy - list.dragstarty)
+				list.pos = -dy / frac
+			end
+			list.pos = clamp(list.pos, -scrollCount, 0)
+			local pos = -list.pos / totalVal
+
+			UiPush()
+				UiTranslate(w, 0)
+				UiColor(1, 1, 1, 0.07)
+				UiImageBox("ui/common/box-solid-4.png", 14, h, 4, 4)
+				UiColor(1, 1, 1, 0.2)
+
+				local bar_posy = 2 + pos*(h-4)
+				local bar_sizey = (h-4)*frac
+				UiPush()
+					UiTranslate(2, 2)
+					if bar_posy > 2 and UiIsMouseInRect(8, bar_posy-2) and InputPressed("lmb") then list.pos = list.pos + frac * totalVal end
+					local h2 = h - 4 - bar_sizey - bar_posy
+					UiTranslate(0, bar_posy + bar_sizey)
+					if h2 > 0 and UiIsMouseInRect(10, h2) and InputPressed("lmb") then list.pos = list.pos - frac * totalVal end
+				UiPop()
+
+				UiTranslate(2, bar_posy)
+				UiImageBox("ui/common/box-solid-4.png", 10, bar_sizey, 4, 4)
+				if UiIsMouseInRect(10, bar_sizey) and InputPressed("lmb") then
+					local posx, posy = UiGetMousePos()
+					list.dragstarty = posy
+					list.isdragging = true
+				end
+			UiPop()
+		else
+			list.pos = 0
+		end
+
+		UiWindow(w, h, true)
+		UiColor(1, 1, 1, 0.07)
+		UiImageBox("ui/common/box-solid-6.png", w, h, 6, 6)
+
+		UiTranslate(10, 24)
+
+		UiAlign("left")
+		UiColor(0.95, 0.95, 0.95, 1)
+		local listStart = math.floor(1-list.pos or 1)
+		local linesLeft = listingVal-3
+		local totalList = 0
+		local prevList = 0
+		for j=1, 3 do
+			local subList = list.items[j]
+			local foldList = list.fold[j]
+			local subListTotal = #subList
+			local subListStart = math.max(1, listStart-totalList)
+			local subListLines = foldList and 0 or math.min(subListTotal, linesLeft-prevList+subListStart-1)
+			local subListLen = foldList and 0 or math.max(0, subListLines-subListStart+1)
+			UiPush()
+				UiFont("regular.ttf", 20)
+				UiPush()
+					UiTranslate(-9, -7)
+					UiButtonImageBox("ui/common/gradient.png", 1, 1, 0.25, 1, 0.25, 0.15)
+					UiButtonHoverColor(0.3, 1, 0.3, 0.9)
+					UiButtonPressColor(0.2, 1, 0.2, 0.9)
+					UiButtonPressDist(0.1)
+					if UiBlankButton(w, 22) then list.fold[j] = not foldList end
+				UiPop()
+				UiPush()
+					UiTranslate(3, -6)
+					UiAlign("middle center")
+					UiText(foldList and "+" or "—")
+				UiPop()
+				UiPush()
+					UiFont("bold.ttf", 20)
+					UiTranslate(15, 0)
+					UiText(categoryTextLookup[j])
+				UiPop()
+				UiPush()
+					UiTranslate(w-20, 0)
+					UiAlign("right")
+					UiText(subListTotal)
+				UiPop()
+			UiPop()
+			UiTranslate(0, 22)
+			prevList = prevList+subListLen
+			totalList = totalList+(foldList and 0 or subListTotal)
+			linesLeft = linesLeft+1
+			for i=subListStart, subListLines do
+				local mouseOverThisMod = false
+				local id = subList[i].id
+				UiPush()
+					UiTranslate(10, -18)
+					UiColor(0, 0, 0, 0)
+					if gModSelected == id then UiColor(1, 1, 1, 0.1) end
+					if mouseOver and UiIsMouseInRect(w-20, 22) then
+						mouseOverThisMod = true
+						UiColor(0, 0, 0, 0.1)
+						if InputPressed("lmb") and gModSelected ~= id then
+							UiSound("terminal/message-select.ogg")
+							ret = id
+						elseif InputPressed("rmb") then
+							ret = id
+							rmb_pushed = true
+							category = j
+						end
+					end
+					UiRect(w, 22)
+				UiPop()
+
+				if subList[i].override then
+					UiPush()
+						UiTranslate(-10, -18)
+						if mouseOver and UiIsMouseInRect(22, 22) and InputPressed("lmb") then
+							subList[i].active = toggleMod(subList[i].id, subList[i].active)
+							needUpdate = true
+						end
+					UiPop()
+					UiPush()
+						UiTranslate(2, -6)
+						UiAlign("center middle")
+						UiScale(0.5)
+						if subList[i].active then
+							UiColor(1, 1, 0.5)
+							UiImage("ui/menu/mod-active.png")
+						else
+							UiImage("ui/menu/mod-inactive.png")
+						end
+					UiPop()
+				end
+				UiPush()
+					UiTranslate(10, 0)
+					local boldName = subList[i].showbold
+					if issubscribedlist and boldName then UiFont("bold.ttf", 20) end
+					local modName = subList[i].name
+					local nameLength = UiText(modName)
+					if mouseOverThisMod and nameLength > w-20 then
+						tooltipHoverId = id
+						local curX, curY = UiGetCursorPos()
+						tooltip = {x = curX, y = curY, text = modName, mode = 2, bold = boldName}
+					end
+				UiPop()
+				UiTranslate(0, 22)
+			end
+		end
+	UiPop()
+
+	if needUpdate then updateCollections(true) updateMods() end
+	return ret, rmb_pushed, category
+end
+
 function listCollections(list, w, h)
 	local ret = gCollectionSelected
 	local rmb_pushed = false
 	local listingVal = math.ceil((h-10)/22)-1
-	local totalVal = #list
+	local totalVal = list.total
 	if gCollectionMain.isdragging and InputReleased("lmb") then gCollectionMain.isdragging = false end
 
 	UiPush()
@@ -1576,7 +1764,7 @@ function listCollectionMods(mainList, w, h, selected)
 			return ret, rmb_pushed
 		end
 
-		local totalVal = #list.items
+		local totalVal = list.total
 		local mouseOver = UiIsMouseInRect(w+12, h)
 		if mouseOver then gCollectionList.pos = browseOperation(gCollectionList.pos, listingVal, totalVal) end
 		if not UiReceivesInput() then mouseOver = false end
@@ -2037,15 +2225,21 @@ function drawCreate()
 					UiButtonPressDist(0.5)
 					UiButtonImageBox("ui/common/box-solid-4.png", 4, 4, 1, 1, 1, 0.1)
 					if gSearchText ~= "" then
-						if UiTextButton("loc@UI_TEXT_SEARCH", listW, 36) then
+						if UiTextButton("loc@UI_TEXT_SEARCH", listW-80, 36) then
 							gSearchText = ""
 							local modPrefix = gModSelected:match("^(%w+)-")
 							local index = category.Lookup[modPrefix]
 							category.Index = index and index or category.Index
 							if GetBool(nodes.Settings..".resetfilter") then resetSearchSortFilter() end
 						end
+						UiTranslate(listW-76, 0)
+						UiFont("regular.ttf", 24)
+						UiButtonHoverColor(1, 1, 1)
+						UiButtonPressDist(0)
+						local modsCount = gSearch.total[1]+gSearch.total[2]+gSearch.total[3]
+						UiTextButton(modsCount > 9999 and "10k+" or modsCount, 76, 36)
 					else
-						if UiTextButton(gMods[category.Index].title, listW, 36) then
+						if UiTextButton(gMods[category.Index].title, listW-80, 36) then
 							category.Index = category.Index%3+1
 							gModSelected = ""
 							if GetBool(nodes.Settings..".resetfilter") then
@@ -2053,6 +2247,12 @@ function drawCreate()
 								updateMods()
 							end
 						end
+						UiTranslate(listW-76, 0)
+						UiFont("regular.ttf", 24)
+						UiButtonHoverColor(1, 1, 1)
+						UiButtonPressDist(0)
+						local modsCount = gMods[category.Index].total
+						UiTextButton(modsCount > 9999 and "10k+" or modsCount, 76, 36)
 					end
 				UiPop()
 
@@ -2652,8 +2852,12 @@ function drawCreate()
 						UiText(locLang.collection)
 						if validCollection then
 							UiAlign("right")
-							UiTranslate(listW, 0)
+							UiTranslate(listW-50, 0)
 							UiText(validCollection.name)
+							UiTranslate(50, 0)
+							UiFont("regular.ttf", 20)
+							local modsCount = validCollection.total
+							UiText(modsCount > 9999 and "10k+" or modsCount)
 						end
 					UiPop()
 
