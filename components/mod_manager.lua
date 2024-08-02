@@ -834,12 +834,20 @@ end
 function updateMods()
 	Command("mods.refresh")
 
-	gMods[1].items = {}
-	gMods[2].items = {}
-	gMods[3].items = {}
+	for i=1, 3 do
+		gMods[i].items = {}
+		gMods[i].total = 0
+		gMods[i].fold = nil
+	end
 
 	local mods = ListKeys("mods.available")
 	local foundSelected = false
+	local displayList = {}
+	local allAuthorList = setmetatable({}, {
+		__call = function(allAuthorList, newList)
+			for _, value in pairs(newList) do allAuthorList[value] = allAuthorList[value] or #displayList+1 end
+		end
+	})
 	for i=1,#mods do
 		local mod = {}
 		local modNode = mods[i]
@@ -859,12 +867,30 @@ function updateMods()
 				mod.showbold = GetBool("mods.available."..modNode..".showbold")
 				if not newList.modNode and mod.showbold then newList[modNode] = true end
 			end
-			if gMods[index].filter == 0 or
-				(gMods[index].filter == 2 and not iscontentmod) or
-				(gMods[index].filter == 3 and iscontentmod) or
-				(gMods[index].filter == 4 and mod.active) or
-				(gMods[index].filter == 1 and newList[modNode]) then
-				gMods[index].items[#gMods[index].items+1] = mod
+			if gMods[index].sort == 1 then
+				local modAuthorList = strSplit(GetString("mods.available."..modNode..".author"), ",")
+				mod.author = modAuthorList
+				allAuthorList(modAuthorList)
+				for _, value in pairs(modAuthorList) do
+					local authorIndexLookup = allAuthorList[value]
+					if gMods[index].filter == 0 or
+						(gMods[index].filter == 2 and not iscontentmod) or
+						(gMods[index].filter == 3 and iscontentmod) or
+						(gMods[index].filter == 4 and mod.active) or
+						(gMods[index].filter == 1 and newList[modNode]) then
+						displayList[authorIndexLookup] = displayList[authorIndexLookup] or {}
+						table.insert(displayList[authorIndexLookup], mod)
+						displayList[authorIndexLookup].name = value
+					end
+				end
+			else
+				if gMods[index].filter == 0 or
+					(gMods[index].filter == 2 and not iscontentmod) or
+					(gMods[index].filter == 3 and iscontentmod) or
+					(gMods[index].filter == 4 and mod.active) or
+					(gMods[index].filter == 1 and newList[modNode]) then
+					table.insert(gMods[index].items, mod)
+				end
 			end
 		end
 		if gModSelected ~= "" and gModSelected == modNode then foundSelected = true end
@@ -880,11 +906,22 @@ function updateMods()
 				table.sort(gMods[i].items, function(a, b) return string.lower(a.name) < string.lower(b.name) end)
 			end
 		elseif gMods[i].sort == 1 then
+			local tempFoldList = {}
 			if gMods[i].sortInv then
-				-- table.sort(gMods[i].items, function(a, b) return a.steamtime < b.steamtime end)
+				table.sort(displayList, function(a, b) return string.lower(a.name) > string.lower(b.name) end)
+				for l=1, #displayList do
+					table.sort(displayList[l], function(a, b) return string.lower(a.name) > string.lower(b.name) end)
+					tempFoldList[l] = false
+				end
 			else
-				-- table.sort(gMods[i].items, function(a, b) return a.steamtime > b.steamtime end)
+				table.sort(displayList, function(a, b) return string.lower(a.name) < string.lower(b.name) end)
+				for l=1, #displayList do
+					table.sort(displayList[l], function(a, b) return string.lower(a.name) < string.lower(b.name) end)
+					tempFoldList[l] = false
+				end
 			end
+			gMods[i].items = displayList
+			gMods[i].fold = tempFoldList
 		elseif gMods[i].sort == 2 then
 			if gMods[i].sortInv then
 				table.sort(gMods[i].items, function(a, b) return a.steamtime < b.steamtime end)
@@ -1158,10 +1195,12 @@ function listMods(list, w, h, issubscribedlist, useSection)
 	local listingVal = math.ceil((h-10)/22)-1
 	local totalCate = 1
 	local totalVal = list.total
+	DebugWatch("useSection", useSection)
 	if useSection then
 		totalCate = #list.items
 		totalVal = totalCate
 		for i=1, totalCate do totalVal = (list.fold[i] and 0 or #list.items[i]) + totalVal end
+		DebugWatch("totalVal", totalVal)
 	end
 	if list.isdragging and InputReleased("lmb") then list.isdragging = false end
 	UiPush()
@@ -1234,6 +1273,7 @@ function listMods(list, w, h, issubscribedlist, useSection)
 			local subListStart = useSection and math.max(1, listStart-totalList) or listStart
 			local subListLines = useSection and (foldList and 0 or math.min(subListTotal, linesLeft-prevList+subListStart-1)) or math.min(totalVal, listStart+listingVal)
 			local subListLen = useSection and (foldList and 0 or math.max(0, subListLines-subListStart+1)) or 0
+			local subListName = #(subList.name) > 0 and subList.name or "loc@NAME_UNKNOWN"
 			if useSection then
 				UiPush()
 					UiFont("regular.ttf", 20)
@@ -1253,7 +1293,7 @@ function listMods(list, w, h, issubscribedlist, useSection)
 					UiPush()
 						UiFont("bold.ttf", 20)
 						UiTranslate(15, 0)
-						UiText(categoryTextLookup[j])
+						UiText(subList.name)
 					UiPop()
 					UiPush()
 						UiTranslate(w-20, 0)
@@ -2160,7 +2200,7 @@ function drawCreate()
 					selected, rmb_pushed, searchCategory = listSearchMods(gSearch, listW, h)
 					if selected ~= "" then selectMod(selected) end
 				else
-					selected, rmb_pushed = listMods(gMods[category.Index], listW, h, category.Index==2)
+					selected, rmb_pushed = listMods(gMods[category.Index], listW, h, category.Index==2, gMods[category.Index].sort==1)
 					if selected ~= "" then
 						selectMod(selected)
 						if category.Index==2 then updateMods() updateCollections(true) end
