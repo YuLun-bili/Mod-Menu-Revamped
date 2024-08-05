@@ -845,7 +845,10 @@ function updateMods()
 	local displayList = {}
 	local allAuthorList = setmetatable({}, {
 		__call = function(allAuthorList, newList)
-			for _, value in pairs(newList) do allAuthorList[value] = allAuthorList[value] or #displayList+1 end
+			local offIndex = 1
+			for _, value in pairs(newList) do
+				if not allAuthorList[value] then allAuthorList[value], offIndex = #displayList+offIndex, offIndex+1 end
+			end
 		end
 	})
 	for i=1,#mods do
@@ -868,7 +871,9 @@ function updateMods()
 				if not newList.modNode and mod.showbold then newList[modNode] = true end
 			end
 			if gMods[index].sort == 1 then
-				local modAuthorList = strSplit(GetString("mods.available."..modNode..".author"), ",")
+				local modAuthorStr = GetString("mods.available."..modNode..".author")
+				local modAuthorList = strSplit(modAuthorStr, ",")
+				modAuthorList = modAuthorStr == "" and {"%,unknown,%"} or modAuthorList
 				mod.author = modAuthorList
 				allAuthorList(modAuthorList)
 				for _, value in pairs(modAuthorList) do
@@ -907,20 +912,22 @@ function updateMods()
 			end
 		elseif gMods[i].sort == 1 then
 			local tempFoldList = {}
+			local authorCount = #displayList
 			if gMods[i].sortInv then
 				table.sort(displayList, function(a, b) return string.lower(a.name) > string.lower(b.name) end)
-				for l=1, #displayList do
+				for l=1, authorCount do
 					table.sort(displayList[l], function(a, b) return string.lower(a.name) > string.lower(b.name) end)
 					tempFoldList[l] = false
 				end
 			else
 				table.sort(displayList, function(a, b) return string.lower(a.name) < string.lower(b.name) end)
-				for l=1, #displayList do
+				for l=1, authorCount do
 					table.sort(displayList[l], function(a, b) return string.lower(a.name) < string.lower(b.name) end)
 					tempFoldList[l] = false
 				end
 			end
 			gMods[i].items = displayList
+			gMods[i].total = authorCount
 			gMods[i].fold = tempFoldList
 		elseif gMods[i].sort == 2 then
 			if gMods[i].sortInv then
@@ -1195,12 +1202,24 @@ function listMods(list, w, h, issubscribedlist, useSection)
 	local listingVal = math.ceil((h-10)/22)-1
 	local totalCate = 1
 	local totalVal = list.total
-	DebugWatch("useSection", useSection)
+	local sectionStart, sectionEnd = nil, nil
+	local listStart = math.floor(1-list.pos)
+	local listOffStart = listStart
 	if useSection then
 		totalCate = #list.items
-		totalVal = totalCate
-		for i=1, totalCate do totalVal = (list.fold[i] and 0 or #list.items[i]) + totalVal end
-		DebugWatch("totalVal", totalVal)
+		totalVal = 0
+		tempOffset = 0
+		for i=1, totalCate do
+			local tempListLen = list.fold[i] and math.max(2-i, 0) or #list.items[i]
+			totalVal = tempListLen+totalVal+1
+			if totalVal > listStart and not sectionStart then sectionStart = i end
+			if totalVal > listStart+listingVal and not sectionEnd then sectionEnd = i end
+			if not sectionStart then tempOffset = tempListLen+tempOffset+1 end
+		end
+		if not sectionEnd then sectionEnd = totalCate end
+		listOffStart = listStart-tempOffset
+	else
+		sectionStart, sectionEnd = 1, 1
 	end
 	if list.isdragging and InputReleased("lmb") then list.isdragging = false end
 	UiPush()
@@ -1262,18 +1281,16 @@ function listMods(list, w, h, issubscribedlist, useSection)
 
 		UiAlign("left")
 		UiColor(0.95, 0.95, 0.95, 1)
-		local listStart = math.floor(1-list.pos or 1)
-		local linesLeft = listingVal-totalCate
 		local totalList = 0
 		local prevList = 0
-		for j=1, totalCate do
+		for j=sectionStart or 0, sectionEnd or 0 do
 			local subList = useSection and list.items[j] or list.items
 			local foldList = useSection and list.fold[j] or false
 			local subListTotal = useSection and #subList or 0
-			local subListStart = useSection and math.max(1, listStart-totalList) or listStart
-			local subListLines = useSection and (foldList and 0 or math.min(subListTotal, linesLeft-prevList+subListStart-1)) or math.min(totalVal, listStart+listingVal)
-			local subListLen = useSection and (foldList and 0 or math.max(0, subListLines-subListStart+1)) or 0
-			local subListName = #(subList.name) > 0 and subList.name or "loc@NAME_UNKNOWN"
+			local subListStart = useSection and math.max(1, listOffStart-totalList) or listStart
+			local subListLines = useSection and (foldList and 0 or math.min(subListTotal, listingVal-prevList+subListStart)) or math.min(totalVal, listOffStart+listingVal)
+			local subListLen = useSection and (foldList and 0 or math.max(0, subListLines-subListStart)) or 0
+			local subListName = subList.name == "%,unknown,%" and "loc@NAME_UNKNOWN" or subList.name
 			if useSection then
 				UiPush()
 					UiFont("regular.ttf", 20)
@@ -1293,7 +1310,7 @@ function listMods(list, w, h, issubscribedlist, useSection)
 					UiPush()
 						UiFont("bold.ttf", 20)
 						UiTranslate(15, 0)
-						UiText(subList.name)
+						UiText(subListName)
 					UiPop()
 					UiPush()
 						UiTranslate(w-20, 0)
@@ -1304,7 +1321,6 @@ function listMods(list, w, h, issubscribedlist, useSection)
 				UiTranslate(0, 22)
 				prevList = prevList+subListLen
 				totalList = totalList+(foldList and 0 or subListTotal)
-				linesLeft = linesLeft+1
 			end
 			for i=subListStart, subListLines do
 				local mouseOverThisMod = false
