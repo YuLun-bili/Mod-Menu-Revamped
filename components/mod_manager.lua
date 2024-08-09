@@ -33,6 +33,7 @@ function locLangReset()
 	locLang.setting4 = 					"Remember last selected mod"
 	locLang.setting4ex = 				"overwrite previous"
 	locLang.setting5 =					"Reset filter when changing mod category"
+	locLang.setting6 =					"Fold author list by default"
 	locLang.cateLocalShort =			"Local"
 	locLang.cateWorkshopShort =			"Workshop"
 	locLang.cateBuiltInShort =			"Built-in"
@@ -85,7 +86,8 @@ function updateLocLangStr()
 			{locLang.setting2,	"showpath.2", 	"bool"},
 			{locLang.setting3,	"startcategory","int", 	3},
 			{locLang.setting4,	"rememberlast",	"bool", 0, locLang.setting4ex},
-			{locLang.setting5,	"resetfilter",	"bool"}
+			{locLang.setting5,	"resetfilter",	"bool"},
+			{locLang.setting6,	"foldauthor",	"bool"}
 		}
 		categoryTextLookup = {
 			locLang.cateBuiltInShort,
@@ -558,7 +560,8 @@ initSettings = {
 	["showpath.2"] = {"bool", false},
 	["startcategory"] = {"int", 0},
 	["rememberlast"] = {"bool", false},
-	["resetfilter"] = {"bool", false}
+	["resetfilter"] = {"bool", false},
+	["foldauthor"] = {"bool", true}
 }
 
 category = {
@@ -851,6 +854,7 @@ function updateMods()
 			end
 		end
 	})
+	local defaultAuthorFold = GetBool(nodes.Settings..".foldauthor")
 	for i=1,#mods do
 		local mod = {}
 		local modNode = mods[i]
@@ -917,13 +921,13 @@ function updateMods()
 				table.sort(displayList, function(a, b) return string.lower(a.name) > string.lower(b.name) end)
 				for l=1, authorCount do
 					table.sort(displayList[l], function(a, b) return string.lower(a.name) > string.lower(b.name) end)
-					tempFoldList[l] = false
+					tempFoldList[l] = defaultAuthorFold
 				end
 			else
 				table.sort(displayList, function(a, b) return string.lower(a.name) < string.lower(b.name) end)
 				for l=1, authorCount do
 					table.sort(displayList[l], function(a, b) return string.lower(a.name) < string.lower(b.name) end)
-					tempFoldList[l] = false
+					tempFoldList[l] = defaultAuthorFold
 				end
 			end
 			gMods[i].items = displayList
@@ -1017,6 +1021,7 @@ function updateCollectMods(id)
 			end
 		end
 	})
+	local defaultAuthorFold = GetBool(nodes.Settings..".foldauthor")
 	for _, item in ipairs(itemList) do
 		local mod = {}
 		local nameCheck = GetString("mods.available."..item..".listname")
@@ -1066,13 +1071,13 @@ function updateCollectMods(id)
 			table.sort(displayList, function(a, b) return string.lower(a.name) > string.lower(b.name) end)
 			for l=1, authorCount do
 				table.sort(displayList[l], function(a, b) return string.lower(a.name) > string.lower(b.name) end)
-				tempFoldList[l] = false
+				tempFoldList[l] = defaultAuthorFold
 			end
 		else
 			table.sort(displayList, function(a, b) return string.lower(a.name) < string.lower(b.name) end)
 			for l=1, authorCount do
 				table.sort(displayList[l], function(a, b) return string.lower(a.name) < string.lower(b.name) end)
-				tempFoldList[l] = false
+				tempFoldList[l] = defaultAuthorFold
 			end
 		end
 		gCollections[id].items = displayList
@@ -1737,7 +1742,7 @@ function listCollectionMods(mainList, w, h, selected, useSection)
 	local sectionStart, sectionEnd = nil, nil
 	local listStart = math.floor(1-gCollectionList.pos)
 	local listOffStart = listStart
-	if useSection then
+	if useSection and list then
 		totalCate = #list.items
 		totalVal = 0
 		tempOffset = 0
@@ -2150,7 +2155,7 @@ function drawCreate()
 								gRefreshFade = 1
 								SetValue("gRefreshFade", 0, "easein", 1.5)
 								updateMods()
-								updateCollections()
+								updateCollections(true)
 								if gSearchText ~= "" then updateSearch() end
 							end
 						UiPop()

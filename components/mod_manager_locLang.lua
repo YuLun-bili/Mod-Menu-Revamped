@@ -281,6 +281,17 @@ locLangLookup = {
 		"Сбросить фильтр при смене категории модов",
 		"Reset filter when changing mod category",
 	},
+	setting6 = 		{
+		"Fold author list by default",
+		"Fold author list by default",
+		"Fold author list by default",
+		"Fold author list by default",
+		"Fold author list by default",
+		"默认折叠作者列表",
+		"Fold author list by default",
+		"Fold author list by default",
+		"Fold author list by default",
+	},
 	cateLocalShort =	{
 		"Local",
 		"Locale",
