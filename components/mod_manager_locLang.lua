@@ -272,8 +272,8 @@ locLangLookup = {
 	},
 	setting5 = 		{
 		"Reset filter when changing mod category",
-		"Reset filter when changing mod category",
-		"Reset filter when changing mod category",
+		"Réinitialiser le filtre lors du changement de catégorie de mod",
+		"Restablecer filtro al cambiar la categoría de mods",
 		"Reset filter when changing mod category",
 		"Reset filter when changing mod category",
 		"更改模组类别时重置过滤选项",
@@ -283,8 +283,8 @@ locLangLookup = {
 	},
 	setting6 = 		{
 		"Fold author list by default",
-		"Fold author list by default",
-		"Fold author list by default",
+		"Réduire la liste d'auteurs par défaut",
+		"Plegar la lista de autores por defecto",
 		"Fold author list by default",
 		"Fold author list by default",
 		"默认折叠作者列表",
@@ -371,7 +371,7 @@ locLangLookup = {
 	},
 	clearModData =		{
 		"This mod occupied %d B in savegame file. Do you want to clear it?",
-		"Ce mod a occupé %d B du fichier de sauvegarde. Voulez-vous le supprimer ?",
+		"Ce mod a occupé %d o du fichier de sauvegarde. Voulez-vous le supprimer ?",
 		"Este mod ha ocupado %d B en el archivo de guardado. ¿Quieres liberarlo?",
 		"This mod occupied %d B in savegame file. Do you want to clear it?",
 		"This mod occupied %d B in savegame file. Do you want to clear it?",
@@ -382,7 +382,7 @@ locLangLookup = {
 	},
 	clearUnknownData =		{
 		"Unknown mods (e.g.: deleted) occupied %d B in savegame file in total. Do you want to clear them?",
-		"Des mods inconnus (par exemple : supprimés) ont occupé %d B dans le fichier de sauvegarde au total. Voulez-vous les effacer ?",
+		"Des mods inconnus (par exemple : supprimés) ont occupé %d o dans le fichier de sauvegarde au total. Voulez-vous les effacer ?",
 		"Mods desconocidos (por ejemplo: borrados) ocupados %d B en el archivo de guardado en total. ¿Quieres eliminarlos?",
 		"Unknown mods (e.g.: deleted) occupied %d B in savegame file in total. Do you want to clear them?",
 		"Unknown mods (e.g.: deleted) occupied %d B in savegame file in total. Do you want to clear them?",
@@ -393,7 +393,7 @@ locLangLookup = {
 	},
 	tooltipClearUnknownData ={
 		"Clean-up unknown savegame data",
-		"Clean-up unknown savegame data",
+		"Nettoyer les données de sauvegarde inconnues",
 		"Limpiar datos de guardado desconocidos",
 		"Clean-up unknown savegame data",
 		"Clean-up unknown savegame data",
@@ -404,7 +404,7 @@ locLangLookup = {
 	},
 	tooltipChooseRandomMod ={
 		"Select a random mod from \"%s\" list",
-		"Select a random mod from \"%s\" list",
+		"Sélectionner un mode aléatoire dans la liste \"%s\"",
 		"Selecciona un mod aleatorio de la lista \"%s\"",
 		"Select a random mod from \"%s\" list",
 		"Wähle eine zufällige Mod aus der Liste \"%s\"",
@@ -415,7 +415,7 @@ locLangLookup = {
 	},
 	tooltipRefresh =	{
 		"Refresh",
-		"Refresh",
+		"Actualiser",
 		"Recargar",
 		"Refresh",
 		"Neuladen",
@@ -426,7 +426,7 @@ locLangLookup = {
 	},
 	collectEnabledToColAsk ={
 		"Do you want to remove all disabled/other mods from collection at the same time?",
-		"Do you want to remove all disabled/other mods from collection at the same time?",
+		"Voulez-vous retirer tous les mods désactivé/autres mods de la collection en même temps ?",
 		"¿Quieres eliminar todos los mods deshabilitados/de la colección al mismo tiempo?",
 		"Do you want to remove all disabled/other mods from collection at the same time?",
 		"Do you want to remove all disabled/other mods from collection at the same time?",
@@ -437,7 +437,7 @@ locLangLookup = {
 	},
 	collectEnabled =	{
 		"Collect all enabled",
-		"Collect all enabled",
+		"Ajouter tous les éléments activés",
 		"Agregar habilitados a colección",
 		"Collect all enabled",
 		"Alle aktivierten einsammeln",
