@@ -48,6 +48,10 @@ function locLangReset()
 	locLang.tooltipRefresh =			"Refresh"
 	locLang.collectEnabledToColAsk =	"Do you want to remove all disabled/other mods from collection at the same time?"
 	locLang.collectEnabled =			"Collect all enabled"
+	locLang.unitBytes =					"B"
+	locLang.unitKiloBytes =				"KB"
+	locLang.unitMegaBytes =				"MB"
+	locLang.unitGigaBytes =				"GB"
 end
 
 function updateLocLangStr()
@@ -111,6 +115,18 @@ function updateLocLangStr()
 			"loc@UI_TEXT_AUTHOR",
 			locLang.filterModeUpdate,
 			locLang.filterModeSubscribe
+		}
+		byteUnitSuffix = {
+			[0] = locLang.unitBytes,
+			[1] = locLang.unitKiloBytes,
+			[2] = locLang.unitMegaBytes,
+			[3] = locLang.unitGigaBytes,
+		}
+		byteUnitFormat = {
+			[0] = "%d %s",
+			[1] = "%.2f %s",
+			[2] = "%.2f %s",
+			[3] = "%.2f %s"
 		}
 
 		UiFont("regular.ttf", 22)
@@ -1954,6 +1970,13 @@ function getSavegameNodeBytes(modNode)
 	return getNodeBytes(fullKeyNode, 3) + 3*2 + #modNode*2 + 7 + (modNodeValueBytes > 0 and (9+modNodeValueBytes) or 0)
 end
 
+function truncateBytesUnits(bytes)
+	-- fuck u microsoft for mixing SI with IEC 60027-2
+	local _, locE = math.frexp(bytes)
+	local index = math.max(3, math.floor(math.max(0, locE-1)/10))
+	return bytes/2^(10*index), index
+end
+
 function drawFilter(filter, sort, order, isWorkshop, isSearch)
 	local button1w = 120
 	local button2w = 184
@@ -2108,7 +2131,9 @@ function drawCreate()
 										unknownData = unknownData + getSavegameNodeBytes(currCheckMod)
 									end
 								end
-								yesNoPopInit(string.format(locLang.clearUnknownData, unknownData), unknownList, clearModsSavegameData)
+								local displayBytes, unitIndex = truncateBytesUnits(unknownData)
+								local formattedBytes = string.format(byteUnitFormat[unitIndex], displayBytes, byteUnitSuffix[unitIndex])
+								yesNoPopInit(string.format(locLang.clearUnknownData, formattedBytes), unknownList, clearModsSavegameData)
 							end
 						UiPop()
 						UiTranslate(-30, 0)
@@ -2505,15 +2530,16 @@ function drawCreate()
 								UiColor(0.9, 0.9, 0.9)
 								if HasKey("savegame.mod."..gModSelected) then
 									UiTranslate(0, -22)
-									local modSavegameBytes = getSavegameNodeBytes(gModSelected)
+									local displayBytes, unitIndex = truncateBytesUnits(getSavegameNodeBytes(gModSelected))
+									local formattedBytes = string.format(byteUnitFormat[unitIndex], displayBytes, byteUnitSuffix[unitIndex])
 									UiButtonHoverColor(0.75, 0.75, 0.3)
 									UiButtonPressColor(0.75, 0.75, 0.75)
 									UiButtonPressDist(0.1)
 									UiPush()
 										UiTranslate(-10, 0)
-										if UiTextButton(string.format("%s%d B", locLang.modSavegameSpace, modSavegameBytes)) then
+										if UiTextButton(string.format("%s%s", locLang.modSavegameSpace, formattedBytes)) then
 											local function clearModSavegameData() ClearKey("savegame.mod."..gModSelected) end
-											yesNoPopInit(string.format(locLang.clearModData, modSavegameBytes), "", clearModSavegameData)
+											yesNoPopInit(string.format(locLang.clearModData, formattedBytes), "", clearModSavegameData)
 										end
 									UiPop()
 								end
