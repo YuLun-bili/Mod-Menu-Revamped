@@ -323,6 +323,7 @@ contextMenu.Search = function(sel_mod, fnCategory)
 				UiColor(1, 1, 1, 0.2)
 				UiRect(w, 22)
 				if InputPressed("lmb") then
+					handleModCollectionRemove(sel_mod)
 					Command("mods.unsubscribe", sel_mod)
 					updateCollections(true)
 					updateMods()
@@ -444,6 +445,7 @@ contextMenu.Common = function(sel_mod, fnCategory)
 				UiColor(1, 1, 1, 0.2)
 				UiRect(w, 22)
 				if InputPressed("lmb") then
+					handleModCollectionRemove(sel_mod)
 					Command("mods.unsubscribe", sel_mod)
 					updateCollections(true)
 					updateMods()
@@ -548,6 +550,7 @@ end
 
 callback.DeleteMod = function()
 	if yesNoPopPopup.item ~= "" then
+		handleModCollectionRemove(yesNoPopPopup.item)
 		Command("mods.delete", yesNoPopPopup.item)
 		updateCollections(true)
 		updateMods()
@@ -1106,6 +1109,10 @@ function handleModCollect(collection)
 	local modKey = nodes.Collection.."."..collection.."."..gModSelected
 	if HasKey(modKey) then ClearKey(modKey) return end
 	SetString(modKey)
+end
+
+function handleModCollectionRemove(id)
+	for _, collKey in ipairs(ListKeys(nodes.Collection)) do ClearKey(nodes.Collection.."."..collKey.."."..id) end
 end
 
 function handleCollectionDuplicate(collection)
