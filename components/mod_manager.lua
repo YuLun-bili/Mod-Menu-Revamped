@@ -1980,7 +1980,7 @@ end
 function truncateBytesUnits(bytes)
 	-- fuck u microsoft for mixing SI with IEC 60027-2
 	local _, locE = math.frexp(bytes)
-	local index = math.max(3, math.floor(math.max(0, locE-1)/10))
+	local index = math.min(3, math.floor(math.max(0, locE-1)/10))
 	return bytes/2^(10*index), index
 end
 
