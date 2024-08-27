@@ -86,17 +86,17 @@ function updateLocLangStr()
 				locLang.errorColLong
 			}
 		}
-		optionSettings = {
-			{locLang.setting2,	"showpath.2", 	"bool"},
-			{locLang.setting3,	"startcategory","int", 	3},
-			{locLang.setting4,	"rememberlast",	"bool", 0, locLang.setting4ex},
-			{locLang.setting5,	"resetfilter",	"bool"},
-			{locLang.setting6,	"foldauthor",	"bool"}
-		}
 		categoryTextLookup = {
 			locLang.cateBuiltInShort,
 			locLang.cateWorkshopShort,
 			locLang.cateLocalShort
+		}
+		optionSettings = {
+			{title = locLang.setting2,	key = "showpath.2", 	type = "bool"},
+			{title = locLang.setting3,	key = "startcategory",	type = "drop", 	dropdown = categoryTextLookup},
+			{title = locLang.setting4,	key = "rememberlast",	type = "bool",	note = locLang.setting4ex},
+			{title = locLang.setting5,	key = "resetfilter",	type = "bool"},
+			{title = locLang.setting6,	key = "foldauthor",		type = "bool"}
 		}
 		gMods = gMods or {}
 		for i=1, 3 do gMods[i]= gMods[i] or {} end
@@ -2210,64 +2210,59 @@ function drawCreate()
 				UiPop()
 			else
 				local boxSize = 36
+				local gap = 10
+				local getSettingVal = {
+					["bool"] = GetBool,
+					["drop"] = GetInt
+				}
 				UiPush()
-					UiTranslate(UiCenter()-370, 68)
-					UiAlign("left")
+					UiTranslate(UiCenter()-355, 52)
+					UiAlign("left middle")
 					UiColor(0.85, 0.85, 0.85)
 					UiFont("regular.ttf", 22)
 					for _, setting in ipairs(optionSettings) do
-						local xOff = 0
-						if setting[3] == "bool" then
-							UiPush()
-								UiAlign("left middle")
-								UiTranslate(-6, -5)
-								UiButtonImageBox("ui/common/box-outline-4.png", 16, 16, 1, 1, 1, 0.75)
-								UiScale(0.5)
-								local currSetting = GetBool(nodes.Settings.."."..setting[2])
-								if currSetting then
-									if UiImageButton("ui/hud/checkmark.png", boxSize, boxSize) then SetBool(nodes.Settings.."."..setting[2], not currSetting) end
-								else
-									if UiBlankButton(boxSize, boxSize) then SetBool(nodes.Settings.."."..setting[2], not currSetting) end
-								end
-							UiPop()
-							UiPush()
-								UiAlign("left middle")
-								UiColor(0.85, 0.85, 0.85)
-								UiTranslate(20, -5)
-								local txw = UiText(setting[1])
-							UiPop()
-							xOff = xOff + 20 + txw + 5
-						end
-						if setting[3] == "int" then
-							UiPush()
-								UiAlign("left middle")
-								UiTranslate(-6, -5)
+						local tempSettingKey = nodes.Settings.."."..setting.key
+						local currSetting = getSettingVal[setting.type](tempSettingKey)
+						local txw = 0
+						UiPush()
+							if setting.type == "bool" then
 								UiPush()
-									UiColor(1, 1, 1, 0.15)
-									UiImageBox("ui/common/box-solid-4.png", 138, 25, 1, 1)
+									UiTranslate(-26, 0)
+									UiAlign("center middle")
+									UiButtonImageBox("ui/common/box-outline-4.png", 16, 16, 1, 1, 1, 0.75)
+									UiScale(0.5)
+									if currSetting then
+										if UiImageButton("ui/hud/checkmark.png", boxSize, boxSize) then SetBool(tempSettingKey, not currSetting) end
+									else
+										if UiBlankButton(boxSize, boxSize) then SetBool(tempSettingKey, not currSetting) end
+									end
 								UiPop()
-								UiColor(0.95, 0.95, 0.95)
-								local currSetting = GetInt(nodes.Settings.."."..setting[2])
-								if UiTextButton(categoryTextLookup[currSetting+1], 140, boxSize-3) then SetInt(nodes.Settings.."."..setting[2], (currSetting+1)%3) end
-							UiPop()
+							end
 							UiPush()
-								UiAlign("left middle")
 								UiColor(0.85, 0.85, 0.85)
-								UiTranslate(150, -5)
-								local txw = UiText(setting[1])
+								txw = UiText(setting.title)
 							UiPop()
-							xOff = xOff + 150 + txw + 5
-						end
-						if setting[5] then
-							UiPush()
-								UiAlign("left middle")
-								UiFont("regular.ttf", 22)
-								UiColor(0.95, 0.45, 0)
-								UiTranslate(xOff, -3)
-								UiText(setting[5])
-							UiPop()
-						end
-						UiTranslate(0, 22)
+							UiTranslate(txw+gap, 0)
+							if setting.type == "drop" then
+								local maxW = UiMeasureText(0, table.concat(setting.dropdown, "\n"))+20
+								UiPush()
+									UiButtonImageBox("ui/common/box-solid-4.png", 4, 4, 1, 1, 1, 0.15)
+									UiColor(0.95, 0.95, 0.95)
+									UiButtonPressDist(0.2)
+									UiButtonTextHandling(1)
+									if UiTextButton(setting.dropdown[currSetting+1], maxW, 22) then SetInt(tempSettingKey, (currSetting+1)%3) end
+								UiPop()
+								UiTranslate(maxW+20, 0)
+							end
+							if setting.note then
+								UiPush()
+									UiColor(0.95, 0.45, 0)
+									txw = UiText(setting.note)
+								UiPop()
+								UiTranslate(txw+gap, 0)
+							end
+						UiPop()
+						UiTranslate(0, 24)
 					end
 				UiPop()
 			end
@@ -3392,7 +3387,6 @@ ModManager.Window = Ui.Window
 				UiAlign("top left")
 				UiTranslate(mouX, mouY+16)
 				UiFont("regular.ttf", 20)
-				local txw, txh = UiMeasureText(0, tooltip.text)
 				UiButtonPressColor(1, 1, 1)
 				UiButtonHoverColor(1, 1, 1)
 				UiButtonPressDist(0)
