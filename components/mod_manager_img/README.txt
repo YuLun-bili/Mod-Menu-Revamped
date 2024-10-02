@@ -10,7 +10,8 @@ Following .png icons in same directory are edited from .svg free download icons 
 * rotate-solid.png
 * trash-solid.png
 
-Following .png icons in same directory are edited from .png free download icons by various creators labeled in brackets after each icon on Flaticon (https://www.flaticon.com/), licenced under Flaticon License (Terms of use, Chapter Flaticon, Section 8.1. Flaticon License; https://www.freepikcompany.com/legal)
+Following .png icons in same directory are edited from .png free download icons by various creators labelled in brackets after each icon on Flaticon (https://www.flaticon.com/), licenced under Flaticon License (Terms of use, Chapter Flaticon, Section 8.1. Flaticon License; https://www.freepikcompany.com/legal)
 * dice.png (Icon home)
+* external-link.png (Fathema Khanom)
 
-14 April 2024
+2 October 2024

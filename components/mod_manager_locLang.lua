@@ -489,5 +489,16 @@ locLangLookup = {
 		"㎇",
 		"Гбайт",
 		"GB",
+	},
+	characterEnableHint = {
+		"View in [[game://characters/;label=loc@UI_BUTTON_CHATACTER;id=game;]] menu",
+		"View in [[game://characters/;label=loc@UI_BUTTON_CHATACTER;id=game;]] menu",
+		"View in [[game://characters/;label=loc@UI_BUTTON_CHATACTER;id=game;]] menu",
+		"View in [[game://characters/;label=loc@UI_BUTTON_CHATACTER;id=game;]] menu",
+		"View in [[game://characters/;label=loc@UI_BUTTON_CHATACTER;id=game;]] menu",
+		"在[[game://characters/;label=loc@UI_BUTTON_CHATACTER;id=game;]]菜单中查看",
+		"View in [[game://characters/;label=loc@UI_BUTTON_CHATACTER;id=game;]] menu",
+		"View in [[game://characters/;label=loc@UI_BUTTON_CHATACTER;id=game;]] menu",
+		"View in [[game://characters/;label=loc@UI_BUTTON_CHATACTER;id=game;]] menu",
 	}
 }

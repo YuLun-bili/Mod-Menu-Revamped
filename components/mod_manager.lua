@@ -52,6 +52,7 @@ function locLangReset()
 	locLang.unitKiloBytes =				"KB"
 	locLang.unitMegaBytes =				"MB"
 	locLang.unitGigaBytes =				"GB"
+	locLang.characterEnableHint =		"View in [[game://characters/;label=loc@UI_BUTTON_CHATACTER;id=game;]] menu"
 end
 
 function updateLocLangStr()
@@ -569,6 +570,8 @@ newList = {}
 prevSelectMod = ""
 initSelect = true
 menuVer = "v1.4.4"
+tempcharctrSelect = ""
+tempcharctrSetTime = -1
 
 webLinks = {
 	projectGithub = "https://github.com/YuLun-bili/Mod-Menu-Revamped",
@@ -763,6 +766,14 @@ function transferCollection()
 	ClearKey(nodes.OldCollection)
 end
 
+function revertTempCharacter()
+	if tempcharctrSetTime < 0 then return end
+	if tempcharctrSelect == "" then return end
+	SetString("savegame.player.character", tempcharctrSelect)
+	tempcharctrSelect = ""
+	tempcharctrSetTime = -1
+end
+
 function initLoc()
 	transferCollection()
 	initModMenuSettings()
@@ -771,6 +782,7 @@ function initLoc()
 	RegisterListenerTo("LanguageChanged", "updateMods")
 	RegisterListenerTo("LanguageChanged", "updateCollections")
 	RegisterListenerTo("LanguageChanged", "collectionReset")
+	RegisterListenerTo("OnMainMenuStateTransitFinished", "revertTempCharacter")
 	math.randomseed(GetInt("savegame.stats.totalplaytime")+GetInt("savegame.stats.brokenvoxels"))
 
 	gMods = gMods or {}
@@ -2628,16 +2640,18 @@ function drawCreate()
 						if not isLocal and not unknownMod then
 							UiTranslate(0, modButtonT)
 							UiPush()
+								local displayText = "loc@UI_BUTTON_MAKE_LOCAL"
+								local textLen = UiMeasureText(0, displayText)
 								if UiIsMouseInRect(buttonW, modButtonH) then
 									UiColorFilter(1, 1, 0.35)
-									if locLang.INDEX == 6 or locLang.INDEX == 7 then
+									if textLen > 185 then
 										tooltipHoverId = "btnLocalCopy"
 										UiPush()
 											UiAlign("left middle")
 											UiTranslate(iconLeft-buttonW/2+iconGap, 1)
 											local curX, curY = UiGetCursorPos()
 										UiPop()
-										tooltip = {x = curX, y = curY, text = "loc@UI_BUTTON_MAKE_LOCAL", mode = 3}
+										tooltip = {x = curX, y = curY, text = displayText, mode = 3}
 									end
 								end
 								if UiBlankButton(buttonW, modButtonH) then
@@ -2652,12 +2666,12 @@ function drawCreate()
 								UiPop()
 								UiTranslate(iconGap, EAcharOffset)
 								UiAlign("left middle")
-								if locLang.INDEX == 6 or locLang.INDEX == 7 then
+								if textLen > 185 then
 									UiPush()
 										UiWindow(186, modButtonH, true, true)
 										UiAlign("left middle")
 										UiTranslate(0, modButtonH/2)
-										UiText("loc@UI_BUTTON_MAKE_LOCAL")
+										UiText(displayText)
 									UiPop()
 									UiTranslate(185, 0)
 									for i=1, 9 do
@@ -2667,11 +2681,11 @@ function drawCreate()
 											UiAlign("left middle")
 											UiTranslate(-185-i, modButtonH/2)
 											UiColor(1, 1, 1, 1-i*0.1)
-											UiText("loc@UI_BUTTON_MAKE_LOCAL")
+											UiText(displayText)
 										UiPop()
 									end
 								else
-									UiText("loc@UI_BUTTON_MAKE_LOCAL")
+									UiText(displayText)
 								end
 							UiPop()
 						end
@@ -2698,7 +2712,7 @@ function drawCreate()
 						end
 					UiPop()
 
-					-- play/enable, options
+					-- play/enable, options, character
 					UiPush()
 						UiTranslate(mainW-buttonW/2-30, mainH+10)
 						if GetBool(modKey..".playable") then
@@ -2757,6 +2771,65 @@ function drawCreate()
 								UiTranslate(iconGap, EAcharOffset)
 								UiAlign("left middle")
 								UiText("loc@UI_BUTTON_OPTIONS")
+							UiPop()
+						end
+						if GetBool(modKey..".character") then
+							UiTranslate(0, -modButtonT)
+							UiPush()
+								local displayText = locLang.characterEnableHint
+								local textLen = UiMeasureText(0, displayText)
+								if UiIsMouseInRect(buttonW, modButtonH) then
+									UiColorFilter(1, 1, 0.35)
+									if textLen > 185 then
+										tooltipHoverId = "btnViewCharacter"
+										UiPush()
+											UiAlign("left middle")
+											UiTranslate(iconLeft-buttonW/2+iconGap, 1)
+											local curX, curY = UiGetCursorPos()
+										UiPop()
+										tooltip = {x = curX, y = curY, text = displayText, mode = 3}
+									end
+								end
+								if UiBlankButton(buttonW, modButtonH) then
+									local checkLen = #gModSelected
+									tempcharctrSelect = GetString("savegame.player.character")
+									for _, charctrKey in ipairs(ListKeys("savegame.freshcharacters")) do
+										if string.sub(charctrKey, 1, checkLen) == gModSelected then
+											SetString("savegame.player.character", charctrKey)
+											tempcharctrSetTime = GetTime()
+											break
+										end
+									end
+									MainMenu.transitToState(MainMenu.State.Avatar)
+								end
+								UiTranslate(iconLeft-buttonW/2, 0)
+								UiPush()
+									UiScale(0.34375)
+									UiImage("ui/components/mod_manager_img/external-link.png")
+								UiPop()
+								UiTranslate(iconGap, EAcharOffset)
+								UiAlign("left middle")
+								if textLen > 185 then
+									UiPush()
+										UiWindow(186, modButtonH, true, true)
+										UiAlign("left middle")
+										UiTranslate(0, modButtonH/2)
+										UiText(displayText)
+									UiPop()
+									UiTranslate(185, 0)
+									for i=1, 9 do
+										UiTranslate(1, 0)
+										UiPush()
+											UiWindow(1, modButtonH, true, true)
+											UiAlign("left middle")
+											UiTranslate(-185-i, modButtonH/2)
+											UiColor(1, 1, 1, 1-i*0.1)
+											UiText(displayText)
+										UiPop()
+									end
+								else
+									UiText(displayText)
+								end
 							UiPop()
 						end
 					UiPop()
