@@ -24,7 +24,7 @@
 * Click & View published local mod's workshop page
 * Tooltips
 * Preview publish mod name & description in other languages
-* integration for viewing player character mod via character menu
+* Integration for viewing player character mod via character menu
 
 ## [Download & Installation](../../releases)
 
