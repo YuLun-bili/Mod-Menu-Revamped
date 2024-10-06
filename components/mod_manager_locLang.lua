@@ -493,12 +493,12 @@ locLangLookup = {
 	characterEnableHint = {
 		"View in [[game://characters/;label=loc@UI_BUTTON_CHATACTER;id=game;]] menu",
 		"View in [[game://characters/;label=loc@UI_BUTTON_CHATACTER;id=game;]] menu",
-		"View in [[game://characters/;label=loc@UI_BUTTON_CHATACTER;id=game;]] menu",
+		"Ver en el menú de [[game://characters/;label=loc@UI_BUTTON_CHATACTER;id=game;]]",
 		"View in [[game://characters/;label=loc@UI_BUTTON_CHATACTER;id=game;]] menu",
 		"Im [[game://characters/;label=loc@UI_BUTTON_CHATACTER;id=game;]] Menü anzeigen",
 		"在[[game://characters/;label=loc@UI_BUTTON_CHATACTER;id=game;]]菜单中查看",
 		"View in [[game://characters/;label=loc@UI_BUTTON_CHATACTER;id=game;]] menu",
 		"View in [[game://characters/;label=loc@UI_BUTTON_CHATACTER;id=game;]] menu",
-		"View in [[game://characters/;label=loc@UI_BUTTON_CHATACTER;id=game;]] menu",
+		"Zobacz w [[game://characters/;label=loc@UI_BUTTON_CHATACTER;id=game;]]",
 	}
 }

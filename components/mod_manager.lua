@@ -2372,10 +2372,7 @@ function drawCreate()
 					if selected ~= "" then selectMod(selected) end
 				else
 					selected, rmb_pushed = listMods(gMods[category.Index], listW, h, category.Index==2, gMods[category.Index].sort==1)
-					if selected ~= "" then
-						selectMod(selected)
-						if category.Index==2 then updateMods() updateCollections(true) end
-					end
+					if selected ~= "" then selectMod(selected) end
 				end
 
 				if rmb_pushed then
