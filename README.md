@@ -11,11 +11,12 @@
 <img src="https://github.com/YuLun-bili/Mod-Menu-Revamped/assets/70589524/9550df06-dca0-4a1c-a945-ace42bb1fb1b" width="576px" align="center">
 <img src="https://github.com/YuLun-bili/Mod-Menu-Revamped/assets/70589524/6bdf7421-feb8-42b3-a8be-66e7e0f349c9" width="576px" align="center">
 <img src="https://github.com/YuLun-bili/Mod-Menu-Revamped/assets/70589524/d9366e42-d445-43bc-bf78-61602a2f502c" width="576px" align="center">
+<img src="https://github.com/user-attachments/assets/7f2b2f32-2b58-4bf4-974a-19ae7e7f527e" width="576px" align="center">
 
 ## New Features
 
 * Redesigned UI layout
-* Display mod preview
+* Display mod preview image
 * Search mod
 * More mods filtering & sorting options
 * Mod collections
@@ -23,6 +24,7 @@
 * Click & View published local mod's workshop page
 * Tooltips
 * Preview publish mod name & description in other languages
+* Integration for viewing player character mod via character menu
 
 ## [Download & Installation](../../releases)
 
