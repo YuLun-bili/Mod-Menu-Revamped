@@ -2788,15 +2788,10 @@ function drawCreate()
 									end
 								end
 								if UiBlankButton(buttonW, modButtonH) then
-									local checkLen = #gModSelected
+									local charctrKey = string.format("%s_%s", gModSelected, ListKeys("characters."..gModSelected)[1])
 									tempcharctrSelect = GetString("savegame.player.character")
-									for _, charctrKey in ipairs(ListKeys("savegame.freshcharacters")) do
-										if string.sub(charctrKey, 1, checkLen) == gModSelected then
-											SetString("savegame.player.character", charctrKey)
-											tempcharctrSetTime = GetTime()
-											break
-										end
-									end
+									SetString("savegame.player.character", charctrKey)
+									tempcharctrSetTime = GetTime()
 									MainMenu.transitToState(MainMenu.State.Avatar)
 								end
 								UiTranslate(iconLeft-buttonW/2, 0)
