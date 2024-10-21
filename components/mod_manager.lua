@@ -572,6 +572,7 @@ initSelect = true
 menuVer = "v1.4.4"
 tempcharctrSelect = ""
 tempcharctrSetTime = -1
+prevPreview = ""
 
 webLinks = {
 	projectGithub = "https://github.com/YuLun-bili/Mod-Menu-Revamped",
@@ -867,6 +868,8 @@ end
 
 function updateMods()
 	Command("mods.refresh")
+	UiUnloadImage(prevPreview)
+	prevPreview = ""
 
 	for i=1, 3 do
 		gMods[i].items = {}
@@ -2430,6 +2433,7 @@ function drawCreate()
 					local modPath =		GetString(modKey..".path")
 					local previewPath =	"RAW:"..modPath.."/preview.jpg"
 					if not HasFile(previewPath) then previewPath = "RAW:"..modPath.."/preview.png" end
+					if prevPreview ~= previewPath then UiUnloadImage(prevPreview) prevPreview = previewPath end
 					local hasPreview =	HasFile(previewPath)
 					local idPath =		"RAW:"..modPath.."/id.txt"
 					local hasId =		modPrefix == "steam" or HasFile(idPath)
@@ -3098,6 +3102,7 @@ function drawPublish(show)
 		local description = gPublishLangDesc or GetString(modKey..".description")
 		local previewPath = "RAW:"..GetString(modKey..".path").."/preview.jpg"
 		if not HasFile(previewPath) then previewPath = "RAW:"..GetString(modKey..".path").."/preview.png" end
+		if prevPreview ~= previewPath then UiUnloadImage(prevPreview) prevPreview = previewPath end
 		local hasPreview = HasFile(previewPath)
 		local missingInfo = false
 
@@ -3520,7 +3525,6 @@ ModManager.Window = Ui.Window
 
 	refresh = 		function(self)
 		setWindowSize()
-		Command("mods.refresh")
 		updateMods()
 		updateCollections()
 		if gSearchText ~= "" then updateSearch() end
