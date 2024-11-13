@@ -1251,7 +1251,7 @@ function updateSearch()
 		local mod = {}
 		local modNode = mods[i]
 		local modName = GetString("mods.available."..modNode..".listname")
-		local matchSearch = modName:lower():match(gSearchText)
+		local matchSearch = modName:lower():match(gSearchText:lower())
 		mod.id = modNode
 		mod.name = modName
 		mod.override = GetBool("mods.available."..modNode..".override") and not GetBool("mods.available."..modNode..".playable")
