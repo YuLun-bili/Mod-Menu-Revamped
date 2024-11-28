@@ -569,7 +569,7 @@ collectionPop = false
 newList = {}
 prevSelectMod = ""
 initSelect = true
-menuVer = "v1.4.4"
+menuVer = "v1.4.5"
 tempcharctrSelect = ""
 tempcharctrSetTime = -1
 prevPreview = ""
@@ -939,7 +939,7 @@ function updateMods()
 		end
 		if gModSelected ~= "" and gModSelected == modNode then foundSelected = true end
 	end
-	if gModSelected ~= "" and not foundSelected then gModSelected = "" end
+	if gModSelected ~= "" and not foundSelected then gModSelected, gAuthorSelected = "", "" end
 
 	for i=1, 3 do
 		gMods[i].total = #gMods[i].items
@@ -1315,8 +1315,10 @@ function listMods(list, w, h, issubscribedlist, useSection)
 	local nextModId = ""
 	local prevModFound = false
 	local nextModFound = false
-	local prevSubListEnd = ""
-	local tryNextSubList = false
+	local prevAuthor = ""
+	local nextAuthor = ""
+	local prevAuthorFound = false
+	local nextAuthorFound = false
 
 	if gModSelected ~= "" then
 		local tempAuthor = GetString("mods.available."..gModSelected..".author")
@@ -1444,7 +1446,6 @@ function listMods(list, w, h, issubscribedlist, useSection)
 				prevList = prevList+subListLen
 				totalList = totalList+(foldList and 0 or subListTotal)
 			end
-			if subList[1] and tryNextSubList then nextModId = subList[1].id nextModFound = nextModId ~= "" end
 			for i=math.max(1, subListStart), subListLines do
 				local mouseOverThisMod = false
 				local id = subList[i].id
@@ -1453,12 +1454,41 @@ function listMods(list, w, h, issubscribedlist, useSection)
 					UiColor(0, 0, 0, 0)
 					if gModSelected == id then
 						UiColor(1, 1, 1, 0.1)
-						if gAuthorSelected == subListName..","..gModSelected then
+						if useSection then
+							if gAuthorSelected == subListName or gAuthorSelected == "" then
+								UiPush()
+									UiColor(1, 1, 1, 0.9)
+									UiRectOutline(w-21, 22, 1)
+								UiPop()
+								prevAuthorFound = list.items[j-1] and true or false
+								nextAuthorFound = list.items[j+1] and true or false
+								prevModFound = subList[i-1] and true or false
+								nextModFound = subList[i+1] and true or false
+								prevAuthor = prevModFound and subListName or prevAuthorFound and list.items[j-1].name or ""
+								nextAuthor = nextModFound and subListName or nextAuthorFound and list.items[j+1].name or ""
+								prevAuthor = prevAuthor == "%,unknown,%" and "loc@NAME_UNKNOWN" or prevAuthor
+								nextAuthor = nextAuthor == "%,unknown,%" and "loc@NAME_UNKNOWN" or nextAuthor
+								prevModId = prevModFound and subList[i-1].id or ""
+								nextModId = nextModFound and subList[i+1].id or ""
+								if not prevModFound and prevAuthorFound then
+									local prevSubList = list.items[j-1]
+									local prevSubListLen = #prevSubList
+									prevModFound = prevSubList[prevSubListLen] and true or false
+									prevModId = prevModFound and prevSubList[prevSubListLen].id or ""
+								end
+								if not nextModFound and nextAuthorFound then
+									local nextSubList = list.items[j+1]
+									nextModFound = nextModFound and true or nextSubList[1] and true or false
+									nextModId = nextModFound and nextSubList[1].id or ""
+								end
+								gAuthorSelected = subListName or ""
+							end
+						else
 							prevModFound = subList[i-1] and true or false
 							nextModFound = subList[i+1] and true or false
-							tryNextSubList = not nextModFound
-							prevModId = prevModFound and subList[i-1].id or prevSubListEnd
+							prevModId = prevModFound and subList[i-1].id or ""
 							nextModId = nextModFound and subList[i+1].id or ""
+							gAuthorSelected = subListName or ""
 						end
 					end
 					if mouseOver and UiIsMouseInRect(w-20, 22) then
@@ -1467,9 +1497,11 @@ function listMods(list, w, h, issubscribedlist, useSection)
 						if InputPressed("lmb") and gModSelected ~= id then
 							UiSound("terminal/message-select.ogg")
 							ret = id
+							gAuthorSelected = subListName or ""
 						elseif InputPressed("rmb") then
 							ret = id
 							rmb_pushed = true
+							gAuthorSelected = subListName or ""
 						end
 					end
 					UiRect(w, 22)
@@ -1509,21 +1541,23 @@ function listMods(list, w, h, issubscribedlist, useSection)
 				UiPop()
 				UiTranslate(0, 22)
 			end
-			if subList[subListListLen] then prevSubListEnd = subList[subListListLen].id end
 		end
 		if not rmb_pushed and mouseOver and InputPressed("rmb") then rmb_pushed = true end
 	UiPop()
 
-	if mouseOver and (prevModFound or nextModFound) then
-		DebugWatch("prev", string.format("%q  (%s)  %s", prevModId, type(prevModId), tostring(prevModFound)))
-		DebugWatch("curr", string.format("%q  (%s)", gModSelected, type(gModSelected)))
-		DebugWatch("next", string.format("%q  (%s)  %s", nextModId, type(nextModId), tostring(nextModFound)))
-
+	if mouseOver then
 		local tempArrowOperation = arrowOperation()
-		local tempArrowList = {prevModFound and prevModId or gModSelected, gModSelected, nextModFound and nextModId or gModSelected}
-		gModSelected = tempArrowList[tempArrowOperation]
-		DebugWatch("pos", list.pos)
-		list.pos = clamp(list.pos-tempArrowOperation+2, -scrollCount, 0)
+		if tempArrowOperation ~= 2 then
+			UiSound("terminal/message-select.ogg")
+			local tempArrowList = {
+				{mod = prevModFound and prevModId or gModSelected, author = prevAuthorFound and prevAuthor or gAuthorSelected},
+				{mod = gModSelected, author = gAuthorSelected},
+				{mod = nextModFound and nextModId or gModSelected, author = nextAuthorFound and nextAuthor or gAuthorSelected}
+			}
+			gModSelected = tempArrowList[tempArrowOperation].mod
+			gAuthorSelected = tempArrowList[tempArrowOperation].author
+			list.pos = clamp(list.pos-tempArrowOperation+2, -scrollCount, 0)
+		end
 	end
 	if needUpdate then updateCollections(true) updateMods() end
 	return ret, rmb_pushed
@@ -2105,8 +2139,10 @@ end
 function drawCreate()
 	local open = true
 	if initSelect then
-		if gModSelected == "" and GetBool(nodes.Settings..".rememberlast") then gModSelected = GetString(nodes.Settings..".rememberlast.last") end
-		if not HasKey("mods.available."..gModSelected) then gModSelected = "" end
+		if gModSelected == "" and GetBool(nodes.Settings..".rememberlast") then
+			gModSelected, gAuthorSelected = GetString(nodes.Settings..".rememberlast.last"), ""
+		end
+		if not HasKey("mods.available."..gModSelected) then gModSelected, gAuthorSelected = "", "" end
 		initSelect = false
 	end
 
@@ -2386,6 +2422,7 @@ function drawCreate()
 						if UiTextButton(gMods[category.Index].title, listW-80, 36) then
 							category.Index = category.Index%3+1
 							gModSelected = ""
+							gAuthorSelected = ""
 							if GetBool(nodes.Settings..".resetfilter") then
 								resetModSortFilter()
 								updateMods()
@@ -3420,7 +3457,10 @@ function drawPopElements()
 	end
 
 	-- last selected mod
-	if prevSelectMod ~= gModSelected and gModSelected ~= "" then SetString(nodes.Settings..".rememberlast.last", gModSelected) prevSelectMod = gModSelected end
+	if prevSelectMod ~= gModSelected and gModSelected ~= "" then
+		SetString(nodes.Settings..".rememberlast.last", gModSelected)
+		prevSelectMod = gModSelected
+	end
 end
 
 function setWindowSize()
