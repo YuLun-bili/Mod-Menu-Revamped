@@ -1309,23 +1309,17 @@ function listMods(list, w, h, issubscribedlist, useSection)
 	local listStart = math.floor(1-list.pos)
 	local listOffStart = listStart
 	local scrollCount = 0
-	local authorFoldLookup = {}
-
 	local prevModId = ""
 	local nextModId = ""
+	local prevSectionIndex = 0
+	local currSectionIndex = 0
+	local nextSectionIndex = 0
 	local prevModFound = false
 	local nextModFound = false
 	local prevAuthor = ""
 	local nextAuthor = ""
 	local prevAuthorFound = false
 	local nextAuthorFound = false
-
-	if gModSelected ~= "" then
-		local tempAuthor = GetString("mods.available."..gModSelected..".author")
-		if tempAuthor == "" then tempAuthor = "loc@NAME_UNKNOWN" end
-		local tempAuthorList = strSplit(tempAuthor, ",")
-		for i=1, #tempAuthorList do authorFoldLookup[tempAuthorList[i]] = true end
-	end
 
 	if useSection then
 		totalCate = #list.items
@@ -1407,15 +1401,13 @@ function listMods(list, w, h, issubscribedlist, useSection)
 		local prevList = 0
 		for j=sectionStart or 0, sectionEnd or 0 do
 			local subList = useSection and list.items[j] or list.items
-			local subListListLen = #subList
 			local foldList = useSection and list.fold[j] or false
-			local subListTotal = useSection and subListListLen or 0
+			local subListTotal = useSection and #subList or 0
 			local subListStart = useSection and math.max(1, listOffStart-totalList) or listStart
 			local subListLines = useSection and (foldList and 0 or math.min(subListTotal, listingVal-prevList+subListStart)) or math.min(totalVal, listOffStart+listingVal)
 			local subListLen = useSection and (foldList and 0 or math.max(0, subListLines-subListStart)) or 0
 			local subListName = subList.name == "%,unknown,%" and "loc@NAME_UNKNOWN" or subList.name
 			if useSection then
-				if authorFoldLookup[subListName] then foldList, list.fold[j] = false, false end 
 				UiPush()
 					UiFont("regular.ttf", 20)
 					UiPush()
@@ -1470,16 +1462,21 @@ function listMods(list, w, h, issubscribedlist, useSection)
 								nextAuthor = nextAuthor == "%,unknown,%" and "loc@NAME_UNKNOWN" or nextAuthor
 								prevModId = prevModFound and subList[i-1].id or ""
 								nextModId = nextModFound and subList[i+1].id or ""
+								prevSectionIndex = j
+								currSectionIndex = j
+								nextSectionIndex = j
 								if not prevModFound and prevAuthorFound then
 									local prevSubList = list.items[j-1]
 									local prevSubListLen = #prevSubList
 									prevModFound = prevSubList[prevSubListLen] and true or false
 									prevModId = prevModFound and prevSubList[prevSubListLen].id or ""
+									prevSectionIndex = prevModFound and j-1 or j
 								end
 								if not nextModFound and nextAuthorFound then
 									local nextSubList = list.items[j+1]
 									nextModFound = nextModFound and true or nextSubList[1] and true or false
 									nextModId = nextModFound and nextSubList[1].id or ""
+									nextSectionIndex = nextModFound and j+1 or j
 								end
 								gAuthorSelected = subListName or ""
 							end
@@ -1550,12 +1547,26 @@ function listMods(list, w, h, issubscribedlist, useSection)
 		if tempArrowOperation ~= 2 then
 			UiSound("terminal/message-select.ogg")
 			local tempArrowList = {
-				{mod = prevModFound and prevModId or gModSelected, author = prevAuthorFound and prevAuthor or gAuthorSelected},
-				{mod = gModSelected, author = gAuthorSelected},
-				{mod = nextModFound and nextModId or gModSelected, author = nextAuthorFound and nextAuthor or gAuthorSelected}
+				{
+					mod = prevModFound and prevModId or gModSelected,
+					author = prevAuthorFound and prevAuthor or gAuthorSelected,
+					index = prevModFound and prevSectionIndex or currSectionIndex
+				},
+				{
+					mod = gModSelected,
+					author = gAuthorSelected,
+					index = currSectionIndex
+				},
+				{
+					mod = nextModFound and nextModId or gModSelected,
+					author = nextAuthorFound and nextAuthor or gAuthorSelected,
+					index = nextModFound and nextSectionIndex or currSectionIndex
+				}
 			}
-			gModSelected = tempArrowList[tempArrowOperation].mod
-			gAuthorSelected = tempArrowList[tempArrowOperation].author
+			local tempSelect = tempArrowList[tempArrowOperation]
+			gModSelected = tempSelect.mod
+			gAuthorSelected = tempSelect.author
+			if useSection then list.fold[tempSelect.index] = false end
 			list.pos = clamp(list.pos-tempArrowOperation+2, -scrollCount, 0)
 		end
 	end
@@ -1569,8 +1580,17 @@ function listSearchMods(list, w, h)
 	local ret = ""
 	local rmb_pushed = false
 	local listingVal = math.ceil((h-10)/22)-1
-	local totalVal = list.total[1] + list.total[2] + list.total[3]
+	local totalVal = 0
+	local scrollCount = 0
+	local prevModId = ""
+	local nextModId = ""
+	local prevSectionIndex = 0
+	local currSectionIndex = 0
+	local nextSectionIndex = 0
+	local prevModFound = false
+	local nextModFound = false
 	if list.isdragging and InputReleased("lmb") then list.isdragging = false end
+	for j=1, 3 do totalVal = totalVal + 1 + (list.fold[j] and 0 or list.total[j]) end
 	UiPush()
 		UiAlign("top left")
 		UiFont("regular.ttf", 22)
@@ -1582,7 +1602,7 @@ function listSearchMods(list, w, h)
 		local itemsInView = math.floor(h/UiFontHeight())
 		if totalVal > itemsInView then
 			w = w-14
-			local scrollCount = (totalVal-itemsInView)
+			scrollCount = totalVal-itemsInView
 			if scrollCount < 0 then scrollCount = 0 end
 
 			local frac = itemsInView / totalVal
@@ -1677,7 +1697,33 @@ function listSearchMods(list, w, h)
 				UiPush()
 					UiTranslate(10, -18)
 					UiColor(0, 0, 0, 0)
-					if gModSelected == id then UiColor(1, 1, 1, 0.1) end
+					if gModSelected == id then
+						UiColor(1, 1, 1, 0.1)
+						UiPush()
+							UiColor(1, 1, 1, 0.9)
+							UiRectOutline(w-21, 22, 1)
+						UiPop()
+						prevModFound = subList[i-1] and true or false
+						nextModFound = subList[i+1] and true or false
+						prevModId = prevModFound and subList[i-1].id or ""
+						nextModId = nextModFound and subList[i+1].id or ""
+						prevSectionIndex = j
+						currSectionIndex = j
+						nextSectionIndex = j
+						local prevSubList = list.items[j-1]
+						local nextSubList = list.items[j+1]
+						if not prevModFound and prevSubList then
+							local prevSubListLen = #prevSubList
+							prevModFound = prevSubList[prevSubListLen] and true or false
+							prevModId = prevModFound and prevSubList[prevSubListLen].id or ""
+							prevSectionIndex = prevModFound and j-1 or j
+						end
+						if not nextModFound and nextSubList then
+							nextModFound = nextModFound and true or nextSubList[1] and true or false
+							nextModId = nextModFound and nextSubList[1].id or ""
+							nextSectionIndex = nextModFound and j+1 or j
+						end
+					end
 					if mouseOver and UiIsMouseInRect(w-20, 22) then
 						mouseOverThisMod = true
 						UiColor(0, 0, 0, 0.1)
@@ -1728,6 +1774,30 @@ function listSearchMods(list, w, h)
 		end
 	UiPop()
 
+	if mouseOver then
+		local tempArrowOperation = arrowOperation()
+		if tempArrowOperation ~= 2 then
+			UiSound("terminal/message-select.ogg")
+			local tempArrowList = {
+				{
+					mod = prevModFound and prevModId or gModSelected,
+					index = prevModFound and prevSectionIndex or currSectionIndex
+				},
+				{
+					mod = gModSelected,
+					index = currSectionIndex
+				},
+				{
+					mod = nextModFound and nextModId or gModSelected,
+					index = nextModFound and nextSectionIndex or currSectionIndex
+				}
+			}
+			local tempSelect = tempArrowList[tempArrowOperation]
+			gModSelected = tempSelect.mod
+			list.fold[tempSelect.index] = false
+			list.pos = clamp(list.pos-tempArrowOperation+2, -scrollCount, 0)
+		end
+	end
 	if needUpdate then updateCollections(true) updateMods() end
 	return ret, rmb_pushed, category
 end
@@ -1737,6 +1807,9 @@ function listCollections(list, w, h)
 	local rmb_pushed = false
 	local listingVal = math.ceil((h-10)/22)-1
 	local totalVal = list.total
+	local scrollCount = 0
+	local prevCollectionIndex = gCollectionSelected
+	local nextCollectionIndex = gCollectionSelected
 	if gCollectionMain.isdragging and InputReleased("lmb") then gCollectionMain.isdragging = false end
 
 	UiPush()
@@ -1750,7 +1823,7 @@ function listCollections(list, w, h)
 		local itemsInView = math.floor(h/UiFontHeight())
 		if totalVal > itemsInView then
 			w = w-14
-			local scrollCount = (totalVal-itemsInView)
+			scrollCount = totalVal-itemsInView
 			if scrollCount < 0 then scrollCount = 0 end
 
 			local frac = itemsInView / totalVal
@@ -1803,7 +1876,11 @@ function listCollections(list, w, h)
 			UiPush()
 				UiTranslate(20, -18)
 				UiColor(0, 0, 0, 0)
-				if gCollectionSelected == i then UiColor(1, 1, 1, 0.1) end
+				if gCollectionSelected == i then
+					UiColor(1, 1, 1, 0.1)
+					prevCollectionIndex = list[i-1] and i-1 or i
+					nextCollectionIndex = list[i+1] and i+1 or i
+				end
 				if mouseOver and UiIsMouseInRect(w-30, 22) then
 					UiColor(0, 0, 0, 0.1)
 					if InputPressed("lmb") and gCollectionSelected ~= i then
@@ -1849,6 +1926,20 @@ function listCollections(list, w, h)
 
 		if not rmb_pushed and mouseOver and InputPressed("rmb") then rmb_pushed = true end
 	UiPop()
+
+	if mouseOver then
+		local tempArrowOperation = arrowOperation()
+		if tempArrowOperation ~= 2 then
+			UiSound("terminal/message-select.ogg")
+			local tempArrowList = {
+				{index = prevCollectionIndex},
+				{index = gCollectionSelected},
+				{index = nextCollectionIndex}
+			}
+			ret = tempArrowList[tempArrowOperation].index
+			gCollectionMain.pos = clamp(gCollectionMain.pos-tempArrowOperation+2, -scrollCount, 0)
+		end
+	end
 	return ret, rmb_pushed
 end
 
@@ -1863,6 +1954,19 @@ function listCollectionMods(mainList, w, h, selected, useSection)
 	local sectionStart, sectionEnd = nil, nil
 	local listStart = math.floor(1-gCollectionList.pos)
 	local listOffStart = listStart
+	local scrollCount = 0
+	local prevModId = ""
+	local nextModId = ""
+	local prevSectionIndex = 0
+	local currSectionIndex = 0
+	local nextSectionIndex = 0
+	local prevModFound = false
+	local nextModFound = false
+	local prevAuthor = ""
+	local nextAuthor = ""
+	local prevAuthorFound = false
+	local nextAuthorFound = false
+
 	if useSection and list then
 		totalCate = #list.items
 		totalVal = 0
@@ -1900,7 +2004,7 @@ function listCollectionMods(mainList, w, h, selected, useSection)
 
 		if totalVal > itemsInView then
 			w = w-14
-			local scrollCount = (totalVal-itemsInView)
+			scrollCount = totalVal-itemsInView
 			if scrollCount < 0 then scrollCount = 0 end
 
 			local frac = itemsInView / totalVal
@@ -1995,16 +2099,61 @@ function listCollectionMods(mainList, w, h, selected, useSection)
 				UiPush()
 					UiTranslate(10, -18)
 					UiColor(0, 0, 0, 0)
-					if gModSelected == id then UiColor(1, 1, 1, 0.1) end
+					if gModSelected == id then
+						UiColor(1, 1, 1, 0.1)
+						if useSection then
+							if gAuthorSelected == subListName or gAuthorSelected == "" then
+								UiPush()
+									UiColor(1, 1, 1, 0.9)
+									UiRectOutline(w-21, 22, 1)
+								UiPop()
+								prevAuthorFound = list.items[j-1] and true or false
+								nextAuthorFound = list.items[j+1] and true or false
+								prevModFound = subList[i-1] and true or false
+								nextModFound = subList[i+1] and true or false
+								prevAuthor = prevModFound and subListName or prevAuthorFound and list.items[j-1].name or ""
+								nextAuthor = nextModFound and subListName or nextAuthorFound and list.items[j+1].name or ""
+								prevAuthor = prevAuthor == "%,unknown,%" and "loc@NAME_UNKNOWN" or prevAuthor
+								nextAuthor = nextAuthor == "%,unknown,%" and "loc@NAME_UNKNOWN" or nextAuthor
+								prevModId = prevModFound and subList[i-1].id or ""
+								nextModId = nextModFound and subList[i+1].id or ""
+								prevSectionIndex = j
+								currSectionIndex = j
+								nextSectionIndex = j
+								if not prevModFound and prevAuthorFound then
+									local prevSubList = list.items[j-1]
+									local prevSubListLen = #prevSubList
+									prevModFound = prevSubList[prevSubListLen] and true or false
+									prevModId = prevModFound and prevSubList[prevSubListLen].id or ""
+									prevSectionIndex = prevModFound and j-1 or j
+								end
+								if not nextModFound and nextAuthorFound then
+									local nextSubList = list.items[j+1]
+									nextModFound = nextModFound and true or nextSubList[1] and true or false
+									nextModId = nextModFound and nextSubList[1].id or ""
+									nextSectionIndex = nextModFound and j+1 or j
+								end
+								gAuthorSelected = subListName or ""
+							end
+						else
+							prevModFound = subList[i-1] and true or false
+							nextModFound = subList[i+1] and true or false
+							prevModId = prevModFound and subList[i-1].id or ""
+							nextModId = nextModFound and subList[i+1].id or ""
+							gAuthorSelected = subListName or ""
+						end
+					end
 					if mouseOver and UiIsMouseInRect(w-20, 22) then
 						mouseOverThisMod = true
 						UiColor(0, 0, 0, 0.1)
 						if InputPressed("lmb") and gModSelected ~= id then
 							UiSound("terminal/message-select.ogg")
 							ret = id
+							gAuthorSelected = subListName or ""
 						elseif InputPressed("rmb") then
 							ret = id
 							rmb_pushed = true
+							gAuthorSelected = subListName or ""
 						end
 					end
 					UiRect(w, 22)
@@ -2046,6 +2195,34 @@ function listCollectionMods(mainList, w, h, selected, useSection)
 		if not rmb_pushed and mouseOver and InputPressed("rmb") then rmb_pushed = true end
 	UiPop()
 
+	if mouseOver then
+		local tempArrowOperation = arrowOperation()
+		if tempArrowOperation ~= 2 then
+			UiSound("terminal/message-select.ogg")
+			local tempArrowList = {
+				{
+					mod = prevModFound and prevModId or gModSelected,
+					author = prevAuthorFound and prevAuthor or gAuthorSelected,
+					index = prevModFound and prevSectionIndex or currSectionIndex
+				},
+				{
+					mod = gModSelected,
+					author = gAuthorSelected,
+					index = currSectionIndex
+				},
+				{
+					mod = nextModFound and nextModId or gModSelected,
+					author = nextAuthorFound and nextAuthor or gAuthorSelected,
+					index = nextModFound and nextSectionIndex or currSectionIndex
+				}
+			}
+			local tempSelect = tempArrowList[tempArrowOperation]
+			gModSelected = tempSelect.mod
+			gAuthorSelected = tempSelect.author
+			if useSection then mainList[selected].fold[tempSelect.index] = false end
+			gCollectionList.pos = clamp(gCollectionList.pos-tempArrowOperation+2, -scrollCount, 0)
+		end
+	end
 	if needUpdate then updateCollections(true) updateMods() updateSearch() end
 	return ret, rmb_pushed
 end
