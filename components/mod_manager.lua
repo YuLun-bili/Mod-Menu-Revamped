@@ -905,6 +905,14 @@ function updateMods()
 		local modPrefix = (mod.id):match("^(%w+)-")
 		local index = category.Lookup[modPrefix]
 		if index then
+			local tempFilter = gMods[index].filter
+			local tempFilterCheck = {
+				[0] = function() return true end,
+				[1] = function() return newList[modNode] end,
+				[2] = function() return not iscontentmod end,
+				[3] = function() return iscontentmod end,
+				[4] = function() return mod.active end
+			}
 			if index == 2 then
 				mod.showbold = GetBool("mods.available."..modNode..".showbold")
 				if not newList.modNode and mod.showbold then newList[modNode] = true end
@@ -917,24 +925,14 @@ function updateMods()
 				allAuthorList(modAuthorList)
 				for _, value in pairs(modAuthorList) do
 					local authorIndexLookup = allAuthorList[value]
-					if gMods[index].filter == 0 or
-						(gMods[index].filter == 2 and not iscontentmod) or
-						(gMods[index].filter == 3 and iscontentmod) or
-						(gMods[index].filter == 4 and mod.active) or
-						(gMods[index].filter == 1 and newList[modNode]) then
+					if tempFilterCheck[tempFilter]() then
 						displayList[authorIndexLookup] = displayList[authorIndexLookup] or {}
 						table.insert(displayList[authorIndexLookup], mod)
 						displayList[authorIndexLookup].name = value
 					end
 				end
 			else
-				if gMods[index].filter == 0 or
-					(gMods[index].filter == 2 and not iscontentmod) or
-					(gMods[index].filter == 3 and iscontentmod) or
-					(gMods[index].filter == 4 and mod.active) or
-					(gMods[index].filter == 1 and newList[modNode]) then
-					table.insert(gMods[index].items, mod)
-				end
+				if tempFilterCheck[tempFilter]() then table.insert(gMods[index].items, mod) end
 			end
 		end
 		if gModSelected ~= "" and gModSelected == modNode then foundSelected = true end
@@ -952,17 +950,24 @@ function updateMods()
 		elseif gMods[i].sort == 1 then
 			local tempFoldList = {}
 			local authorCount = #displayList
+			local tempModSelect = gModSelected ~= ""
+			local modAuthorStr = GetString("mods.available."..gModSelected..".author")
+			modAuthorStr = modAuthorStr == "" and "%,unknown,%" or modAuthorStr
 			if gMods[i].sortInv then
 				table.sort(displayList, function(a, b) return string.lower(a.name) > string.lower(b.name) end)
 				for l=1, authorCount do
 					table.sort(displayList[l], function(a, b) return string.lower(a.name) > string.lower(b.name) end)
 					tempFoldList[l] = defaultAuthorFold
+					local foundAuthor = string.find(modAuthorStr, displayList[l].name, 1, true) and true
+					if foundAuthor then tempFoldList[l] = false end
 				end
 			else
 				table.sort(displayList, function(a, b) return string.lower(a.name) < string.lower(b.name) end)
 				for l=1, authorCount do
 					table.sort(displayList[l], function(a, b) return string.lower(a.name) < string.lower(b.name) end)
 					tempFoldList[l] = defaultAuthorFold
+					local foundAuthor = string.find(modAuthorStr, displayList[l].name, 1, true) and true
+					if foundAuthor then tempFoldList[l] = false end
 				end
 			end
 			gMods[i].items = displayList
@@ -1065,6 +1070,13 @@ function updateCollectMods(id)
 		mod.override = GetBool("mods.available."..item..".override") and not GetBool("mods.available."..item..".playable")
 		mod.active = GetBool("mods.available."..item..".active") or GetBool(item..".active")
 		local iscontentmod = GetBool("mods.available."..item..".playable")
+		local tempFilter = gCollectionList.filter
+		local tempFilterCheck = {
+			[0] = function() return true end,
+			[2] = function() return not iscontentmod end,
+			[3] = function() return iscontentmod end,
+			[4] = function() return mod.active end
+		}
 		if gCollectionList.sort == 1 then
 			local modAuthorStr = GetString("mods.available."..item..".author")
 			local modAuthorList = strSplit(modAuthorStr, ",")
@@ -1073,20 +1085,14 @@ function updateCollectMods(id)
 			allAuthorList(modAuthorList)
 			for _, value in pairs(modAuthorList) do
 				local authorIndexLookup = allAuthorList[value]
-				if gCollectionList.filter == 0 or
-					(gCollectionList.filter == 2 and not iscontentmod) or
-					(gCollectionList.filter == 3 and iscontentmod) or
-					(gCollectionList.filter == 4 and mod.active) then
+				if tempFilterCheck[tempFilter]() then
 					displayList[authorIndexLookup] = displayList[authorIndexLookup] or {}
 					table.insert(displayList[authorIndexLookup], mod)
 					displayList[authorIndexLookup].name = value
 				end
 			end
 		else
-			if gCollectionList.filter == 0 or
-				(gCollectionList.filter == 2 and not iscontentmod) or
-				(gCollectionList.filter == 3 and iscontentmod) or
-				(gCollectionList.filter == 4 and mod.active) then
+			if tempFilterCheck[tempFilter]() then
 				table.insert(gCollections[id].items, mod)
 			end
 		end
@@ -1102,17 +1108,24 @@ function updateCollectMods(id)
 	else
 		local tempFoldList = {}
 		local authorCount = #displayList
+		local tempModSelect = gModSelected ~= ""
+		local modAuthorStr = GetString("mods.available."..gModSelected..".author")
+		modAuthorStr = modAuthorStr == "" and "%,unknown,%" or modAuthorStr
 		if gCollectionList.sortInv then
 			table.sort(displayList, function(a, b) return string.lower(a.name) > string.lower(b.name) end)
 			for l=1, authorCount do
 				table.sort(displayList[l], function(a, b) return string.lower(a.name) > string.lower(b.name) end)
 				tempFoldList[l] = defaultAuthorFold
+				local foundAuthor = string.find(modAuthorStr, displayList[l].name, 1, true) and true
+				if foundAuthor then tempFoldList[l] = false end
 			end
 		else
 			table.sort(displayList, function(a, b) return string.lower(a.name) < string.lower(b.name) end)
 			for l=1, authorCount do
 				table.sort(displayList[l], function(a, b) return string.lower(a.name) < string.lower(b.name) end)
 				tempFoldList[l] = defaultAuthorFold
+				local foundAuthor = string.find(modAuthorStr, displayList[l].name, 1, true) and true
+				if foundAuthor then tempFoldList[l] = false end
 			end
 		end
 		gCollections[id].items = displayList
@@ -1261,9 +1274,15 @@ function updateSearch()
 		local iscontentmod = GetBool("mods.available."..modNode..".playable")
 		local modPrefix = (mod.id):match("^(%w+)-")
 		local index = category.Lookup[modPrefix]
-		local filter = gSearch.filter
+		local tempFilter = gSearch.filter
+		local tempFilterCheck = {
+			[0] = function() return true end,
+			[2] = function() return not iscontentmod end,
+			[3] = function() return iscontentmod end,
+			[4] = function() return mod.active end
+		}
 		if matchSearch and index then
-			if filter == 0 or (filter == 2 and not iscontentmod) or (filter == 3 and iscontentmod) or (filter == 4 and mod.active) then gSearch.items[index][#gSearch.items[index]+1] = mod end
+			if tempFilterCheck[tempFilter]() then gSearch.items[index][#gSearch.items[index]+1] = mod end
 		end
 	end
 
@@ -1485,7 +1504,6 @@ function listMods(list, w, h, issubscribedlist, useSection)
 							nextModFound = subList[i+1] and true or false
 							prevModId = prevModFound and subList[i-1].id or ""
 							nextModId = nextModFound and subList[i+1].id or ""
-							gAuthorSelected = subListName or ""
 						end
 					end
 					if mouseOver and UiIsMouseInRect(w-20, 22) then
@@ -1494,11 +1512,23 @@ function listMods(list, w, h, issubscribedlist, useSection)
 						if InputPressed("lmb") and gModSelected ~= id then
 							UiSound("terminal/message-select.ogg")
 							ret = id
-							gAuthorSelected = subListName or ""
+							if useSection then
+								gAuthorSelected = subListName or ""
+							else
+								local modAuthorStr = GetString("mods.available."..id..".author")
+								modAuthorStr = modAuthorStr == "" and "%,unknown,%" or modAuthorStr
+								gAuthorSelected = strSplit(modAuthorStr, ",")[1]
+							end
 						elseif InputPressed("rmb") then
 							ret = id
 							rmb_pushed = true
-							gAuthorSelected = subListName or ""
+							if useSection then
+								gAuthorSelected = subListName or ""
+							else
+								local modAuthorStr = GetString("mods.available."..id..".author")
+								modAuthorStr = modAuthorStr == "" and "%,unknown,%" or modAuthorStr
+								gAuthorSelected = strSplit(modAuthorStr, ",")[1]
+							end
 						end
 					end
 					UiRect(w, 22)
@@ -1566,8 +1596,23 @@ function listMods(list, w, h, issubscribedlist, useSection)
 			local tempSelect = tempArrowList[tempArrowOperation]
 			gModSelected = tempSelect.mod
 			gAuthorSelected = tempSelect.author
-			if useSection then list.fold[tempSelect.index] = false end
-			list.pos = clamp(list.pos-tempArrowOperation+2, -scrollCount, 0)
+			if useSection then
+				local tempAuthorFactor = tempArrowList[2].author ~= tempSelect.author and 2 or 1
+				if tempArrowList[1].mod == tempArrowList[3].mod and tempArrowList[1].mod == tempArrowList[2].mod then
+					list.fold[tempArrowList[2].index] = false
+					local modAuthorStr = GetString("mods.available."..gModSelected..".author")
+					modAuthorStr = modAuthorStr == "" and "%,unknown,%" or modAuthorStr
+					for t=1, totalCate do
+						local subListName = list.items[t].name
+						if string.find(modAuthorStr, subListName, 1, true) then list.fold[t] = false end
+					end
+				else
+					list.fold[tempSelect.index] = false
+					list.pos = clamp(list.pos-(tempArrowOperation-2)*tempAuthorFactor, -scrollCount, 0)
+				end
+			else
+				list.pos = clamp(list.pos-tempArrowOperation+2, -scrollCount, 0)
+			end
 		end
 	end
 	if needUpdate then updateCollections(true) updateMods() end
@@ -1794,8 +1839,12 @@ function listSearchMods(list, w, h)
 			}
 			local tempSelect = tempArrowList[tempArrowOperation]
 			gModSelected = tempSelect.mod
-			list.fold[tempSelect.index] = false
-			list.pos = clamp(list.pos-tempArrowOperation+2, -scrollCount, 0)
+			if tempArrowList[1].mod == tempArrowList[3].mod and tempArrowList[1].mod == tempArrowList[2].mod then
+				list.fold[tempArrowList[2].index] = false
+			else
+				list.fold[tempSelect.index] = false
+				list.pos = clamp(list.pos-tempArrowOperation+2, -scrollCount, 0)
+			end
 		end
 	end
 	if needUpdate then updateCollections(true) updateMods() end
@@ -2140,7 +2189,6 @@ function listCollectionMods(mainList, w, h, selected, useSection)
 							nextModFound = subList[i+1] and true or false
 							prevModId = prevModFound and subList[i-1].id or ""
 							nextModId = nextModFound and subList[i+1].id or ""
-							gAuthorSelected = subListName or ""
 						end
 					end
 					if mouseOver and UiIsMouseInRect(w-20, 22) then
@@ -2149,11 +2197,23 @@ function listCollectionMods(mainList, w, h, selected, useSection)
 						if InputPressed("lmb") and gModSelected ~= id then
 							UiSound("terminal/message-select.ogg")
 							ret = id
-							gAuthorSelected = subListName or ""
+							if useSection then
+								gAuthorSelected = subListName or ""
+							else
+								local modAuthorStr = GetString("mods.available."..id..".author")
+								modAuthorStr = modAuthorStr == "" and "%,unknown,%" or modAuthorStr
+								gAuthorSelected = strSplit(modAuthorStr, ",")[1]
+							end
 						elseif InputPressed("rmb") then
 							ret = id
 							rmb_pushed = true
-							gAuthorSelected = subListName or ""
+							if useSection then
+								gAuthorSelected = subListName or ""
+							else
+								local modAuthorStr = GetString("mods.available."..id..".author")
+								modAuthorStr = modAuthorStr == "" and "%,unknown,%" or modAuthorStr
+								gAuthorSelected = strSplit(modAuthorStr, ",")[1]
+							end
 						end
 					end
 					UiRect(w, 22)
@@ -2219,8 +2279,23 @@ function listCollectionMods(mainList, w, h, selected, useSection)
 			local tempSelect = tempArrowList[tempArrowOperation]
 			gModSelected = tempSelect.mod
 			gAuthorSelected = tempSelect.author
-			if useSection then mainList[selected].fold[tempSelect.index] = false end
-			gCollectionList.pos = clamp(gCollectionList.pos-tempArrowOperation+2, -scrollCount, 0)
+			if useSection then
+				local tempAuthorFactor = tempArrowList[2].author ~= tempSelect.author and 2 or 1
+				if tempArrowList[1].mod == tempArrowList[3].mod and tempArrowList[1].mod == tempArrowList[2].mod then
+					mainList[selected].fold[tempArrowList[2].index] = false
+					local modAuthorStr = GetString("mods.available."..gModSelected..".author")
+					modAuthorStr = modAuthorStr == "" and "%,unknown,%" or modAuthorStr
+					for t=1, totalCate do
+						local subListName = list.items[t].name
+						if string.find(modAuthorStr, subListName, 1, true) then mainList[selected].fold[t] = false end
+					end
+				else
+					mainList[selected].fold[tempSelect.index] = false
+					gCollectionList.pos = clamp(gCollectionList.pos-(tempArrowOperation-2)*tempAuthorFactor, -scrollCount, 0)
+				end
+			else
+				gCollectionList.pos = clamp(gCollectionList.pos-tempArrowOperation+2, -scrollCount, 0)
+			end
 		end
 	end
 	if needUpdate then updateCollections(true) updateMods() updateSearch() end
@@ -2321,6 +2396,11 @@ function drawCreate()
 		end
 		if not HasKey("mods.available."..gModSelected) then gModSelected, gAuthorSelected = "", "" end
 		initSelect = false
+	end
+	if gModSelected ~= "" and gAuthorSelected == "" then
+		local modAuthorStr = GetString("mods.available."..gModSelected..".author")
+		modAuthorStr = modAuthorStr == "" and "%,unknown,%" or modAuthorStr
+		gAuthorSelected = strSplit(modAuthorStr, ",")[1]
 	end
 
 	local w = 758 + 810
