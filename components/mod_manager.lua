@@ -1560,10 +1560,15 @@ function listMods(list, w, h, issubscribedlist, useSection)
 					if issubscribedlist and boldName then UiFont("bold.ttf", 20) end
 					local modName = subList[i].name
 					local nameLength = UiText(modName)
-					if mouseOverThisMod and nameLength > w-20 then
-						tooltipHoverId = id
-						local curX, curY = UiGetCursorPos()
-						tooltip = {x = curX, y = curY, text = modName, mode = 2, bold = boldName}
+					if mouseOverThisMod then
+						if nameLength > w-20 then
+							tooltipHoverId = id
+							local curX, curY = UiGetCursorPos()
+							tooltip = {x = curX, y = curY, text = modName, mode = 2, bold = boldName}
+						else
+							tooltipHoverId = ""
+							tooltip = {x = 0, y = 0, text = "", mode = 1, bold = false}
+						end
 					end
 				UiPop()
 				UiTranslate(0, 22)
@@ -1808,10 +1813,15 @@ function listSearchMods(list, w, h)
 					UiTranslate(10, 0)
 					local modName = subList[i].name
 					local nameLength = UiText(modName)
-					if mouseOverThisMod and nameLength > w-20 then
-						tooltipHoverId = id
-						local curX, curY = UiGetCursorPos()
-						tooltip = {x = curX, y = curY, text = modName, mode = 2}
+					if mouseOverThisMod then
+						if nameLength > w-20 then
+							tooltipHoverId = id
+							local curX, curY = UiGetCursorPos()
+							tooltip = {x = curX, y = curY, text = modName, mode = 2}
+						else
+							tooltipHoverId = ""
+							tooltip = {x = 0, y = 0, text = "", mode = 1, bold = false}
+						end
 					end
 				UiPop()
 				UiTranslate(0, 22)
@@ -2243,10 +2253,15 @@ function listCollectionMods(mainList, w, h, selected, useSection)
 					UiTranslate(10, 0)
 					local modName = subList[i].name
 					local nameLength = UiText(modName)
-					if mouseOverThisMod and nameLength > w-20 then
-						tooltipHoverId = tostring(selected).."-"..id
-						local curX, curY = UiGetCursorPos()
-						tooltip = {x = curX, y = curY, text = modName, mode = 2, bold = false}
+					if mouseOverThisMod then
+						if nameLength > w-20 then
+							tooltipHoverId = tostring(selected).."-"..id
+							local curX, curY = UiGetCursorPos()
+							tooltip = {x = curX, y = curY, text = modName, mode = 2, bold = false}
+						else
+							tooltipHoverId = ""
+							tooltip = {x = 0, y = 0, text = "", mode = 1, bold = false}
+						end
 					end
 				UiPop()
 				UiTranslate(0, 22)
@@ -2787,6 +2802,7 @@ function drawCreate()
 						UiTranslate(30, 26)
 						UiColor(1, 1, 1, 1)
 						UiPush()
+							UiTextUniformHeight(true)
 							UiTranslate(300, 0)
 							UiFont("bold.ttf", 32)
 							UiWordWrap(mainW-300-60)
@@ -2846,15 +2862,16 @@ function drawCreate()
 									UiAlign("top left")
 									UiTranslate(entryLen, 0)
 									local countDist = 0
+									local tempWmax = textWmax-entryLen
 									for i, auth in ipairs(authorList) do
-										UiWordWrap(textWmax-entryLen)
+										UiWordWrap(tempWmax)
 										local authW, authH = UiGetTextSize(auth)
 										local transX, transY = authW+authGap, 0
-										if authH > 26 then
+										if authH > 28 then
 											if countDist > 0 then UiTranslate(-countDist, 24) end
 											countDist = 0
 											transX, transY = 0, authH
-										elseif countDist + authW+authGap > textWmax-entryLen then
+										elseif countDist + authW+authGap > tempWmax then
 											UiTranslate(-countDist, 24)
 											countDist = 0
 											transX = authW+authGap
@@ -2875,9 +2892,10 @@ function drawCreate()
 									UiButtonPressColor(1, 1, 1)
 									UiButtonPressDist(0)
 									local countDist = 0
+									local tempWmax = textWmax-entryLen
 									for i, tag in ipairs(tagList) do
 										local tagW, tagH = UiGetTextSize(tag)
-										if countDist + tagW+24 > textWmax then
+										if countDist + tagW+24 > tempWmax then
 											UiTranslate(-countDist, 26)
 											countDist = 0
 										end
@@ -3821,11 +3839,11 @@ ModManager.Window = Ui.Window
 				if tooltip.bold then UiFont("bold.ttf", 20) else UiFont("regular.ttf", 22) end
 				local txw = UiMeasureText(0, tooltip.text)
 				UiPush()
-					UiTranslate(txw-175, -18)
+					UiTranslate(200, -18)
 					UiColor(0.375, 0.375, 0.375)
 					UiImageBox("ui/common/hgradient-right-64.png", 100, 22, 0, 0)
 					UiTranslate(100, 0)
-					UiRect(80, 22)
+					UiRect(txw-295, 22)
 				UiPop()
 				UiColor(0.95, 0.95, 0.95)
 				UiText(tooltip.text)
