@@ -2784,12 +2784,15 @@ function drawCreate()
 					
 					UiPush()
 						UiAlign("top left")
-						UiTranslate(30, 16)
+						UiTranslate(30, 26)
 						UiColor(1, 1, 1, 1)
-						UiFont("bold.ttf", 32)
-						UiText(name)
+						UiPush()
+							UiTranslate(300, 0)
+							UiFont("bold.ttf", 32)
+							UiWordWrap(mainW-300-60)
+							local _, titleH = UiText(name)
+						UiPop()
 						UiFont("regular.ttf", 20)
-						UiTranslate(0, 40)
 
 						UiPush()
 							local poW, poH = 270, 270
@@ -2833,24 +2836,25 @@ function drawCreate()
 								UiPop()
 							end
 
-							UiTranslate(poW+30, 0)
-							UiWindow(textWmax, poH, true)
+							UiTranslate(poW+30, titleH+10)
+							UiWindow(textWmax, poH-titleH-10, true)
 
 							UiPush()
 								if author ~= "" then
-									UiText(locLangStrAuthor)
+									local entryLen = UiText(locLangStrAuthor)
+									entryLen = entryLen+16
 									UiAlign("top left")
-									UiTranslate(68, 0)
+									UiTranslate(entryLen, 0)
 									local countDist = 0
 									for i, auth in ipairs(authorList) do
-										UiWordWrap(textWmax-68)
+										UiWordWrap(textWmax-entryLen)
 										local authW, authH = UiGetTextSize(auth)
 										local transX, transY = authW+authGap, 0
 										if authH > 26 then
 											if countDist > 0 then UiTranslate(-countDist, 24) end
 											countDist = 0
 											transX, transY = 0, authH
-										elseif countDist + authW+authGap > textWmax-68 then
+										elseif countDist + authW+authGap > textWmax-entryLen then
 											UiTranslate(-countDist, 24)
 											countDist = 0
 											transX = authW+authGap
@@ -2859,11 +2863,13 @@ function drawCreate()
 										UiTranslate(transX, transY)
 										countDist = countDist + transX
 									end
-									UiTranslate(-68-countDist, 24)
+									UiTranslate(-entryLen-countDist, 24)
 								end
 								if tags ~= "" then
-									UiText("loc@UI_TEXT_TAGS", true)
 									UiTranslate(0, 4)
+									local entryLen = UiText("loc@UI_TEXT_TAGS")
+									entryLen = entryLen+16
+									UiTranslate(entryLen, 0)
 									UiButtonImageBox("ui/common/box-outline-4.png", 8, 8, 1, 1, 1, 0.7)
 									UiButtonHoverColor(1, 1, 1)
 									UiButtonPressColor(1, 1, 1)
@@ -2883,7 +2889,7 @@ function drawCreate()
 							UiPop()
 
 							UiPush()
-								UiTranslate(0, poH-8)
+								UiTranslate(0, poH-titleH-10)
 								UiFont("regular.ttf", 16)
 								UiColor(0.9, 0.9, 0.9)
 								if HasKey("savegame.mod."..gModSelected) then
@@ -2930,7 +2936,7 @@ function drawCreate()
 
 					-- edit/copy, details, publish
 					UiPush()
-						UiTranslate(mainW-buttonW/2-30, mainH-340)
+						UiTranslate(mainW-buttonW/2-30, mainH-370)
 						if isLocal then
 							if GetBool(modKey..".playable") then
 								UiTranslate(0, modButtonT)
