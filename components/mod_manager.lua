@@ -569,9 +569,10 @@ collectionPop = false
 newList = {}
 prevSelectMod = ""
 initSelect = true
-menuVer = "v1.4.4"
+menuVer = "v1.4.5"
 tempcharctrSelect = ""
 tempcharctrSetTime = -1
+prevPreview = ""
 
 webLinks = {
 	projectGithub = "https://github.com/YuLun-bili/Mod-Menu-Revamped",
@@ -798,6 +799,7 @@ function initLoc()
 		gMods[i].isdragging = false
 	end
 	gModSelected = ""
+	gAuthorSelected = ""
 	updateMods()
 
 	gCollections = {}
@@ -850,6 +852,8 @@ function initLoc()
 
 	recentRndList = {}
 	recentRndListLookup = {}
+	
+	viewLocalPublishedWorkshop = false
 end
 
 function resetModSortFilter()
@@ -867,6 +871,8 @@ end
 
 function updateMods()
 	Command("mods.refresh")
+	UiUnloadImage(prevPreview)
+	prevPreview = ""
 
 	for i=1, 3 do
 		gMods[i].items = {}
@@ -901,6 +907,14 @@ function updateMods()
 		local modPrefix = (mod.id):match("^(%w+)-")
 		local index = category.Lookup[modPrefix]
 		if index then
+			local tempFilter = gMods[index].filter
+			local tempFilterCheck = {
+				[0] = function() return true end,
+				[1] = function() return newList[modNode] end,
+				[2] = function() return not iscontentmod end,
+				[3] = function() return iscontentmod end,
+				[4] = function() return mod.active end
+			}
 			if index == 2 then
 				mod.showbold = GetBool("mods.available."..modNode..".showbold")
 				if not newList.modNode and mod.showbold then newList[modNode] = true end
@@ -913,29 +927,19 @@ function updateMods()
 				allAuthorList(modAuthorList)
 				for _, value in pairs(modAuthorList) do
 					local authorIndexLookup = allAuthorList[value]
-					if gMods[index].filter == 0 or
-						(gMods[index].filter == 2 and not iscontentmod) or
-						(gMods[index].filter == 3 and iscontentmod) or
-						(gMods[index].filter == 4 and mod.active) or
-						(gMods[index].filter == 1 and newList[modNode]) then
+					if tempFilterCheck[tempFilter]() then
 						displayList[authorIndexLookup] = displayList[authorIndexLookup] or {}
 						table.insert(displayList[authorIndexLookup], mod)
 						displayList[authorIndexLookup].name = value
 					end
 				end
 			else
-				if gMods[index].filter == 0 or
-					(gMods[index].filter == 2 and not iscontentmod) or
-					(gMods[index].filter == 3 and iscontentmod) or
-					(gMods[index].filter == 4 and mod.active) or
-					(gMods[index].filter == 1 and newList[modNode]) then
-					table.insert(gMods[index].items, mod)
-				end
+				if tempFilterCheck[tempFilter]() then table.insert(gMods[index].items, mod) end
 			end
 		end
 		if gModSelected ~= "" and gModSelected == modNode then foundSelected = true end
 	end
-	if gModSelected ~= "" and not foundSelected then gModSelected = "" end
+	if gModSelected ~= "" and not foundSelected then gModSelected, gAuthorSelected = "", "" end
 
 	for i=1, 3 do
 		gMods[i].total = #gMods[i].items
@@ -948,17 +952,24 @@ function updateMods()
 		elseif gMods[i].sort == 1 then
 			local tempFoldList = {}
 			local authorCount = #displayList
+			local tempModSelect = gModSelected ~= ""
+			local modAuthorStr = GetString("mods.available."..gModSelected..".author")
+			modAuthorStr = modAuthorStr == "" and "%,unknown,%" or modAuthorStr
 			if gMods[i].sortInv then
 				table.sort(displayList, function(a, b) return string.lower(a.name) > string.lower(b.name) end)
 				for l=1, authorCount do
 					table.sort(displayList[l], function(a, b) return string.lower(a.name) > string.lower(b.name) end)
 					tempFoldList[l] = defaultAuthorFold
+					local foundAuthor = string.find(modAuthorStr, displayList[l].name, 1, true) and true
+					if foundAuthor then tempFoldList[l] = false end
 				end
 			else
 				table.sort(displayList, function(a, b) return string.lower(a.name) < string.lower(b.name) end)
 				for l=1, authorCount do
 					table.sort(displayList[l], function(a, b) return string.lower(a.name) < string.lower(b.name) end)
 					tempFoldList[l] = defaultAuthorFold
+					local foundAuthor = string.find(modAuthorStr, displayList[l].name, 1, true) and true
+					if foundAuthor then tempFoldList[l] = false end
 				end
 			end
 			gMods[i].items = displayList
@@ -1061,6 +1072,13 @@ function updateCollectMods(id)
 		mod.override = GetBool("mods.available."..item..".override") and not GetBool("mods.available."..item..".playable")
 		mod.active = GetBool("mods.available."..item..".active") or GetBool(item..".active")
 		local iscontentmod = GetBool("mods.available."..item..".playable")
+		local tempFilter = gCollectionList.filter
+		local tempFilterCheck = {
+			[0] = function() return true end,
+			[2] = function() return not iscontentmod end,
+			[3] = function() return iscontentmod end,
+			[4] = function() return mod.active end
+		}
 		if gCollectionList.sort == 1 then
 			local modAuthorStr = GetString("mods.available."..item..".author")
 			local modAuthorList = strSplit(modAuthorStr, ",")
@@ -1069,20 +1087,14 @@ function updateCollectMods(id)
 			allAuthorList(modAuthorList)
 			for _, value in pairs(modAuthorList) do
 				local authorIndexLookup = allAuthorList[value]
-				if gCollectionList.filter == 0 or
-					(gCollectionList.filter == 2 and not iscontentmod) or
-					(gCollectionList.filter == 3 and iscontentmod) or
-					(gCollectionList.filter == 4 and mod.active) then
+				if tempFilterCheck[tempFilter]() then
 					displayList[authorIndexLookup] = displayList[authorIndexLookup] or {}
 					table.insert(displayList[authorIndexLookup], mod)
 					displayList[authorIndexLookup].name = value
 				end
 			end
 		else
-			if gCollectionList.filter == 0 or
-				(gCollectionList.filter == 2 and not iscontentmod) or
-				(gCollectionList.filter == 3 and iscontentmod) or
-				(gCollectionList.filter == 4 and mod.active) then
+			if tempFilterCheck[tempFilter]() then
 				table.insert(gCollections[id].items, mod)
 			end
 		end
@@ -1098,17 +1110,24 @@ function updateCollectMods(id)
 	else
 		local tempFoldList = {}
 		local authorCount = #displayList
+		local tempModSelect = gModSelected ~= ""
+		local modAuthorStr = GetString("mods.available."..gModSelected..".author")
+		modAuthorStr = modAuthorStr == "" and "%,unknown,%" or modAuthorStr
 		if gCollectionList.sortInv then
 			table.sort(displayList, function(a, b) return string.lower(a.name) > string.lower(b.name) end)
 			for l=1, authorCount do
 				table.sort(displayList[l], function(a, b) return string.lower(a.name) > string.lower(b.name) end)
 				tempFoldList[l] = defaultAuthorFold
+				local foundAuthor = string.find(modAuthorStr, displayList[l].name, 1, true) and true
+				if foundAuthor then tempFoldList[l] = false end
 			end
 		else
 			table.sort(displayList, function(a, b) return string.lower(a.name) < string.lower(b.name) end)
 			for l=1, authorCount do
 				table.sort(displayList[l], function(a, b) return string.lower(a.name) < string.lower(b.name) end)
 				tempFoldList[l] = defaultAuthorFold
+				local foundAuthor = string.find(modAuthorStr, displayList[l].name, 1, true) and true
+				if foundAuthor then tempFoldList[l] = false end
 			end
 		end
 		gCollections[id].items = displayList
@@ -1248,7 +1267,7 @@ function updateSearch()
 		local mod = {}
 		local modNode = mods[i]
 		local modName = GetString("mods.available."..modNode..".listname")
-		local matchSearch = modName:lower():match(gSearchText)
+		local matchSearch = modName:lower():match(gSearchText:lower())
 		mod.id = modNode
 		mod.name = modName
 		mod.override = GetBool("mods.available."..modNode..".override") and not GetBool("mods.available."..modNode..".playable")
@@ -1257,9 +1276,15 @@ function updateSearch()
 		local iscontentmod = GetBool("mods.available."..modNode..".playable")
 		local modPrefix = (mod.id):match("^(%w+)-")
 		local index = category.Lookup[modPrefix]
-		local filter = gSearch.filter
+		local tempFilter = gSearch.filter
+		local tempFilterCheck = {
+			[0] = function() return true end,
+			[2] = function() return not iscontentmod end,
+			[3] = function() return iscontentmod end,
+			[4] = function() return mod.active end
+		}
 		if matchSearch and index then
-			if filter == 0 or (filter == 2 and not iscontentmod) or (filter == 3 and iscontentmod) or (filter == 4 and mod.active) then gSearch.items[index][#gSearch.items[index]+1] = mod end
+			if tempFilterCheck[tempFilter]() then gSearch.items[index][#gSearch.items[index]+1] = mod end
 		end
 	end
 
@@ -1287,6 +1312,13 @@ function browseOperation(value, pageSize, listMax)
 	return math.min(value, 0)
 end
 
+function arrowOperation()
+	local anyArrowPressed = InputPressed("menu_up") or InputPressed("menu_down") or InputPressed("menu_left") or InputPressed("menu_right")
+	local arrowDir = math.ceil((InputValue("menu_down")+InputValue("menu_right"))/2) - math.ceil((InputValue("menu_up")+InputValue("menu_left"))/2)
+	return (anyArrowPressed and arrowDir or 0)+2
+	--	-1, 0, 1 -> 1, 2, 3
+end
+
 function listMods(list, w, h, issubscribedlist, useSection)
 	local needUpdate = false
 	local ret = ""
@@ -1297,6 +1329,19 @@ function listMods(list, w, h, issubscribedlist, useSection)
 	local sectionStart, sectionEnd = nil, nil
 	local listStart = math.floor(1-list.pos)
 	local listOffStart = listStart
+	local scrollCount = 0
+	local prevModId = ""
+	local nextModId = ""
+	local prevSectionIndex = 0
+	local currSectionIndex = 0
+	local nextSectionIndex = 0
+	local prevModFound = false
+	local nextModFound = false
+	local prevAuthor = ""
+	local nextAuthor = ""
+	local prevAuthorFound = false
+	local nextAuthorFound = false
+
 	if useSection then
 		totalCate = #list.items
 		totalVal = 0
@@ -1325,7 +1370,7 @@ function listMods(list, w, h, issubscribedlist, useSection)
 		local itemsInView = math.floor(h/UiFontHeight())
 		if totalVal > itemsInView then
 			w = w-14
-			local scrollCount = (totalVal-itemsInView)
+			scrollCount = totalVal-itemsInView
 			if scrollCount < 0 then scrollCount = 0 end
 
 			local frac = itemsInView / totalVal
@@ -1414,22 +1459,78 @@ function listMods(list, w, h, issubscribedlist, useSection)
 				prevList = prevList+subListLen
 				totalList = totalList+(foldList and 0 or subListTotal)
 			end
-			for i=subListStart, subListLines do
+			for i=math.max(1, subListStart), subListLines do
 				local mouseOverThisMod = false
 				local id = subList[i].id
 				UiPush()
 					UiTranslate(10, -18)
 					UiColor(0, 0, 0, 0)
-					if gModSelected == id then UiColor(1, 1, 1, 0.1) end
+					if gModSelected == id then
+						UiColor(1, 1, 1, 0.1)
+						if useSection then
+							if gAuthorSelected == subListName or gAuthorSelected == "" then
+								UiPush()
+									UiColor(1, 1, 1, 0.9)
+									UiRectOutline(w-21, 22, 1)
+								UiPop()
+								prevAuthorFound = list.items[j-1] and true or false
+								nextAuthorFound = list.items[j+1] and true or false
+								prevModFound = subList[i-1] and true or false
+								nextModFound = subList[i+1] and true or false
+								prevAuthor = prevModFound and subListName or prevAuthorFound and list.items[j-1].name or ""
+								nextAuthor = nextModFound and subListName or nextAuthorFound and list.items[j+1].name or ""
+								prevAuthor = prevAuthor == "%,unknown,%" and "loc@NAME_UNKNOWN" or prevAuthor
+								nextAuthor = nextAuthor == "%,unknown,%" and "loc@NAME_UNKNOWN" or nextAuthor
+								prevModId = prevModFound and subList[i-1].id or ""
+								nextModId = nextModFound and subList[i+1].id or ""
+								prevSectionIndex = j
+								currSectionIndex = j
+								nextSectionIndex = j
+								if not prevModFound and prevAuthorFound then
+									local prevSubList = list.items[j-1]
+									local prevSubListLen = #prevSubList
+									prevModFound = prevSubList[prevSubListLen] and true or false
+									prevModId = prevModFound and prevSubList[prevSubListLen].id or ""
+									prevSectionIndex = prevModFound and j-1 or j
+								end
+								if not nextModFound and nextAuthorFound then
+									local nextSubList = list.items[j+1]
+									nextModFound = nextModFound and true or nextSubList[1] and true or false
+									nextModId = nextModFound and nextSubList[1].id or ""
+									nextSectionIndex = nextModFound and j+1 or j
+								end
+								gAuthorSelected = subListName or ""
+							end
+						else
+							prevModFound = subList[i-1] and true or false
+							nextModFound = subList[i+1] and true or false
+							prevModId = prevModFound and subList[i-1].id or ""
+							nextModId = nextModFound and subList[i+1].id or ""
+						end
+					end
 					if mouseOver and UiIsMouseInRect(w-20, 22) then
 						mouseOverThisMod = true
 						UiColor(0, 0, 0, 0.1)
 						if InputPressed("lmb") and gModSelected ~= id then
 							UiSound("terminal/message-select.ogg")
 							ret = id
+							if useSection then
+								gAuthorSelected = subListName or ""
+							else
+								local modAuthorStr = GetString("mods.available."..id..".author")
+								modAuthorStr = modAuthorStr == "" and "%,unknown,%" or modAuthorStr
+								gAuthorSelected = strSplit(modAuthorStr, ",")[1]
+							end
 						elseif InputPressed("rmb") then
 							ret = id
 							rmb_pushed = true
+							if useSection then
+								gAuthorSelected = subListName or ""
+							else
+								local modAuthorStr = GetString("mods.available."..id..".author")
+								modAuthorStr = modAuthorStr == "" and "%,unknown,%" or modAuthorStr
+								gAuthorSelected = strSplit(modAuthorStr, ",")[1]
+							end
 						end
 					end
 					UiRect(w, 22)
@@ -1461,10 +1562,15 @@ function listMods(list, w, h, issubscribedlist, useSection)
 					if issubscribedlist and boldName then UiFont("bold.ttf", 20) end
 					local modName = subList[i].name
 					local nameLength = UiText(modName)
-					if mouseOverThisMod and nameLength > w-20 then
-						tooltipHoverId = id
-						local curX, curY = UiGetCursorPos()
-						tooltip = {x = curX, y = curY, text = modName, mode = 2, bold = boldName}
+					if mouseOverThisMod then
+						if nameLength > w-20 then
+							tooltipHoverId = id
+							local curX, curY = UiGetCursorPos()
+							tooltip = {x = curX, y = curY, text = modName, mode = 2, bold = boldName}
+						else
+							tooltipHoverId = ""
+							tooltip = {x = 0, y = 0, text = "", mode = 1, bold = false}
+						end
 					end
 				UiPop()
 				UiTranslate(0, 22)
@@ -1473,6 +1579,49 @@ function listMods(list, w, h, issubscribedlist, useSection)
 		if not rmb_pushed and mouseOver and InputPressed("rmb") then rmb_pushed = true end
 	UiPop()
 
+	if mouseOver then
+		local tempArrowOperation = arrowOperation()
+		if tempArrowOperation ~= 2 then
+			UiSound("terminal/message-select.ogg")
+			local tempArrowList = {
+				{
+					mod = prevModFound and prevModId or gModSelected,
+					author = prevAuthorFound and prevAuthor or gAuthorSelected,
+					index = prevModFound and prevSectionIndex or currSectionIndex
+				},
+				{
+					mod = gModSelected,
+					author = gAuthorSelected,
+					index = currSectionIndex
+				},
+				{
+					mod = nextModFound and nextModId or gModSelected,
+					author = nextAuthorFound and nextAuthor or gAuthorSelected,
+					index = nextModFound and nextSectionIndex or currSectionIndex
+				}
+			}
+			local tempSelect = tempArrowList[tempArrowOperation]
+			gModSelected = tempSelect.mod
+			gAuthorSelected = tempSelect.author
+			if useSection then
+				local tempAuthorFactor = tempArrowList[2].author ~= tempSelect.author and 2 or 1
+				if tempArrowList[1].mod == tempArrowList[3].mod and tempArrowList[1].mod == tempArrowList[2].mod then
+					list.fold[tempArrowList[2].index] = false
+					local modAuthorStr = GetString("mods.available."..gModSelected..".author")
+					modAuthorStr = modAuthorStr == "" and "%,unknown,%" or modAuthorStr
+					for t=1, totalCate do
+						local subListName = list.items[t].name
+						if string.find(modAuthorStr, subListName, 1, true) then list.fold[t] = false end
+					end
+				else
+					list.fold[tempSelect.index] = false
+					list.pos = clamp(list.pos-(tempArrowOperation-2)*tempAuthorFactor, -scrollCount, 0)
+				end
+			else
+				list.pos = clamp(list.pos-tempArrowOperation+2, -scrollCount, 0)
+			end
+		end
+	end
 	if needUpdate then updateCollections(true) updateMods() end
 	return ret, rmb_pushed
 end
@@ -1483,8 +1632,17 @@ function listSearchMods(list, w, h)
 	local ret = ""
 	local rmb_pushed = false
 	local listingVal = math.ceil((h-10)/22)-1
-	local totalVal = list.total[1] + list.total[2] + list.total[3]
+	local totalVal = 0
+	local scrollCount = 0
+	local prevModId = ""
+	local nextModId = ""
+	local prevSectionIndex = 0
+	local currSectionIndex = 0
+	local nextSectionIndex = 0
+	local prevModFound = false
+	local nextModFound = false
 	if list.isdragging and InputReleased("lmb") then list.isdragging = false end
+	for j=1, 3 do totalVal = totalVal + 1 + (list.fold[j] and 0 or list.total[j]) end
 	UiPush()
 		UiAlign("top left")
 		UiFont("regular.ttf", 22)
@@ -1496,7 +1654,7 @@ function listSearchMods(list, w, h)
 		local itemsInView = math.floor(h/UiFontHeight())
 		if totalVal > itemsInView then
 			w = w-14
-			local scrollCount = (totalVal-itemsInView)
+			scrollCount = totalVal-itemsInView
 			if scrollCount < 0 then scrollCount = 0 end
 
 			local frac = itemsInView / totalVal
@@ -1591,7 +1749,33 @@ function listSearchMods(list, w, h)
 				UiPush()
 					UiTranslate(10, -18)
 					UiColor(0, 0, 0, 0)
-					if gModSelected == id then UiColor(1, 1, 1, 0.1) end
+					if gModSelected == id then
+						UiColor(1, 1, 1, 0.1)
+						UiPush()
+							UiColor(1, 1, 1, 0.9)
+							UiRectOutline(w-21, 22, 1)
+						UiPop()
+						prevModFound = subList[i-1] and true or false
+						nextModFound = subList[i+1] and true or false
+						prevModId = prevModFound and subList[i-1].id or ""
+						nextModId = nextModFound and subList[i+1].id or ""
+						prevSectionIndex = j
+						currSectionIndex = j
+						nextSectionIndex = j
+						local prevSubList = list.items[j-1]
+						local nextSubList = list.items[j+1]
+						if not prevModFound and prevSubList then
+							local prevSubListLen = #prevSubList
+							prevModFound = prevSubList[prevSubListLen] and true or false
+							prevModId = prevModFound and prevSubList[prevSubListLen].id or ""
+							prevSectionIndex = prevModFound and j-1 or j
+						end
+						if not nextModFound and nextSubList then
+							nextModFound = nextModFound and true or nextSubList[1] and true or false
+							nextModId = nextModFound and nextSubList[1].id or ""
+							nextSectionIndex = nextModFound and j+1 or j
+						end
+					end
 					if mouseOver and UiIsMouseInRect(w-20, 22) then
 						mouseOverThisMod = true
 						UiColor(0, 0, 0, 0.1)
@@ -1631,10 +1815,15 @@ function listSearchMods(list, w, h)
 					UiTranslate(10, 0)
 					local modName = subList[i].name
 					local nameLength = UiText(modName)
-					if mouseOverThisMod and nameLength > w-20 then
-						tooltipHoverId = id
-						local curX, curY = UiGetCursorPos()
-						tooltip = {x = curX, y = curY, text = modName, mode = 2}
+					if mouseOverThisMod then
+						if nameLength > w-20 then
+							tooltipHoverId = id
+							local curX, curY = UiGetCursorPos()
+							tooltip = {x = curX, y = curY, text = modName, mode = 2}
+						else
+							tooltipHoverId = ""
+							tooltip = {x = 0, y = 0, text = "", mode = 1, bold = false}
+						end
 					end
 				UiPop()
 				UiTranslate(0, 22)
@@ -1642,6 +1831,34 @@ function listSearchMods(list, w, h)
 		end
 	UiPop()
 
+	if mouseOver then
+		local tempArrowOperation = arrowOperation()
+		if tempArrowOperation ~= 2 then
+			UiSound("terminal/message-select.ogg")
+			local tempArrowList = {
+				{
+					mod = prevModFound and prevModId or gModSelected,
+					index = prevModFound and prevSectionIndex or currSectionIndex
+				},
+				{
+					mod = gModSelected,
+					index = currSectionIndex
+				},
+				{
+					mod = nextModFound and nextModId or gModSelected,
+					index = nextModFound and nextSectionIndex or currSectionIndex
+				}
+			}
+			local tempSelect = tempArrowList[tempArrowOperation]
+			gModSelected = tempSelect.mod
+			if tempArrowList[1].mod == tempArrowList[3].mod and tempArrowList[1].mod == tempArrowList[2].mod then
+				list.fold[tempArrowList[2].index] = false
+			else
+				list.fold[tempSelect.index] = false
+				list.pos = clamp(list.pos-tempArrowOperation+2, -scrollCount, 0)
+			end
+		end
+	end
 	if needUpdate then updateCollections(true) updateMods() end
 	return ret, rmb_pushed, category
 end
@@ -1651,6 +1868,9 @@ function listCollections(list, w, h)
 	local rmb_pushed = false
 	local listingVal = math.ceil((h-10)/22)-1
 	local totalVal = list.total
+	local scrollCount = 0
+	local prevCollectionIndex = gCollectionSelected
+	local nextCollectionIndex = gCollectionSelected
 	if gCollectionMain.isdragging and InputReleased("lmb") then gCollectionMain.isdragging = false end
 
 	UiPush()
@@ -1664,7 +1884,7 @@ function listCollections(list, w, h)
 		local itemsInView = math.floor(h/UiFontHeight())
 		if totalVal > itemsInView then
 			w = w-14
-			local scrollCount = (totalVal-itemsInView)
+			scrollCount = totalVal-itemsInView
 			if scrollCount < 0 then scrollCount = 0 end
 
 			local frac = itemsInView / totalVal
@@ -1717,7 +1937,11 @@ function listCollections(list, w, h)
 			UiPush()
 				UiTranslate(20, -18)
 				UiColor(0, 0, 0, 0)
-				if gCollectionSelected == i then UiColor(1, 1, 1, 0.1) end
+				if gCollectionSelected == i then
+					UiColor(1, 1, 1, 0.1)
+					prevCollectionIndex = list[i-1] and i-1 or i
+					nextCollectionIndex = list[i+1] and i+1 or i
+				end
 				if mouseOver and UiIsMouseInRect(w-30, 22) then
 					UiColor(0, 0, 0, 0.1)
 					if InputPressed("lmb") and gCollectionSelected ~= i then
@@ -1763,6 +1987,20 @@ function listCollections(list, w, h)
 
 		if not rmb_pushed and mouseOver and InputPressed("rmb") then rmb_pushed = true end
 	UiPop()
+
+	if mouseOver then
+		local tempArrowOperation = arrowOperation()
+		if tempArrowOperation ~= 2 then
+			UiSound("terminal/message-select.ogg")
+			local tempArrowList = {
+				{index = prevCollectionIndex},
+				{index = gCollectionSelected},
+				{index = nextCollectionIndex}
+			}
+			ret = tempArrowList[tempArrowOperation].index
+			gCollectionMain.pos = clamp(gCollectionMain.pos-tempArrowOperation+2, -scrollCount, 0)
+		end
+	end
 	return ret, rmb_pushed
 end
 
@@ -1777,6 +2015,19 @@ function listCollectionMods(mainList, w, h, selected, useSection)
 	local sectionStart, sectionEnd = nil, nil
 	local listStart = math.floor(1-gCollectionList.pos)
 	local listOffStart = listStart
+	local scrollCount = 0
+	local prevModId = ""
+	local nextModId = ""
+	local prevSectionIndex = 0
+	local currSectionIndex = 0
+	local nextSectionIndex = 0
+	local prevModFound = false
+	local nextModFound = false
+	local prevAuthor = ""
+	local nextAuthor = ""
+	local prevAuthorFound = false
+	local nextAuthorFound = false
+
 	if useSection and list then
 		totalCate = #list.items
 		totalVal = 0
@@ -1814,7 +2065,7 @@ function listCollectionMods(mainList, w, h, selected, useSection)
 
 		if totalVal > itemsInView then
 			w = w-14
-			local scrollCount = (totalVal-itemsInView)
+			scrollCount = totalVal-itemsInView
 			if scrollCount < 0 then scrollCount = 0 end
 
 			local frac = itemsInView / totalVal
@@ -1909,16 +2160,72 @@ function listCollectionMods(mainList, w, h, selected, useSection)
 				UiPush()
 					UiTranslate(10, -18)
 					UiColor(0, 0, 0, 0)
-					if gModSelected == id then UiColor(1, 1, 1, 0.1) end
+					if gModSelected == id then
+						UiColor(1, 1, 1, 0.1)
+						if useSection then
+							if gAuthorSelected == subListName or gAuthorSelected == "" then
+								UiPush()
+									UiColor(1, 1, 1, 0.9)
+									UiRectOutline(w-21, 22, 1)
+								UiPop()
+								prevAuthorFound = list.items[j-1] and true or false
+								nextAuthorFound = list.items[j+1] and true or false
+								prevModFound = subList[i-1] and true or false
+								nextModFound = subList[i+1] and true or false
+								prevAuthor = prevModFound and subListName or prevAuthorFound and list.items[j-1].name or ""
+								nextAuthor = nextModFound and subListName or nextAuthorFound and list.items[j+1].name or ""
+								prevAuthor = prevAuthor == "%,unknown,%" and "loc@NAME_UNKNOWN" or prevAuthor
+								nextAuthor = nextAuthor == "%,unknown,%" and "loc@NAME_UNKNOWN" or nextAuthor
+								prevModId = prevModFound and subList[i-1].id or ""
+								nextModId = nextModFound and subList[i+1].id or ""
+								prevSectionIndex = j
+								currSectionIndex = j
+								nextSectionIndex = j
+								if not prevModFound and prevAuthorFound then
+									local prevSubList = list.items[j-1]
+									local prevSubListLen = #prevSubList
+									prevModFound = prevSubList[prevSubListLen] and true or false
+									prevModId = prevModFound and prevSubList[prevSubListLen].id or ""
+									prevSectionIndex = prevModFound and j-1 or j
+								end
+								if not nextModFound and nextAuthorFound then
+									local nextSubList = list.items[j+1]
+									nextModFound = nextModFound and true or nextSubList[1] and true or false
+									nextModId = nextModFound and nextSubList[1].id or ""
+									nextSectionIndex = nextModFound and j+1 or j
+								end
+								gAuthorSelected = subListName or ""
+							end
+						else
+							prevModFound = subList[i-1] and true or false
+							nextModFound = subList[i+1] and true or false
+							prevModId = prevModFound and subList[i-1].id or ""
+							nextModId = nextModFound and subList[i+1].id or ""
+						end
+					end
 					if mouseOver and UiIsMouseInRect(w-20, 22) then
 						mouseOverThisMod = true
 						UiColor(0, 0, 0, 0.1)
 						if InputPressed("lmb") and gModSelected ~= id then
 							UiSound("terminal/message-select.ogg")
 							ret = id
+							if useSection then
+								gAuthorSelected = subListName or ""
+							else
+								local modAuthorStr = GetString("mods.available."..id..".author")
+								modAuthorStr = modAuthorStr == "" and "%,unknown,%" or modAuthorStr
+								gAuthorSelected = strSplit(modAuthorStr, ",")[1]
+							end
 						elseif InputPressed("rmb") then
 							ret = id
 							rmb_pushed = true
+							if useSection then
+								gAuthorSelected = subListName or ""
+							else
+								local modAuthorStr = GetString("mods.available."..id..".author")
+								modAuthorStr = modAuthorStr == "" and "%,unknown,%" or modAuthorStr
+								gAuthorSelected = strSplit(modAuthorStr, ",")[1]
+							end
 						end
 					end
 					UiRect(w, 22)
@@ -1948,10 +2255,15 @@ function listCollectionMods(mainList, w, h, selected, useSection)
 					UiTranslate(10, 0)
 					local modName = subList[i].name
 					local nameLength = UiText(modName)
-					if mouseOverThisMod and nameLength > w-20 then
-						tooltipHoverId = tostring(selected).."-"..id
-						local curX, curY = UiGetCursorPos()
-						tooltip = {x = curX, y = curY, text = modName, mode = 2, bold = false}
+					if mouseOverThisMod then
+						if nameLength > w-20 then
+							tooltipHoverId = tostring(selected).."-"..id
+							local curX, curY = UiGetCursorPos()
+							tooltip = {x = curX, y = curY, text = modName, mode = 2, bold = false}
+						else
+							tooltipHoverId = ""
+							tooltip = {x = 0, y = 0, text = "", mode = 1, bold = false}
+						end
 					end
 				UiPop()
 				UiTranslate(0, 22)
@@ -1960,6 +2272,49 @@ function listCollectionMods(mainList, w, h, selected, useSection)
 		if not rmb_pushed and mouseOver and InputPressed("rmb") then rmb_pushed = true end
 	UiPop()
 
+	if mouseOver then
+		local tempArrowOperation = arrowOperation()
+		if tempArrowOperation ~= 2 then
+			UiSound("terminal/message-select.ogg")
+			local tempArrowList = {
+				{
+					mod = prevModFound and prevModId or gModSelected,
+					author = prevAuthorFound and prevAuthor or gAuthorSelected,
+					index = prevModFound and prevSectionIndex or currSectionIndex
+				},
+				{
+					mod = gModSelected,
+					author = gAuthorSelected,
+					index = currSectionIndex
+				},
+				{
+					mod = nextModFound and nextModId or gModSelected,
+					author = nextAuthorFound and nextAuthor or gAuthorSelected,
+					index = nextModFound and nextSectionIndex or currSectionIndex
+				}
+			}
+			local tempSelect = tempArrowList[tempArrowOperation]
+			gModSelected = tempSelect.mod
+			gAuthorSelected = tempSelect.author
+			if useSection then
+				local tempAuthorFactor = tempArrowList[2].author ~= tempSelect.author and 2 or 1
+				if tempArrowList[1].mod == tempArrowList[3].mod and tempArrowList[1].mod == tempArrowList[2].mod then
+					mainList[selected].fold[tempArrowList[2].index] = false
+					local modAuthorStr = GetString("mods.available."..gModSelected..".author")
+					modAuthorStr = modAuthorStr == "" and "%,unknown,%" or modAuthorStr
+					for t=1, totalCate do
+						local subListName = list.items[t].name
+						if string.find(modAuthorStr, subListName, 1, true) then mainList[selected].fold[t] = false end
+					end
+				else
+					mainList[selected].fold[tempSelect.index] = false
+					gCollectionList.pos = clamp(gCollectionList.pos-(tempArrowOperation-2)*tempAuthorFactor, -scrollCount, 0)
+				end
+			else
+				gCollectionList.pos = clamp(gCollectionList.pos-tempArrowOperation+2, -scrollCount, 0)
+			end
+		end
+	end
 	if needUpdate then updateCollections(true) updateMods() updateSearch() end
 	return ret, rmb_pushed
 end
@@ -2053,9 +2408,21 @@ end
 function drawCreate()
 	local open = true
 	if initSelect then
-		if gModSelected == "" and GetBool(nodes.Settings..".rememberlast") then gModSelected = GetString(nodes.Settings..".rememberlast.last") end
-		if not HasKey("mods.available."..gModSelected) then gModSelected = "" end
+		if gModSelected == "" and GetBool(nodes.Settings..".rememberlast") then
+			gModSelected, gAuthorSelected = GetString(nodes.Settings..".rememberlast.last"), ""
+		end
+		if not HasKey("mods.available."..gModSelected) then gModSelected, gAuthorSelected = "", "" end
 		initSelect = false
+	end
+	if gModSelected ~= "" and gAuthorSelected == "" then
+		local modAuthorStr = GetString("mods.available."..gModSelected..".author")
+		modAuthorStr = modAuthorStr == "" and "%,unknown,%" or modAuthorStr
+		gAuthorSelected = strSplit(modAuthorStr, ",")[1]
+	end
+	if viewLocalPublishedWorkshop and HasKey("mods.publish.id") then
+		Command("game.openurl", "https://steamcommunity.com/sharedfiles/filedetails/?id="..GetString("mods.publish.id"))
+		Command("mods.publishend")
+		viewLocalPublishedWorkshop = false
 	end
 
 	local w = 758 + 810
@@ -2334,6 +2701,7 @@ function drawCreate()
 						if UiTextButton(gMods[category.Index].title, listW-80, 36) then
 							category.Index = category.Index%3+1
 							gModSelected = ""
+							gAuthorSelected = ""
 							if GetBool(nodes.Settings..".resetfilter") then
 								resetModSortFilter()
 								updateMods()
@@ -2430,6 +2798,7 @@ function drawCreate()
 					local modPath =		GetString(modKey..".path")
 					local previewPath =	"RAW:"..modPath.."/preview.jpg"
 					if not HasFile(previewPath) then previewPath = "RAW:"..modPath.."/preview.png" end
+					if prevPreview ~= previewPath then UiUnloadImage(prevPreview) prevPreview = previewPath end
 					local hasPreview =	HasFile(previewPath)
 					local idPath =		"RAW:"..modPath.."/id.txt"
 					local hasId =		modPrefix == "steam" or HasFile(idPath)
@@ -2437,12 +2806,16 @@ function drawCreate()
 					
 					UiPush()
 						UiAlign("top left")
-						UiTranslate(30, 16)
+						UiTranslate(30, 26)
 						UiColor(1, 1, 1, 1)
-						UiFont("bold.ttf", 32)
-						UiText(name)
+						UiPush()
+							UiTextUniformHeight(true)
+							UiTranslate(300, 0)
+							UiFont("bold.ttf", 32)
+							UiWordWrap(mainW-300-60)
+							local _, titleH = UiText(name)
+						UiPop()
 						UiFont("regular.ttf", 20)
-						UiTranslate(0, 40)
 
 						UiPush()
 							local poW, poH = 270, 270
@@ -2486,24 +2859,26 @@ function drawCreate()
 								UiPop()
 							end
 
-							UiTranslate(poW+30, 0)
-							UiWindow(textWmax, poH, true)
+							UiTranslate(poW+30, titleH+10)
+							UiWindow(textWmax, poH-titleH-10, true)
 
 							UiPush()
 								if author ~= "" then
-									UiText(locLangStrAuthor)
+									local entryLen = UiText(locLangStrAuthor)
+									entryLen = entryLen+16
 									UiAlign("top left")
-									UiTranslate(68, 0)
+									UiTranslate(entryLen, 0)
 									local countDist = 0
+									local tempWmax = textWmax-entryLen
 									for i, auth in ipairs(authorList) do
-										UiWordWrap(textWmax-68)
+										UiWordWrap(tempWmax)
 										local authW, authH = UiGetTextSize(auth)
 										local transX, transY = authW+authGap, 0
-										if authH > 26 then
+										if authH > 28 then
 											if countDist > 0 then UiTranslate(-countDist, 24) end
 											countDist = 0
 											transX, transY = 0, authH
-										elseif countDist + authW+authGap > textWmax-68 then
+										elseif countDist + authW+authGap > tempWmax then
 											UiTranslate(-countDist, 24)
 											countDist = 0
 											transX = authW+authGap
@@ -2512,19 +2887,22 @@ function drawCreate()
 										UiTranslate(transX, transY)
 										countDist = countDist + transX
 									end
-									UiTranslate(-68-countDist, 24)
+									UiTranslate(-entryLen-countDist, 24)
 								end
 								if tags ~= "" then
-									UiText("loc@UI_TEXT_TAGS", true)
 									UiTranslate(0, 4)
+									local entryLen = UiText("loc@UI_TEXT_TAGS")
+									entryLen = entryLen+16
+									UiTranslate(entryLen, 0)
 									UiButtonImageBox("ui/common/box-outline-4.png", 8, 8, 1, 1, 1, 0.7)
 									UiButtonHoverColor(1, 1, 1)
 									UiButtonPressColor(1, 1, 1)
 									UiButtonPressDist(0)
 									local countDist = 0
+									local tempWmax = textWmax-entryLen
 									for i, tag in ipairs(tagList) do
 										local tagW, tagH = UiGetTextSize(tag)
-										if countDist + tagW+24 > textWmax then
+										if countDist + tagW+24 > tempWmax then
 											UiTranslate(-countDist, 26)
 											countDist = 0
 										end
@@ -2536,7 +2914,7 @@ function drawCreate()
 							UiPop()
 
 							UiPush()
-								UiTranslate(0, poH-8)
+								UiTranslate(0, poH-titleH-10)
 								UiFont("regular.ttf", 16)
 								UiColor(0.9, 0.9, 0.9)
 								if HasKey("savegame.mod."..gModSelected) then
@@ -2583,7 +2961,7 @@ function drawCreate()
 
 					-- edit/copy, details, publish
 					UiPush()
-						UiTranslate(mainW-buttonW/2-30, mainH-340)
+						UiTranslate(mainW-buttonW/2-30, mainH-370)
 						if isLocal then
 							if GetBool(modKey..".playable") then
 								UiTranslate(0, modButtonT)
@@ -2692,7 +3070,8 @@ function drawCreate()
 								if UiIsMouseInRect(buttonW, modButtonH) then UiColorFilter(1, 1, 0.35) end
 								if UiBlankButton(buttonW, modButtonH) then
 									if isLocal then
-										Command("game.openurl", "https://steamcommunity.com/sharedfiles/filedetails/?id="..GetString("mods.publish.id"))
+										Command("mods.publishbegin", gModSelected)
+										viewLocalPublishedWorkshop = true
 									else
 										Command("mods.browsesubscribed", gModSelected)
 									end
@@ -3056,7 +3435,10 @@ function drawLargePreview(show)
 end
 
 function drawPublish(show)
-	if not show then return nil end
+	if not show then
+		if HasKey("mods.publish.id") and not viewLocalPublishedWorkshop then Command("mods.publishend") end
+		return nil
+	end
 	UiModalBegin()
 	UiBlur(gPublishScale)
 	UiPush()
@@ -3098,6 +3480,7 @@ function drawPublish(show)
 		local description = gPublishLangDesc or GetString(modKey..".description")
 		local previewPath = "RAW:"..GetString(modKey..".path").."/preview.jpg"
 		if not HasFile(previewPath) then previewPath = "RAW:"..GetString(modKey..".path").."/preview.png" end
+		if prevPreview ~= previewPath then UiUnloadImage(prevPreview) prevPreview = previewPath end
 		local hasPreview = HasFile(previewPath)
 		local missingInfo = false
 
@@ -3366,7 +3749,10 @@ function drawPopElements()
 	end
 
 	-- last selected mod
-	if prevSelectMod ~= gModSelected and gModSelected ~= "" then SetString(nodes.Settings..".rememberlast.last", gModSelected) prevSelectMod = gModSelected end
+	if prevSelectMod ~= gModSelected and gModSelected ~= "" then
+		SetString(nodes.Settings..".rememberlast.last", gModSelected)
+		prevSelectMod = gModSelected
+	end
 end
 
 function setWindowSize()
@@ -3421,7 +3807,6 @@ ModManager.Window = Ui.Window
 	end,
 
 	onPostDraw =	function(self)
-		if tonumber(InputLastPressedKey()) then LoadLanguageTable(InputLastPressedKey()) end
 		UiPush()
 			if tooltipHoverId == "" then
 				if tooltipPrevId ~= "" then
@@ -3464,11 +3849,11 @@ ModManager.Window = Ui.Window
 				if tooltip.bold then UiFont("bold.ttf", 20) else UiFont("regular.ttf", 22) end
 				local txw = UiMeasureText(0, tooltip.text)
 				UiPush()
-					UiTranslate(txw-175, -18)
+					UiTranslate(200, -18)
 					UiColor(0.375, 0.375, 0.375)
 					UiImageBox("ui/common/hgradient-right-64.png", 100, 22, 0, 0)
 					UiTranslate(100, 0)
-					UiRect(80, 22)
+					UiRect(txw-295, 22)
 				UiPop()
 				UiColor(0.95, 0.95, 0.95)
 				UiText(tooltip.text)
@@ -3501,6 +3886,7 @@ ModManager.Window = Ui.Window
 		initSelect = true
 		ModManager.WindowAnimation.duration = 0.2
 		ModManager.WindowAnimation:init(self)
+		viewLocalPublishedWorkshop = false
 	end,
 
 	canRestore = 	function(self) return GetString("mods.modmanager.selectedmod") ~= "" end,
@@ -3510,17 +3896,18 @@ ModManager.Window = Ui.Window
 		initSelect = true
 		ModManager.WindowAnimation.duration = 0.0
 		ModManager.WindowAnimation:init(self)
+		viewLocalPublishedWorkshop = false
 	end,
 
 	onClose = 		function(self)
 		ModManager.WindowAnimation.duration = 0.2
 		ModManager.WindowAnimation:init(self)
 		SetString("mods.modmanager.selectedmod", "")
+		viewLocalPublishedWorkshop = false
 	end,
 
 	refresh = 		function(self)
 		setWindowSize()
-		Command("mods.refresh")
 		updateMods()
 		updateCollections()
 		if gSearchText ~= "" then updateSearch() end
