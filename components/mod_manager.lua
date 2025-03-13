@@ -852,6 +852,8 @@ function initLoc()
 
 	recentRndList = {}
 	recentRndListLookup = {}
+	
+	viewLocalPublishedWorkshop = false
 end
 
 function resetModSortFilter()
@@ -2417,6 +2419,11 @@ function drawCreate()
 		modAuthorStr = modAuthorStr == "" and "%,unknown,%" or modAuthorStr
 		gAuthorSelected = strSplit(modAuthorStr, ",")[1]
 	end
+	if viewLocalPublishedWorkshop and HasKey("mods.publish.id") then
+		Command("game.openurl", "https://steamcommunity.com/sharedfiles/filedetails/?id="..GetString("mods.publish.id"))
+		Command("mods.publishend")
+		viewLocalPublishedWorkshop = false
+	end
 
 	local w = 758 + 810
 	local h = 940
@@ -3063,7 +3070,8 @@ function drawCreate()
 								if UiIsMouseInRect(buttonW, modButtonH) then UiColorFilter(1, 1, 0.35) end
 								if UiBlankButton(buttonW, modButtonH) then
 									if isLocal then
-										Command("game.openurl", "https://steamcommunity.com/sharedfiles/filedetails/?id="..GetString("mods.publish.id"))
+										Command("mods.publishbegin", gModSelected)
+										viewLocalPublishedWorkshop = true
 									else
 										Command("mods.browsesubscribed", gModSelected)
 									end
@@ -3427,7 +3435,10 @@ function drawLargePreview(show)
 end
 
 function drawPublish(show)
-	if not show then return nil end
+	if not show then
+		if HasKey("mods.publish.id") and not viewLocalPublishedWorkshop then Command("mods.publishend") end
+		return nil
+	end
 	UiModalBegin()
 	UiBlur(gPublishScale)
 	UiPush()
@@ -3796,7 +3807,6 @@ ModManager.Window = Ui.Window
 	end,
 
 	onPostDraw =	function(self)
-		if tonumber(InputLastPressedKey()) then LoadLanguageTable(InputLastPressedKey()) end
 		UiPush()
 			if tooltipHoverId == "" then
 				if tooltipPrevId ~= "" then
@@ -3876,6 +3886,7 @@ ModManager.Window = Ui.Window
 		initSelect = true
 		ModManager.WindowAnimation.duration = 0.2
 		ModManager.WindowAnimation:init(self)
+		viewLocalPublishedWorkshop = false
 	end,
 
 	canRestore = 	function(self) return GetString("mods.modmanager.selectedmod") ~= "" end,
@@ -3885,12 +3896,14 @@ ModManager.Window = Ui.Window
 		initSelect = true
 		ModManager.WindowAnimation.duration = 0.0
 		ModManager.WindowAnimation:init(self)
+		viewLocalPublishedWorkshop = false
 	end,
 
 	onClose = 		function(self)
 		ModManager.WindowAnimation.duration = 0.2
 		ModManager.WindowAnimation:init(self)
 		SetString("mods.modmanager.selectedmod", "")
+		viewLocalPublishedWorkshop = false
 	end,
 
 	refresh = 		function(self)
